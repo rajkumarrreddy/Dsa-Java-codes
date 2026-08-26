@@ -1,0 +1,70 @@
+class Solution {
+    public int[] nextGreaterElements(int[] nums) {
+
+        int n = nums.length;
+
+        // Edge case: empty array
+        if (n == 0) {
+            return new int[0];
+        }
+
+        // Result array where we'll store answers
+        int[] nge = new int[n];
+
+        // Monotonic decreasing stack
+        // Stores candidate "next greater elements"
+        Stack<Integer> stack = new Stack<>();
+
+        // Traverse from right to left twice
+        // Why twice?
+        // Because array is circular.
+        for (int i = 2 * n - 1; i >= 0; i--) {
+
+            // Convert large indices back into array range
+            // Example:
+            // n = 3
+            // i = 5 -> nums[2]
+            // i = 4 -> nums[1]
+            // i = 3 -> nums[0]
+            int curr = nums[i % n];
+
+            // Remove all elements that are <= current
+            //
+            // Why?
+            // Because they can NEVER be the Next Greater Element
+            // for current or any element further left.
+            while (!stack.isEmpty() && curr >= stack.peek()) {
+                stack.pop();
+            }
+
+            // Only store answers during the second pass
+            //
+            // First pass (i = 5,4,3):
+            //     build the stack
+            //
+            // Second pass (i = 2,1,0):
+            //     actually calculate answers
+            if (i < n) {
+
+                // If stack became empty,
+                // there is no greater element.
+                if (stack.isEmpty()) {
+                    nge[i] = -1;
+                }
+
+                // Otherwise top of stack is the
+                // nearest greater element.
+                else {
+                    nge[i] = stack.peek();
+                }
+            }
+
+            // Current element can become the answer
+            // for elements on its left,
+            // so push it into stack.
+            stack.push(curr);
+        }
+
+        return nge;
+    }
+}
