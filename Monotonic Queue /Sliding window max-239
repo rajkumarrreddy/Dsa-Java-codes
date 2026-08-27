@@ -1,0 +1,86 @@
+class Solution {
+    public int[] maxSlidingWindow(int[] nums, int k) {
+
+        // Total number of elements in the array
+        int n = nums.length;
+
+        // Edge case:
+        // No elements or window size is 0
+        if (n == 0 || k == 0) {
+            return new int[0];
+        }
+
+        // Number of windows = n - k + 1
+        // We need one answer (maximum) for each window
+        int[] result = new int[n - k + 1];
+
+        // Monotonic Decreasing Deque
+        // Stores INDICES, not values
+        Deque<Integer> deque = new ArrayDeque<>();
+
+        // Process each element once
+        for (int i = 0; i < n; i++) {
+
+            //---------------------------------------------------
+            // STEP 1:
+            // Remove indices that are outside the current window
+            //---------------------------------------------------
+
+            // Current window should contain indices:
+            // [i-k+1 ... i]
+            //
+            // Any index <= i-k has expired
+            while (deque.size() > 0 &&
+                   deque.peekFirst() <= i - k) {
+
+                deque.pollFirst();
+            }
+
+            //---------------------------------------------------
+            // STEP 2:
+            // Remove smaller elements from the back
+            //---------------------------------------------------
+
+            // If current value is bigger than values at the back,
+            // those values can never become maximum again.
+            //
+            // Example:
+            // deque values: [8,5,3]
+            // current value: 10
+            //
+            // 3,5,8 are useless now because
+            // 10 is larger and will stay longer.
+            while (deque.size() > 0 &&
+                   nums[deque.peekLast()] < nums[i]) {
+
+                deque.pollLast();
+            }
+
+            //---------------------------------------------------
+            // STEP 3:
+            // Add current index
+            //---------------------------------------------------
+
+            // Add current element's index to the deque
+            deque.offerLast(i);
+
+            //---------------------------------------------------
+            // STEP 4:
+            // If a complete window is formed,
+            // save the maximum
+            //---------------------------------------------------
+
+            // First complete window appears when:
+            // i == k - 1
+            if (i >= k - 1) {
+
+                // Front of deque always stores
+                // the index of the maximum element
+                result[i - k + 1] =
+                        nums[deque.peekFirst()];
+            }
+        }
+
+        return result;
+    }
+}
