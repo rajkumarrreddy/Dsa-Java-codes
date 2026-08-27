@@ -1,0 +1,84 @@
+class Solution {
+
+    public int largestRectangleArea(int[] heights) {
+
+        int n = heights.length;
+
+        // Stores nearest smaller index on left side
+        int[] left = new int[n];
+
+        // Stores nearest smaller index on right side
+        int[] right = new int[n];
+
+        Stack<Integer> stack = new Stack<>();
+
+
+        // =============================
+        // Find Nearest Smaller To Left
+        // =============================
+
+        for (int i = 0; i < n; i++) {
+
+            while (!stack.isEmpty() &&
+                   heights[stack.peek()] >= heights[i]) {
+
+                stack.pop();
+            }
+
+            if (stack.isEmpty()) {
+                left[i] = -1;
+            } else {
+                left[i] = stack.peek();
+            }
+
+            stack.push(i);
+        }
+
+
+        // Empty stack before next usage
+        stack.clear();
+
+
+        // =============================
+        // Find Nearest Smaller To Right
+        // =============================
+
+        for (int i = n - 1; i >= 0; i--) {
+
+            while (!stack.isEmpty() &&
+                   heights[stack.peek()] >= heights[i]) {
+
+                stack.pop();
+            }
+
+            if (stack.isEmpty()) {
+                right[i] = n;
+            } else {
+                right[i] = stack.peek();
+            }
+
+            stack.push(i);
+        }
+
+
+        int maxArea = 0;
+
+
+        // =============================
+        // Calculate area for every bar
+        // =============================
+
+        for (int i = 0; i < n; i++) {
+
+            int height = heights[i];
+
+            int width = right[i] - left[i] - 1;
+
+            int area = height * width;
+
+            maxArea = Math.max(maxArea, area);
+        }
+
+        return maxArea;
+    }
+}
