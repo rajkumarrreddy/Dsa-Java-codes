@@ -1,0 +1,71 @@
+class Solution {
+    public int minSubArrayLen(int target, int[] nums) {
+
+        // Left boundary of the sliding window
+        int left = 0;
+
+        // Right boundary of the sliding window
+        int right = 0;
+
+        // Stores sum of current window
+        int sum = 0;
+
+        // Stores smallest valid length found so far
+        int minL = Integer.MAX_VALUE;
+
+        // Keep expanding window until right reaches end
+        while (right < nums.length) {
+
+            // Include current element into window
+            sum += nums[right];
+
+            // Move right forward to expand window
+            right++;
+
+            /*
+             * If sum becomes >= target,
+             * we have found a VALID window.
+             *
+             * Now our goal changes:
+             * We no longer want a bigger window.
+             * We want the SMALLEST possible valid window.
+             */
+            while (sum >= target) {
+
+                /*
+                 * Current window:
+                 * starts at left
+                 * ends at right-1
+                 *
+                 * Length = right - left
+                 */
+                minL = Math.min(minL, right - left);
+
+                /*
+                 * Try removing leftmost element.
+                 *
+                 * Why?
+                 * Because maybe this element isn't needed.
+                 *
+                 * If window remains valid after removing it,
+                 * we get a smaller answer.
+                 */
+                sum -= nums[left];
+
+                // Window shrinks from left side
+                left++;
+            }
+        }
+
+        /*
+         * If minL never changed,
+         * no valid subarray was found.
+         */
+        if (minL == Integer.MAX_VALUE) {
+            return 0;
+        }
+
+        // Return smallest valid window length
+        return minL;
+    }
+}
