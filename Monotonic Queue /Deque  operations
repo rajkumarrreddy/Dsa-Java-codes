@@ -1,0 +1,32 @@
+Deque<Integer> dq = new ArrayDeque<>();
+
+dq.addFirst(x);      // Insert x at the front
+dq.addLast(x);       // Insert x at the back
+
+dq.offerFirst(x);    // Same as addFirst(), preferred in DSA
+dq.offerLast(x);     // Same as addLast(), preferred in DSA
+
+dq.peekFirst();      // View front element, don't remove
+dq.peekLast();       // View back element, don't remove
+
+dq.getFirst();       // Same as peekFirst(), throws exception if empty
+dq.getLast();        // Same as peekLast(), throws exception if empty
+
+dq.pollFirst();      // Remove and return front element
+dq.pollLast();       // Remove and return back element
+
+dq.removeFirst();    // Same as pollFirst(), throws exception if empty
+dq.removeLast();     // Same as pollLast(), throws exception if empty
+
+dq.isEmpty();        // Returns true if deque is empty
+dq.size();           // Returns number of elements
+
+// Monotonic Queue Patterns
+
+dq.peekFirst();      // Best/oldest candidate
+dq.pollFirst();      // Remove expired/completed candidate
+
+dq.peekLast();       // Check weakest/newest candidate
+dq.pollLast();       // Remove useless candidate
+
+dq.offerLast(i);     // Add current index as a candidate
