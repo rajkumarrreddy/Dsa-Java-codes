@@ -1,0 +1,44 @@
+class Solution {
+    public int[] topKFrequent(int[] nums, int k) {
+
+        // Frequency Map
+        // number -> occurrence count
+        HashMap<Integer, Integer> map = new HashMap<>();
+
+        for (int num : nums) {
+            map.put(num, map.getOrDefault(num, 0) + 1);
+        }
+
+        // Min Heap ordered by frequency
+        // We store numbers in the heap
+        // but compare them using their frequencies
+        PriorityQueue<Integer> minHeap =
+            new PriorityQueue<>((a, b) -> map.get(a) - map.get(b));
+
+        // Visit every unique number
+        for (int num : map.keySet()) {
+
+            // Add current number
+            minHeap.offer(num);
+
+            // If heap grows bigger than k
+            // remove the least frequent element
+            if (minHeap.size() > k) {
+                minHeap.poll();
+            }
+        }
+
+        // Heap now contains exactly k
+        // most frequent elements
+        int[] result = new int[k];
+
+        // Extract answer
+        // Fill backwards because Min Heap removes
+        // smaller frequencies first
+        for (int i = k - 1; i >= 0; i--) {
+            result[i] = minHeap.poll();
+        }
+
+        return result;
+    }
+}
