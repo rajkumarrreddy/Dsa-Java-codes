@@ -1,0 +1,206 @@
+import java.util.Deque;
+import java.util.LinkedList;
+
+class Solution {
+
+    public int longestSubarray(int[] nums, int limit) {
+
+        // Store the length of the array.
+        // We use n as the stopping point for the right pointer.
+        int n = nums.length;
+
+        /*
+         * dec is a monotonically decreasing deque.
+         *
+         * It stores useful maximum candidates in decreasing order.
+         *
+         * Example:
+         * dec = [8, 7, 4, 2]
+         *
+         * Therefore, the first value is always the maximum
+         * value of the current sliding window.
+         */
+        Deque<Integer> dec = new LinkedList<>();
+
+        /*
+         * inc is a monotonically increasing deque.
+         *
+         * It stores useful minimum candidates in increasing order.
+         *
+         * Example:
+         * inc = [2, 4, 7, 8]
+         *
+         * Therefore, the first value is always the minimum
+         * value of the current sliding window.
+         */
+        Deque<Integer> inc = new LinkedList<>();
+
+        /*
+         * left represents the starting index
+         * of the current sliding window.
+         *
+         * The current window is:
+         * nums[left ... right]
+         */
+        int left = 0;
+
+        /*
+         * ans stores the length of the longest valid
+         * subarray found so far.
+         */
+        int ans = 0;
+
+        /*
+         * right expands the sliding window.
+         *
+         * During every iteration, nums[right]
+         * is the new value entering the window.
+         */
+        for (int right = 0; right < n; right++) {
+
+            // The current value entering the sliding window.
+            int num = nums[right];
+
+            /*
+             * Maintain dec in decreasing order.
+             *
+             * Remove all values from the back that are
+             * smaller than the current value.
+             *
+             * Why can we remove them?
+             *
+             * The current value is:
+             * 1. Larger than those values.
+             * 2. Newer than those values.
+             *
+             * Therefore, as long as num remains in the window,
+             * those smaller values cannot become the maximum.
+             */
+            while (!dec.isEmpty() && num > dec.peekLast()) {
+
+                // Remove the smaller and now-useless
+                // maximum candidate from the back.
+                dec.pollLast();
+            }
+
+            /*
+             * Add the current value at the back.
+             *
+             * After removing all smaller values,
+             * dec remains in decreasing order.
+             */
+            dec.addLast(num);
+
+            /*
+             * Maintain inc in increasing order.
+             *
+             * Remove all values from the back that are
+             * larger than the current value.
+             *
+             * Why can we remove them?
+             *
+             * The current value is:
+             * 1. Smaller than those values.
+             * 2. Newer than those values.
+             *
+             * Therefore, as long as num remains in the window,
+             * those larger values cannot become the minimum.
+             */
+            while (!inc.isEmpty() && num < inc.peekLast()) {
+
+                // Remove the larger and now-useless
+                // minimum candidate from the back.
+                inc.pollLast();
+            }
+
+            /*
+             * Add the current value at the back.
+             *
+             * After removing all larger values,
+             * inc remains in increasing order.
+             */
+            inc.addLast(num);
+
+            /*
+             * dec.peekFirst() gives the maximum
+             * value in the current window.
+             *
+             * inc.peekFirst() gives the minimum
+             * value in the current window.
+             *
+             * According to the problem, a window is valid when:
+             *
+             * maximum - minimum <= limit
+             *
+             * Therefore, the window is invalid when:
+             *
+             * maximum - minimum > limit
+             *
+             * Keep shrinking the window from the left
+             * until it becomes valid again.
+             */
+            while (dec.peekFirst() - inc.peekFirst() > limit) {
+
+                /*
+                 * nums[left] is the element that is about
+                 * to leave the sliding window.
+                 *
+                 * If this outgoing element is also the current
+                 * maximum, it will be at the front of dec.
+                 *
+                 * We must remove it because it will no longer
+                 * belong to the current window.
+                 */
+                if (dec.peekFirst() == nums[left]) {
+                    dec.pollFirst();
+                }
+
+                /*
+                 * If the outgoing element is also the current
+                 * minimum, it will be at the front of inc.
+                 *
+                 * We must remove it because it will no longer
+                 * belong to the current window.
+                 */
+                if (inc.peekFirst() == nums[left]) {
+                    inc.pollFirst();
+                }
+
+                /*
+                 * Move the left boundary one position forward.
+                 *
+                 * This removes nums[left] from the logical
+                 * sliding window and makes the window smaller.
+                 *
+                 * left++ and ++left behave identically here
+                 * because the increment is a separate statement.
+                 */
+                left++;
+            }
+
+            /*
+             * When execution reaches this line, the while loop
+             * has finished, so the current window is valid.
+             *
+             * Current window:
+             * nums[left ... right]
+             *
+             * Its length is:
+             * right - left + 1
+             *
+             * We add 1 because both left and right
+             * indices are included in the window.
+             *
+             * Compare the current valid window length with
+             * the best length found earlier.
+             */
+            ans = Math.max(ans, right - left + 1);
+        }
+
+        /*
+         * After right has visited every array element,
+         * ans contains the longest valid subarray length.
+         */
+        return ans;
+    }
+}
