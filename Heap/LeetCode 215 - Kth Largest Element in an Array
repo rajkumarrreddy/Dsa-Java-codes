@@ -1,0 +1,33 @@
+class Solution {
+    public int findKthLargest(int[] nums, int k) {
+
+        // Min Heap keeps the smallest element at the top
+        PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+
+        // Put first k elements into the heap
+        // We need an initial group of k numbers to compare against
+        for (int i = 0; i < k; i++) {
+            minHeap.offer(nums[i]);
+        }
+
+        // Process remaining elements
+        for (int i = k; i < nums.length; i++) {
+
+            // If current number is bigger than the smallest
+            // element among our current top-k numbers,
+            // then it deserves a place in the heap
+            if (nums[i] > minHeap.peek()) {
+
+                // Remove the weakest candidate
+                minHeap.poll();
+
+                // Add the better candidate
+                minHeap.offer(nums[i]);
+            }
+        }
+
+        // Heap now contains the k largest elements
+        // The smallest among them is the kth largest
+        return minHeap.peek();
+    }
+}
