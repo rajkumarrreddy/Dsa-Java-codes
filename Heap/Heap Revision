@@ -1,0 +1,402 @@
+/*
+==========================================================
+HEAP / PRIORITY QUEUE REVISION NOTES
+==========================================================
+
+1. Java PriorityQueue = MIN HEAP by default
+
+    PriorityQueue<Integer> pq = new PriorityQueue<>();
+
+    Root always contains the SMALLEST element.
+
+----------------------------------------------------------
+
+2. Max Heap
+
+    PriorityQueue<Integer> pq =
+        new PriorityQueue<>(Collections.reverseOrder());
+
+    Root always contains the LARGEST element.
+
+----------------------------------------------------------
+
+3. Common Operations
+
+    pq.offer(x);      // insert
+    pq.poll();        // remove root
+    pq.peek();        // read root
+    pq.size();        // current size
+    pq.isEmpty();     // empty check
+
+----------------------------------------------------------
+
+4. Time Complexity
+
+    offer()  -> O(log n)
+    poll()   -> O(log n)
+    peek()   -> O(1)
+
+----------------------------------------------------------
+
+5. Interview Rules
+
+    Top K Largest     -> Min Heap of size K
+    Kth Largest       -> Min Heap of size K
+
+    Top K Smallest    -> Max Heap of size K
+    Kth Smallest      -> Max Heap of size K
+
+    Top K Frequent    -> HashMap + Min Heap
+
+    Merge K Lists     -> Min Heap
+
+    Dijkstra          -> Min Heap
+
+    Median Stream     -> Two Heaps
+
+==========================================================
+TOP K LARGEST TEMPLATE
+==========================================================
+*/
+
+class Solution {
+
+    public int[] topKLargest(int[] nums, int k) {
+
+        // Min Heap
+        // Why Min Heap?
+        // Because we want quick access to the SMALLEST element
+        // among our current Top K elements.
+        PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+
+
+        // Process every number
+        for (int num : nums) {
+
+            // Add current number
+            minHeap.offer(num);
+
+            /*
+             Why check size > k ?
+
+             We only want to keep K best elements.
+
+             If heap grows beyond K,
+             remove the weakest candidate.
+
+             Since this is a Min Heap,
+             root = smallest element.
+
+             poll() removes the smallest element.
+            */
+            if (minHeap.size() > k) {
+                minHeap.poll();
+            }
+        }
+
+
+        /*
+         After processing all numbers,
+
+         heap contains only Top K largest elements.
+
+         Example:
+
+         [7,2,15,8,20,11]
+         k = 3
+
+         Heap finally contains:
+
+         [11,15,20]
+        */
+
+
+        int[] result = new int[k];
+
+        /*
+         Heap gives values from smallest to largest.
+
+         Poll order:
+
+         11
+         15
+         20
+
+         To return:
+
+         [20,15,11]
+
+         fill array from right to left.
+        */
+        for (int i = k - 1; i >= 0; i--) {
+            result[i] = minHeap.poll();
+        }
+
+        return result;
+    }
+}
+
+/*
+==========================================================
+HEAP COMPARATORS (VERY IMPORTANT)
+==========================================================
+
+By default:
+
+PriorityQueue<Integer> pq = new PriorityQueue<>();
+
+Java creates MIN HEAP.
+
+Smallest element stays at top.
+
+----------------------------------------------------------
+CUSTOM COMPARATOR SYNTAX
+----------------------------------------------------------
+
+(a, b) -> ?
+
+Think:
+
+a = first element
+b = second element
+
+Comparator decides:
+
+negative  -> a comes first
+positive  -> b comes first
+zero      -> same
+
+----------------------------------------------------------
+MIN HEAP
+----------------------------------------------------------
+
+PriorityQueue<Integer> minHeap =
+    new PriorityQueue<>((a, b) -> a - b);
+
+OR
+
+PriorityQueue<Integer> minHeap =
+    new PriorityQueue<>();
+
+Both are same.
+
+Example:
+
+5 2 8 1
+
+Top:
+
+1
+
+----------------------------------------------------------
+MAX HEAP
+----------------------------------------------------------
+
+PriorityQueue<Integer> maxHeap =
+    new PriorityQueue<>((a, b) -> b - a);
+
+Example:
+
+5 2 8 1
+
+Top:
+
+8
+
+Why?
+
+For (8,2)
+
+b-a
+
+2-8=-6
+
+negative
+
+8 goes ahead of 2
+
+Larger elements move upward.
+
+----------------------------------------------------------
+ANOTHER WAY
+----------------------------------------------------------
+
+PriorityQueue<Integer> maxHeap =
+    new PriorityQueue<>(Collections.reverseOrder());
+
+Same thing.
+
+----------------------------------------------------------
+TOP K FREQUENT ELEMENTS (LC 347)
+----------------------------------------------------------
+
+HashMap<Integer,Integer> freq
+
+1 -> 3
+2 -> 2
+3 -> 1
+
+Store NUMBERS in heap.
+
+PriorityQueue<Integer> minHeap =
+    new PriorityQueue<>(
+        (a,b) -> freq.get(a)-freq.get(b)
+    );
+
+Why?
+
+Compare frequencies instead of values.
+
+----------------------------------------------------------
+
+For:
+
+a=2
+b=1
+
+freq(2)=2
+freq(1)=3
+
+2-3=-1
+
+negative
+
+2 comes first.
+
+Smaller frequency stays at top.
+
+Perfect for Top K Frequent.
+
+----------------------------------------------------------
+PAIR COMPARISON
+----------------------------------------------------------
+
+PriorityQueue<int[]> pq =
+    new PriorityQueue<>(
+        (a,b) -> a[1]-b[1]
+    );
+
+Assume:
+
+[value,freq]
+
+[1,3]
+[2,2]
+[3,1]
+
+Comparing:
+
+a[1]
+b[1]
+
+means:
+
+compare frequencies.
+
+Heap is ordered by frequency.
+
+----------------------------------------------------------
+K CLOSEST POINTS
+----------------------------------------------------------
+
+[x,y,distance]
+
+PriorityQueue<int[]> pq =
+    new PriorityQueue<>(
+        (a,b) -> b[2]-a[2]
+    );
+
+Why reverse?
+
+Need MAX HEAP.
+
+Largest distance on top.
+
+Easy to remove farthest point.
+
+----------------------------------------------------------
+STRING COMPARATOR
+----------------------------------------------------------
+
+PriorityQueue<String> pq =
+    new PriorityQueue<>(
+        (a,b) -> a.length()-b.length()
+    );
+
+Smaller length first.
+
+----------------------------------------------------------
+LC 692 TOP K FREQUENT WORDS
+----------------------------------------------------------
+
+PriorityQueue<String> pq =
+    new PriorityQueue<>(
+        (a,b) -> {
+
+            if(freq.get(a)==freq.get(b))
+                return b.compareTo(a);
+
+            return freq.get(a)-freq.get(b);
+        }
+    );
+
+First compare frequency.
+
+If same frequency:
+
+compare alphabetically.
+
+----------------------------------------------------------
+MOST IMPORTANT THING
+----------------------------------------------------------
+
+(a,b)->a-b
+
+Smaller value rises up.
+
+MIN HEAP
+
+----------------------------------------------------------
+
+(a,b)->b-a
+
+Larger value rises up.
+
+MAX HEAP
+
+----------------------------------------------------------
+
+(a,b)->map.get(a)-map.get(b)
+
+Compare using frequency.
+
+----------------------------------------------------------
+
+(a,b)->a[1]-b[1]
+
+Compare using second column.
+
+----------------------------------------------------------
+
+(a,b)->a[0]-b[0]
+
+Compare using first column.
+
+==========================================================
+INTERVIEW SHORTCUT
+==========================================================
+
+a-b      -> MIN HEAP
+
+b-a      -> MAX HEAP
+
+freq(a)-freq(b)
+         -> frequency heap
+
+a[1]-b[1]
+         -> sort by second value
+
+a[0]-b[0]
+         -> sort by first value
+==========================================================
+*/
