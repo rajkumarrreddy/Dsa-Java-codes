@@ -1,0 +1,60 @@
+class KthLargest {
+
+    // Stores the value of k.
+    private int k;
+
+    // Min Heap that will always contain
+    // the k largest numbers seen so far.
+    private PriorityQueue<Integer> minHeap;
+
+    public KthLargest(int k, int[] nums) {
+
+        this.k = k;
+
+        // Min Heap.
+        minHeap = new PriorityQueue<>();
+
+        // Process existing numbers.
+        for (int num : nums) {
+
+            // If heap has less than k elements,
+            // directly add the number.
+            if (minHeap.size() < k) {
+                minHeap.offer(num);
+            }
+
+            // If current number is bigger than
+            // the smallest among top k elements,
+            // replace that smallest element.
+            else if (num > minHeap.peek()) {
+
+                minHeap.poll();
+
+                minHeap.offer(num);
+            }
+        }
+    }
+
+    public int add(int val) {
+
+        // If heap contains fewer than k elements,
+        // we must include this value.
+        if (minHeap.size() < k) {
+            minHeap.offer(val);
+        }
+
+        // If new value is larger than the
+        // current kth largest element,
+        // it deserves a place in top k.
+        else if (val > minHeap.peek()) {
+
+            minHeap.poll();
+
+            minHeap.offer(val);
+        }
+
+        // Heap top always represents
+        // the kth largest element.
+        return minHeap.peek();
+    }
+}
