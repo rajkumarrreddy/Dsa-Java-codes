@@ -1,0 +1,181 @@
+/*
+ * LeetCode 692: Top K Frequent Words
+ *
+ * Question:
+ * Return the k most frequently occurring words.
+ *
+ * Required answer order:
+ * 1. Higher-frequency word comes first.
+ * 2. If frequencies are equal, the lexicographically
+ *    smaller word comes first.
+ *
+ * Main heap idea:
+ * We keep only the best k words in the heap.
+ *
+ * Therefore, the WORST word must remain at the heap's top
+ * so that heap.poll() can remove it when size becomes greater than k.
+ *
+ * Worst word:
+ * 1. Word with lower frequency.
+ * 2. If frequencies are equal, lexicographically larger word.
+ */
+
+class Solution {
+
+    public List<String> topKFrequent(String[] words, int k) {
+
+        /*
+         * STEP 1: Count the frequency of each word.
+         *
+         * Map format:
+         * word -> number of occurrences
+         *
+         * Example:
+         * words = ["i", "love", "i"]
+         *
+         * Frequency map:
+         * i    -> 2
+         * love -> 1
+         */
+        HashMap<String, Integer> freq = new HashMap<>();
+
+        // Visit every word from the input array.
+        for (String word : words) {
+
+            /*
+             * getOrDefault(word, 0):
+             *
+             * If the word already exists, get its current frequency.
+             * If it does not exist, use 0.
+             *
+             * Then add 1 because we found the word one more time.
+             */
+            freq.put(word, freq.getOrDefault(word, 0) + 1);
+        }
+
+        /*
+         * STEP 2: Create a PriorityQueue containing words.
+         *
+         * The heap must keep the WORST word at the top.
+         *
+         * Why?
+         *
+         * Whenever heap size becomes greater than k,
+         * heap.poll() should remove the worst candidate.
+         *
+         * Heap removal priority:
+         *
+         * 1. Lower-frequency word is removed first.
+         *
+         * 2. If frequencies are equal, the lexicographically
+         *    larger word is removed first.
+         */
+        PriorityQueue<String> heap = new PriorityQueue<>((a, b) -> {
+
+            /*
+             * First check whether both words have
+             * the same frequency.
+             */
+            if (freq.get(a).equals(freq.get(b))) {
+
+                /*
+                 * If frequencies are equal, the lexicographically
+                 * larger word is considered worse.
+                 *
+                 * Example:
+                 *
+                 * apple  -> 2
+                 * banana -> 2
+                 *
+                 * The final answer prefers "apple".
+                 * Therefore, "banana" should be removed first.
+                 *
+                 * We use b.compareTo(a), not a.compareTo(b),
+                 * to reverse the normal alphabetical order.
+                 *
+                 * This brings the lexicographically larger
+                 * word toward the top of the heap.
+                 */
+                return b.compareTo(a);
+            }
+
+            /*
+             * If frequencies are different, the word with
+             * the lower frequency should be removed first.
+             *
+             * Example:
+             *
+             * a frequency = 1
+             * b frequency = 3
+             *
+             * Integer.compare(1, 3) gives a negative result.
+             * Therefore, a receives higher removal priority.
+             */
+            return Integer.compare(freq.get(a), freq.get(b));
+        });
+
+        /*
+         * STEP 3: Process every unique word.
+         *
+         * freq.keySet() gives only unique words.
+         *
+         * Example:
+         * Original array = ["i", "love", "i", "love"]
+         *
+         * keySet = ["i", "love"]
+         *
+         * We do not need to add duplicate words because their
+         * total frequencies are already stored in the map.
+         */
+        for (String word : freq.keySet()) {
+
+            /*
+             * Add the current word as a possible
+             * top-k candidate.
+             */
+            heap.offer(word);
+
+            /*
+             * We need only the best k words.
+             *
+             * If heap size becomes k + 1, remove one word.
+             *
+             * Because our comparator keeps the worst word
+             * at the top, poll() removes the worst candidate.
+             */
+            if (heap.size() > k) {
+                heap.poll();
+            }
+        }
+
+        /*
+         * After the loop, the heap contains only
+         * the best k words.
+         */
+        List<String> res = new ArrayList<>();
+
+        /*
+         * STEP 4: Remove all remaining words from the heap.
+         *
+         * Important:
+         * The heap returns words from WORST to BEST because
+         * the worst remaining word is at the top.
+         */
+        while (!heap.isEmpty()) {
+            res.add(heap.poll());
+        }
+
+        /*
+         * Current result order:
+         * worst -> best
+         *
+         * Required result order:
+         * best -> worst
+         *
+         * Therefore, reverse the result.
+         */
+        Collections.reverse(res);
+
+        return res;
+    }
+}
