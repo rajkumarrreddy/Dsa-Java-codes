@@ -1,0 +1,44 @@
+class Solution {
+
+    // Returns squared distance from origin (0,0).
+    // We use x² + y² instead of sqrt(x² + y²)
+    // because we only need to compare distances.
+    public int squaredDis(int[] p) {
+        return p[0] * p[0] + p[1] * p[1];
+    }
+
+    public int[][] kClosest(int[][] points, int k) {
+
+        // Max Heap based on distance.
+        // Why Max Heap?
+        // Because whenever heap size becomes > k,
+        // we want to remove the farthest point quickly.
+        PriorityQueue<int[]> maxHeap =
+                new PriorityQueue<>(
+                        (a, b) -> squaredDis(b) - squaredDis(a)
+                );
+
+        // Process every point.
+        for (int[] p : points) {
+
+            // Add current point into heap.
+            maxHeap.offer(p);
+
+            // If heap size exceeds k,
+            // remove the farthest point.
+            if (maxHeap.size() > k) {
+                maxHeap.poll();
+            }
+        }
+
+        // Heap now contains exactly k closest points.
+        int[][] res = new int[k][2];
+
+        // Extract points from heap.
+        for (int i = 0; i < k; i++) {
+            res[i] = maxHeap.poll();
+        }
+
+        return res;
+    }
+}
