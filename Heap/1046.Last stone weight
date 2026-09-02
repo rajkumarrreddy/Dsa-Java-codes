@@ -1,0 +1,45 @@
+class Solution {
+    public int lastStoneWeight(int[] stones) {
+
+        // We need the largest stone again and again.
+        // So use a Max Heap.
+        PriorityQueue<Integer> maxHeap =
+                new PriorityQueue<>(Collections.reverseOrder());
+
+        // Put all stones into the Max Heap.
+        for (int st : stones) {
+            maxHeap.add(st);
+        }
+
+        // A smash operation always needs 2 stones.
+        // So continue while at least 2 stones exist.
+        while (maxHeap.size() >= 2) {
+
+            // Largest stone (y)
+            int y = maxHeap.poll();
+
+            // Second largest stone (x)
+            int x = maxHeap.poll();
+
+            // If both stones have same weight,
+            // both get destroyed.
+            if (x == y) {
+                continue;
+            }
+
+            // If weights are different,
+            // smaller stone is destroyed and
+            // larger stone becomes (y - x).
+            if (y != x) {
+                maxHeap.add(y - x);
+            }
+        }
+
+        // After all smash operations:
+        // If one stone remains, return its weight.
+        // Otherwise return 0.
+        return maxHeap.size() == 1
+                ? maxHeap.peek()
+                : 0;
+    }
+}
