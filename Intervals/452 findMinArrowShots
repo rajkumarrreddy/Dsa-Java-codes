@@ -1,0 +1,56 @@
+import java.util.*;
+
+class Solution {
+
+    public int findMinArrowShots(int[][] points) {
+
+        // No balloons -> no arrows needed
+        if (points.length == 0) {
+            return 0;
+        }
+
+        // Sort balloons by END position.
+        //
+        // Why?
+        // The balloon ending earliest is the best place
+        // to shoot an arrow because it maximizes the chance
+        // of bursting future overlapping balloons.
+        Arrays.sort(points, (a, b) -> Integer.compare(a[1], b[1]));
+
+        // First balloon always requires one arrow.
+        int arrows = 1;
+
+        // Shoot first arrow at end of first balloon.
+        int arrowPosition = points[0][1];
+
+        // Process remaining balloons.
+        for (int i = 1; i < points.length; i++) {
+
+            int currentStart = points[i][0];
+            int currentEnd = points[i][1];
+
+            // If current balloon starts AFTER
+            // our current arrow position,
+            // then the current arrow cannot burst it.
+            if (currentStart > arrowPosition) {
+
+                // Need a new arrow.
+                arrows++;
+
+                // Shoot new arrow at end of current balloon.
+                arrowPosition = currentEnd;
+            }
+
+            // Otherwise:
+            //
+            // currentStart <= arrowPosition
+            //
+            // This balloon overlaps with the balloons
+            // already covered by the current arrow.
+            //
+            // No new arrow needed.
+        }
+
+        return arrows;
+    }
+}
