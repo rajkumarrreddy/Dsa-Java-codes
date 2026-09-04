@@ -1,0 +1,51 @@
+import java.util.*;
+
+class Solution {
+    public boolean canAttendMeetings(int[][] intervals) {
+
+        // If there are 0 or 1 meetings,
+        // overlap is impossible.
+        if (intervals.length <= 1) {
+            return true;
+        }
+
+        // Sort meetings by start time.
+        //
+        // Example:
+        // Before:
+        // [[5,10],[0,30],[15,20]]
+        //
+        // After:
+        // [[0,30],[5,10],[15,20]]
+        Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
+
+        // Check every adjacent pair of meetings.
+        for (int i = 1; i < intervals.length; i++) {
+
+            // End time of previous meeting
+            int previousEnd = intervals[i - 1][1];
+
+            // Start time of current meeting
+            int currentStart = intervals[i][0];
+
+            // Overlap condition:
+            //
+            // Previous meeting:
+            // [0 ------- 30]
+            //
+            // Current meeting:
+            //      [5 --- 10]
+            //
+            // Since:
+            // 30 > 5
+            //
+            // overlap exists.
+            if (previousEnd > currentStart) {
+                return false;
+            }
+        }
+
+        // No overlap found anywhere.
+        return true;
+    }
+}
