@@ -1,0 +1,87 @@
+import java.util.*;
+
+class Solution {
+
+    public int[][] insert(int[][] intervals, int[] newInterval) {
+
+        // We do not know the final number of intervals because some intervals
+        // may be merged. Therefore, ArrayList is more convenient than an array.
+        List<int[]> result = new ArrayList<>();
+
+        // 'i' represents the current interval that we are examining.
+        int i = 0;
+
+        /*
+         * PHASE 1:
+         * Add all intervals that come completely before newInterval.
+         *
+         * intervals[i][1] = ending point of the current interval
+         * newInterval[0]  = starting point of the new interval
+         *
+         * If the current interval ends before newInterval starts,
+         * there is no overlap.
+         */
+        while (
+            i < intervals.length &&
+            intervals[i][1] < newInterval[0]
+        ) {
+            result.add(intervals[i]);
+            i++;
+        }
+
+        /*
+         * PHASE 2:
+         * Merge every interval that overlaps with newInterval.
+         *
+         * At this point, intervals ending before newInterval have
+         * already been handled.
+         *
+         * An overlap exists when the current interval starts before
+         * or exactly when newInterval ends.
+         */
+        while (
+            i < intervals.length &&
+            intervals[i][0] <= newInterval[1]
+        ) {
+            // Pick the smallest starting point.
+            newInterval[0] = Math.min(
+                newInterval[0],
+                intervals[i][0]
+            );
+
+            // Pick the largest ending point.
+            newInterval[1] = Math.max(
+                newInterval[1],
+                intervals[i][1]
+            );
+
+            // Move to the next interval to check whether it also overlaps.
+            i++;
+        }
+
+        /*
+         * newInterval now contains the complete merged interval.
+         *
+         * This is outside the loop because we want to add the final
+         * merged interval only once, not after every merge.
+         */
+        result.add(newInterval);
+
+        /*
+         * PHASE 3:
+         * Add all intervals that come completely after newInterval.
+         *
+         * No more merging is required because intervals are sorted.
+         */
+        while (i < intervals.length) {
+            result.add(intervals[i]);
+            i++;
+        }
+
+        /*
+         * Convert List<int[]> into int[][] because the method's
+         * return type is int[][].
+         */
+        return result.toArray(new int[result.size()][]);
+    }
+}
