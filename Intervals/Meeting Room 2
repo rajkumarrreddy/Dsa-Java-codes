@@ -1,0 +1,66 @@
+import java.util.*;
+
+class Solution {
+    public int minMeetingRooms(int[][] intervals) {
+
+        // No meetings => no rooms needed
+        if (intervals == null || intervals.length == 0) {
+            return 0;
+        }
+
+        // Sort meetings by start time
+        //
+        // Example:
+        // Before:
+        // [5,10] [0,30] [15,20]
+        //
+        // After:
+        // [0,30] [5,10] [15,20]
+        Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
+
+        // Min Heap stores END TIMES ONLY
+        //
+        // Why?
+        // We only care about:
+        // "Which meeting ends earliest?"
+        PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+
+        // First meeting always needs one room
+        minHeap.offer(intervals[0][1]);
+
+        // Process remaining meetings
+        for (int i = 1; i < intervals.length; i++) {
+
+            int currentStart = intervals[i][0];
+            int currentEnd = intervals[i][1];
+
+            // Earliest ending meeting
+            int earliestEnd = minHeap.peek();
+
+            // Check if current meeting can use
+            // a room that became free.
+            //
+            // Example:
+            //
+            // Existing meeting:
+            // [5,10]
+            //
+            // Current:
+            //        [15,20]
+            //
+            // Since:
+            // 15 >= 10
+            //
+            // same room can be reused.
+            if (currentStart >= earliestEnd) {
+                minHeap.poll(); // room becomes available
+            }
+
+            // Put current meeting into a room
+            minHeap.offer(currentEnd);
+        }
+
+        // Heap size = rooms needed
+        return minHeap.size();
+    }
+}
