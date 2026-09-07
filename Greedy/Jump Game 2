@@ -1,0 +1,64 @@
+// LeetCode 45 : Jump Game II
+// Pattern: Greedy + BFS Level Traversal
+//
+// Core Idea:
+// Instead of deciding "which index should I jump to",
+// we explore ALL positions reachable with the current jump.
+//
+// currentEnd = end of current BFS level
+// farthest   = farthest index reachable in next level
+// jumps      = number of levels crossed = number of jumps
+
+class Solution {
+
+    public int jump(int[] nums) {
+
+        // Counts how many jumps we have taken so far
+        int jumps = 0;
+
+        // Boundary of current jump range (current BFS level)
+        int currentEnd = 0;
+
+        // Farthest position we can reach while exploring
+        // the current level
+        int farthest = 0;
+
+        // We stop before last index because
+        // once we reach the end, no more jumps are needed
+        for (int i = 0; i < nums.length - 1; i++) {
+
+            /*
+             * From current index i,
+             * maximum position reachable is:
+             *
+             * i + nums[i]
+             *
+             * We keep track of the best reach found
+             * among ALL positions inside current level.
+             */
+            farthest = Math.max(farthest, i + nums[i]);
+
+            /*
+             * If we reached the end of current level,
+             * it means we have explored every position
+             * reachable using the current jump.
+             */
+            if (i == currentEnd) {
+
+                // Must take one more jump
+                jumps++;
+
+                /*
+                 * Move to next level.
+                 *
+                 * The next level can reach up to
+                 * the farthest position discovered.
+                 */
+                currentEnd = farthest;
+            }
+        }
+
+        // Minimum jumps needed to reach last index
+        return jumps;
+    }
+}
