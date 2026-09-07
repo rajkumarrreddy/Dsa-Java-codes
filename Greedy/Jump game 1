@@ -1,0 +1,89 @@
+// Jump Game I
+// Pattern: Greedy
+//
+// Goal:
+// Determine whether we can reach the last index.
+//
+// Greedy idea:
+// Instead of deciding exactly where to jump,
+// keep track of the farthest index reachable so far.
+//
+// Time Complexity: O(n)
+// Space Complexity: O(1)
+
+public class Main {
+
+    public static boolean canJump(int[] nums) {
+
+        /*
+         * farthest represents the farthest index that
+         * we can reach using the reachable positions
+         * checked so far.
+         *
+         * We begin at index 0, so initially:
+         * farthest = 0
+         */
+        int farthest = 0;
+
+        // Store the length of the array.
+        // The last index will be n - 1.
+        int n = nums.length;
+
+        /*
+         * Visit each index and check:
+         *
+         * 1. Can we reach the current index?
+         * 2. If yes, can it increase our farthest reach?
+         */
+        for (int i = 0; i < n; i++) {
+
+            /*
+             * If i is greater than farthest, the current
+             * index is outside our reachable boundary.
+             *
+             * Example:
+             * i = 4 and farthest = 3
+             *
+             * We can reach only up to index 3.
+             * Therefore, index 4 is unreachable.
+             *
+             * We cannot use nums[i] if we cannot
+             * reach index i in the first place.
+             */
+            if (i > farthest) {
+                return false;
+            }
+
+            /*
+             * i + nums[i] gives the farthest index
+             * reachable from the current index.
+             *
+             * We use Math.max() because an earlier index
+             * may already have provided a better reach.
+             *
+             * This ensures that our reachable boundary
+             * never moves backward.
+             */
+            farthest = Math.max(farthest, i + nums[i]);
+
+            /*
+             * The last index is n - 1.
+             *
+             * If farthest reaches or crosses the last index,
+             * we have successfully found a valid path.
+             *
+             * We use >= because reaching beyond the last
+             * index is also enough.
+             */
+            if (farthest >= n - 1) {
+                return true;
+            }
+        }
+
+        /*
+         * If the array is valid and the loop completes
+         * without finding an unreachable index,
+         * the destination is reachable.
+         */
+        return true;
+    }
