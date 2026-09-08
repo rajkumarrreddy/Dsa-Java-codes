@@ -1,0 +1,137 @@
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+
+class Solution {
+
+    public int[][] reconstructQueue(int[][] people) {
+
+        /*
+         * STEP 1: Sort the people.
+         *
+         * Sorting rules:
+         *
+         * 1. Sort height in DESCENDING order.
+         *    Taller people must be processed first.
+         *
+         * 2. If two people have the same height,
+         *    sort their k values in ASCENDING order.
+         *
+         * Example:
+         *
+         * Original:
+         * [[7,0], [4,4], [7,1], [5,0], [6,1], [5,2]]
+         *
+         * After sorting:
+         * [[7,0], [7,1], [6,1], [5,0], [5,2], [4,4]]
+         *
+         * Why tallest first?
+         *
+         * When we process a person, everyone already added to
+         * the queue will be taller than or equal to that person.
+         *
+         * Therefore, we can directly insert the person at index k.
+         */
+        Arrays.sort(people, (a, b) -> {
+
+            // a[0] and b[0] represent the heights.
+            if (a[0] == b[0]) {
+
+                /*
+                 * If both people have the same height,
+                 * sort their k values in ascending order.
+                 *
+                 * Example:
+                 * [7,0] must come before [7,1].
+                 *
+                 * Equal-height people count each other because
+                 * the question says "greater than or equal to".
+                 */
+                return Integer.compare(a[1], b[1]);
+
+            } else {
+
+                /*
+                 * If heights are different,
+                 * sort height in descending order.
+                 *
+                 * We compare b's height with a's height
+                 * so that the taller person comes first.
+                 *
+                 * Example:
+                 * [7,0] comes before [6,1].
+                 */
+                return Integer.compare(b[0], a[0]);
+            }
+        });
+
+        /*
+         * STEP 2: Create a list for constructing the final queue.
+         *
+         * Every element of this list is an int[] representing:
+         *
+         * [height, k]
+         *
+         * We use a LinkedList because we need to insert people
+         * at different indexes.
+         */
+        List<int[]> ordered = new LinkedList<>();
+
+        /*
+         * STEP 3: Process every person from the sorted array.
+         *
+         * Since the array is sorted by descending height,
+         * taller people are processed before shorter people.
+         */
+        for (int[] person : people) {
+
+            /*
+             * person[0] = height
+             * person[1] = k
+             *
+             * The add method works like:
+             *
+             * list.add(index, element);
+             *
+             * Therefore:
+             *
+             * person[1] is the index where we insert.
+             * person is the complete [height, k] array.
+             *
+             * Example:
+             *
+             * person = [6,1]
+             *
+             * ordered.add(1, [6,1]);
+             *
+             * If the list is:
+             *
+             * [[7,0], [7,1]]
+             *
+             * After inserting at index 1:
+             *
+             * [[7,0], [6,1], [7,1]]
+             *
+             * Exactly one taller-or-equal person is now
+             * standing before [6,1].
+             */
+            ordered.add(person[1], person);
+        }
+
+        /*
+         * STEP 4: Convert the List<int[]> to int[][].
+         *
+         * Our answer is currently stored as:
+         *
+         * List<int[]>
+         *
+         * But the method must return:
+         *
+         * int[][]
+         *
+         * people.length = total number of people
+         * 2 = height and k value
+         */
+        return ordered.toArray(new int[people.length][2]);
+    }
+}
