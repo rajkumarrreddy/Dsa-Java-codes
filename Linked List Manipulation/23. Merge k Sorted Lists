@@ -1,0 +1,237 @@
+import java.util.ArrayList;
+import java.util.List;
+
+class Solution {
+
+    public ListNode mergeKLists(ListNode[] lists) {
+
+        /*
+         * If the array itself is null or contains zero linked lists,
+         * there is nothing available to merge.
+         */
+        if (lists == null || lists.length == 0) {
+            return null;
+        }
+
+        /*
+         * Keep performing merging rounds until only one list remains.
+         *
+         * Example:
+         *
+         * 5 lists -> 3 lists -> 2 lists -> 1 final list
+         *
+         * When lists.length becomes 1, that one list is our answer.
+         */
+        while (lists.length > 1) {
+
+            /*
+             * temp stores the merged lists created during the current round.
+             *
+             * Example:
+             *
+             * lists = [L1, L2, L3, L4]
+             *
+             * After merging pairs:
+             *
+             * temp = [merge(L1,L2), merge(L3,L4)]
+             */
+            List<ListNode> temp = new ArrayList<>();
+
+            /*
+             * Move by 2 because we are selecting lists in pairs.
+             *
+             * i = 0 -> select lists[0] and lists[1]
+             * i = 2 -> select lists[2] and lists[3]
+             * i = 4 -> select lists[4] and lists[5]
+             */
+            for (int i = 0; i < lists.length; i += 2) {
+
+                /*
+                 * Take the first linked list of the current pair.
+                 */
+                ListNode l1 = lists[i];
+
+                /*
+                 * Check whether a second list exists.
+                 *
+                 * If i + 1 is a valid index:
+                 *     take lists[i + 1]
+                 *
+                 * Otherwise:
+                 *     use null
+                 *
+                 * We need this check when the number of lists is odd.
+                 *
+                 * Example:
+                 *
+                 * lists = [L1, L2, L3]
+                 *
+                 * First pair  = L1 and L2
+                 * Second pair = L3 and null
+                 */
+                ListNode l2;
+
+                if (i + 1 < lists.length) {
+                    l2 = lists[i + 1];
+                } else {
+                    l2 = null;
+                }
+
+                /*
+                 * Merge the selected two sorted lists.
+                 *
+                 * Then store the head of the merged list inside temp.
+                 *
+                 * Example:
+                 *
+                 * l1 = 1 -> 4 -> 5
+                 * l2 = 2 -> 3 -> 6
+                 *
+                 * merged = 1 -> 2 -> 3 -> 4 -> 5 -> 6
+                 *
+                 * That merged list is added to temp.
+                 */
+                ListNode mergedList = mergeLists(l1, l2);
+                temp.add(mergedList);
+            }
+
+            /*
+             * At this point, temp contains the merged results
+             * produced during this round.
+             *
+             * Example:
+             *
+             * Before:
+             * lists = [L1, L2, L3, L4]
+             *
+             * After merging:
+             * temp = [M1, M2]
+             *
+             * But temp is an ArrayList<ListNode>, while lists must
+             * be a ListNode[] array.
+             *
+             * Therefore, toArray converts temp into ListNode[].
+             *
+             * new ListNode[0] tells Java that the result must have
+             * the type ListNode[].
+             *
+             * After this line:
+             *
+             * lists = [M1, M2]
+             *
+             * These merged lists become the input for the next round.
+             */
+            lists = temp.toArray(new ListNode[0]);
+        }
+
+        /*
+         * The while loop stops when lists.length becomes 1.
+         *
+         * Therefore, lists[0] contains the final merged linked list.
+         */
+        return lists[0];
+    }
+
+    /*
+     * This helper method merges two sorted linked lists.
+     *
+     * Example:
+     *
+     * l1 = 1 -> 4 -> 5
+     * l2 = 2 -> 3 -> 6
+     *
+     * Result:
+     *
+     * 1 -> 2 -> 3 -> 4 -> 5 -> 6
+     */
+    private ListNode mergeLists(ListNode l1, ListNode l2) {
+
+        /*
+         * Create a temporary dummy node.
+         *
+         * Its value is not part of the final answer.
+         * It only makes it easier to build the merged list.
+         */
+        ListNode dummy = new ListNode(0);
+
+        /*
+         * current is the moving pointer.
+         *
+         * Initially, dummy and current point to the same node.
+         *
+         * dummy stays at the beginning.
+         * current moves forward as we attach nodes.
+         */
+        ListNode current = dummy;
+
+        /*
+         * Continue comparing while both lists have nodes.
+         */
+        while (l1 != null && l2 != null) {
+
+            /*
+             * Since both lists are sorted, the smaller current node
+             * must be the next node in the merged list.
+             */
+            if (l1.val <= l2.val) {
+
+                /*
+                 * l1's current node is smaller or equal,
+                 * so attach it after current.
+                 */
+                current.next = l1;
+
+                /*
+                 * Move l1 forward because its current node
+                 * has already been added.
+                 */
+                l1 = l1.next;
+
+            } else {
+
+                /*
+                 * l2's current node is smaller,
+                 * so attach it after current.
+                 */
+                current.next = l2;
+
+                /*
+                 * Move l2 forward because its current node
+                 * has already been added.
+                 */
+                l2 = l2.next;
+            }
+
+            /*
+             * Move current to the node we just attached.
+             *
+             * current must always point to the last node
+             * of the merged list.
+             */
+            current = current.next;
+        }
+
+        /*
+         * The loop stops when one list becomes null.
+         *
+         * If l1 still has nodes, attach l1.
+         * Otherwise, attach l2.
+         *
+         * The remaining nodes can be attached directly because
+         * they are already sorted.
+         */
+        if (l1 != null) {
+            current.next = l1;
+        } else {
+            current.next = l2;
+        }
+
+        /*
+         * dummy points to the fake starting node.
+         *
+         * dummy.next points to the actual first node
+         * of the merged list.
+         */
+        return dummy.next;
+    }
+}
