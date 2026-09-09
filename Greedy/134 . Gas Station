@@ -1,0 +1,49 @@
+class Solution {
+    public int canCompleteCircuit(int[] gas, int[] cost) {
+
+        // Fuel remaining while testing the current starting station
+        int gasInTank = 0;
+
+        // Current candidate from where we may complete the circle
+        int startInd = 0;
+
+        // Overall fuel available minus overall travel cost
+        int total = 0;
+
+        // Fuel gained or lost at the current station
+        int net = 0;
+
+        for (int i = 0; i < gas.length; i++) {
+
+            // After collecting gas at station i and travelling
+            // to the next station, how much fuel do we gain or lose?
+            net = gas[i] - cost[i];
+
+            // Add this gain/loss to the current journey's tank
+            gasInTank += net;
+
+            // Add it to the overall fuel balance
+            total += net;
+
+            // If the tank becomes negative, our current starting
+            // station cannot take us beyond station i
+            if (gasInTank < 0) {
+
+                // Therefore, try the next station as the new start
+                startInd = i + 1;
+
+                // Begin a fresh journey from the new starting station
+                gasInTank = 0;
+            }
+        }
+
+        // If total gas is less than total cost,
+        // completing the circle is impossible from every station
+        if (total < 0) {
+            return -1;
+        }
+
+        // Otherwise, the final candidate is the valid starting station
+        return startInd;
+    }
+}
