@@ -1,0 +1,100 @@
+class Solution {
+
+    public ListNode swapPairs(ListNode head) {
+
+        // Create a dummy node before the original head.
+        //
+        // Example:
+        // dummy -> 1 -> 2 -> 3 -> 4
+        //
+        // Dummy helps us handle the first pair because,
+        // after swapping 1 and 2, node 2 becomes the new head.
+        ListNode dummy = new ListNode(0, head);
+
+        // prev points to the node immediately before the pair
+        // that we are currently going to swap.
+        //
+        // cur points to the first node of the current pair.
+        //
+        // Initially:
+        // dummy -> 1 -> 2 -> 3 -> 4
+        //   ↑      ↑
+        //  prev   cur
+        ListNode prev = dummy;
+        ListNode cur = head;
+
+        // We can swap only when two nodes are available.
+        //
+        // cur != null means the first node exists.
+        // cur.next != null means the second node exists.
+        while (cur != null && cur.next != null) {
+
+            // Save the node immediately after the current pair.
+            //
+            // Example:
+            // prev -> 1 -> 2 -> 3 -> 4
+            //         ↑    ↑    ↑
+            //        cur second npn
+            //
+            // We save node 3 before changing any connections,
+            // so that we do not lose the remaining linked list.
+            ListNode npn = cur.next.next;
+
+            // Save the second node of the current pair.
+            //
+            // If cur is node 1, then second is node 2.
+            ListNode second = cur.next;
+
+            // Make the second node point to the first node.
+            //
+            // Before:
+            // 1 -> 2
+            //
+            // After:
+            // 2 -> 1
+            second.next = cur;
+
+            // Connect the first node of the old pair to the
+            // remaining part of the linked list.
+            //
+            // If cur is 1 and npn is 3:
+            // 1 -> 3
+            //
+            // Now the pair and remaining list look like:
+            // 2 -> 1 -> 3 -> 4
+            cur.next = npn;
+
+            // Connect the node before the pair to the new
+            // first node of the swapped pair.
+            //
+            // Before:
+            // prev -> 1 -> 2
+            //
+            // After:
+            // prev -> 2 -> 1
+            prev.next = second;
+
+            // cur is now the last node of the swapped pair.
+            //
+            // Example after the first swap:
+            // dummy -> 2 -> 1 -> 3 -> 4
+            //
+            // Node 1 must become prev because it is immediately
+            // before the next pair, 3 and 4.
+            prev = cur;
+
+            // Move cur to the first node of the next pair.
+            //
+            // Here, npn is node 3, so cur becomes node 3.
+            cur = npn;
+        }
+
+        // Dummy is only a helper node.
+        //
+        // If the final list is:
+        // dummy -> 2 -> 1 -> 4 -> 3
+        //
+        // dummy.next is node 2, which is the actual head.
+        return dummy.next;
+    }
+}
