@@ -1,0 +1,123 @@
+class Solution {
+
+    public ListNode reverseKGroup(ListNode head, int k) {
+
+        // If no nodes are left, there is nothing to process.
+        if (head == null) {
+            return null;
+        }
+
+        /*
+         * 'head' is the first node of the current group.
+         *
+         * We will move 'tail' k positions ahead.
+         * After that, tail will point to the node immediately
+         * after the current group.
+         */
+        ListNode tail = head;
+
+        /*
+         * Check whether the current portion contains at least k nodes.
+         *
+         * Example:
+         * 1 -> 2 -> 3 -> 4, k = 3
+         *
+         * head points to 1.
+         * After 3 movements, tail points to 4.
+         *
+         * Therefore, the current group is:
+         * 1 -> 2 -> 3
+         */
+        for (int i = 0; i < k; i++) {
+
+            /*
+             * If tail becomes null before completing k movements,
+             * fewer than k nodes remain.
+             *
+             * The incomplete group must remain unchanged,
+             * so return its original head.
+             */
+            if (tail == null) {
+                return head;
+            }
+
+            tail = tail.next;
+        }
+
+        /*
+         * Reverse the current complete group.
+         *
+         * reverse(head, tail) reverses nodes from head
+         * up to, but not including, tail.
+         *
+         * Example:
+         * head = 1 and tail = 4
+         *
+         * 1 -> 2 -> 3 becomes 3 -> 2 -> 1
+         *
+         * newHead will point to 3.
+         */
+        ListNode newHead = reverse(head, tail);
+
+        /*
+         * After reversing the group, the original head becomes
+         * the last node of that group.
+         *
+         * Example:
+         * Before: head points to 1 in 1 -> 2 -> 3
+         * After:  3 -> 2 -> 1
+         *
+         * The original head still points to node 1,
+         * but node 1 is now the last node.
+         *
+         * Process the remaining list starting from tail,
+         * and connect its returned head after node 1.
+         */
+        head.next = reverseKGroup(tail, k);
+
+        // Return the first node of the reversed current group.
+        return newHead;
+    }
+
+    /*
+     * Reverses nodes from 'cur' up to, but not including, 'end'.
+     *
+     * Example:
+     * cur points to 1 and end points to 4:
+     *
+     * 1 -> 2 -> 3 -> 4
+     *
+     * Only 1, 2, and 3 are reversed.
+     * Node 4 is not included.
+     */
+    private ListNode reverse(ListNode cur, ListNode end) {
+
+        // 'prev' represents the previous node in the reversed list.
+        ListNode prev = null;
+
+        // Stop when cur reaches the exclusive boundary 'end'.
+        while (cur != end) {
+
+            /*
+             * Save the next node before changing cur.next.
+             * Otherwise, access to the remaining nodes would be lost.
+             */
+            ListNode next = cur.next;
+
+            // Reverse the current node's pointer.
+            cur.next = prev;
+
+            // Move prev to the current node.
+            prev = cur;
+
+            // Move cur to the saved next node.
+            cur = next;
+        }
+
+        /*
+         * prev points to the new first node
+         * of the reversed group.
+         */
+        return prev;
+    }
+}
