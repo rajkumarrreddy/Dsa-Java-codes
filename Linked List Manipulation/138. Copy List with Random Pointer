@@ -1,0 +1,133 @@
+/*
+ // Definition for a Node.
+ class Node {
+     int val;
+     Node next;
+     Node random;
+
+     public Node(int val) {
+         this.val = val;
+         this.next = null;
+         this.random = null;
+     }
+ }
+*/
+
+class Solution {
+
+    public Node copyRandomList(Node head) {
+
+        // Edge Case:
+        // Empty list => nothing to copy
+        if (head == null) {
+            return null;
+        }
+
+        /*
+            HashMap stores:
+
+            Original Node  ->  Copied Node
+
+            Example:
+
+            A -> A'
+            B -> B'
+            C -> C'
+
+            This allows us to instantly find the copied
+            version of any original node.
+        */
+        HashMap<Node, Node> oldToNew = new HashMap<>();
+
+
+        // ==================================================
+        // PASS 1: Create copy of every node
+        // ==================================================
+
+        Node curr = head;
+
+        while (curr != null) {
+
+            /*
+                Create a completely new node
+                having the same value.
+
+                Original:
+                A(7)
+
+                Copy:
+                A'(7)
+
+                next   = null
+                random = null for now
+            */
+            oldToNew.put(curr, new Node(curr.val));
+
+            curr = curr.next;
+        }
+
+
+        // ==================================================
+        // PASS 2: Connect next and random pointers
+        // ==================================================
+
+        curr = head;
+
+        while (curr != null) {
+
+            /*
+                Get copied version of current node.
+
+                Example:
+
+                curr = B
+
+                copy = B'
+            */
+            Node copy = oldToNew.get(curr);
+
+
+            /*
+                Connect NEXT pointer.
+
+                Original:
+                B -> C
+
+                We want:
+                B' -> C'
+
+                oldToNew.get(curr.next)
+                gives copied version of C
+            */
+            copy.next = oldToNew.get(curr.next);
+
+
+            /*
+                Connect RANDOM pointer.
+
+                Original:
+                B.random = A
+
+                We want:
+                B'.random = A'
+
+                oldToNew.get(curr.random)
+                gives copied version of A
+            */
+            copy.random = oldToNew.get(curr.random);
+
+
+            curr = curr.next;
+        }
+
+
+        /*
+            head = A
+
+            Return copied version:
+
+            A'
+        */
+        return oldToNew.get(head);
+    }
+}
