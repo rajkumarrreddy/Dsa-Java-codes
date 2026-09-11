@@ -1,0 +1,83 @@
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode() {}
+ *     TreeNode(int val) { this.val = val; }
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+
+class Solution {
+
+    // Stores the maximum diameter found anywhere in the tree.
+    // Diameter = number of edges in the longest path.
+    int res = 0;
+
+    public int diameterOfBinaryTree(TreeNode root) {
+
+        // Start DFS from root.
+        dfs(root);
+
+        // After visiting all nodes,
+        // res contains the maximum diameter.
+        return res;
+    }
+
+    private int dfs(TreeNode root) {
+
+        // Base Case:
+        // Height of an empty subtree is 0.
+        if (root == null) {
+            return 0;
+        }
+
+        // Ask left child:
+        // "What is the height of your subtree?"
+        int l = dfs(root.left);
+
+        // Ask right child:
+        // "What is the height of your subtree?"
+        int r = dfs(root.right);
+
+        /*
+         * At this point:
+         *
+         * l = left subtree height
+         * r = right subtree height
+         *
+         * Any path passing through current node
+         * can go:
+         *
+         * left subtree -> current node -> right subtree
+         *
+         * Number of edges in that path = l + r
+         */
+        int currentDiameter = l + r;
+
+        // Update global answer if current node creates
+        // a larger diameter.
+        res = Math.max(res, currentDiameter);
+
+        /*
+         * Important:
+         *
+         * dfs() returns HEIGHT, not diameter.
+         *
+         * Parent only needs to know:
+         * "How tall is my subtree?"
+         *
+         * Height =
+         * 1 (current node)
+         * +
+         * max(left height, right height)
+         */
+        return 1 + Math.max(l, r);
+    }
+}
