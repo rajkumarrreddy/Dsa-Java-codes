@@ -1,0 +1,109 @@
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *
+ *     TreeNode() {}
+ *
+ *     TreeNode(int val) {
+ *         this.val = val;
+ *     }
+ *
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+
+class Solution {
+
+    public boolean hasPathSum(TreeNode root, int targetSum) {
+
+        // =============================
+        // BASE CASE #1
+        // =============================
+        // If we fall outside the tree,
+        // there is no path here.
+        //
+        // Example:
+        //      5
+        //     /
+        //   null
+        //
+        // Since no node exists,
+        // we cannot complete the target.
+        if (root == null) {
+            return false;
+        }
+
+        // =============================
+        // USE CURRENT NODE'S VALUE
+        // =============================
+        // Suppose target = 22
+        // Current node = 5
+        //
+        // After using node 5,
+        // we still need:
+        //
+        // 22 - 5 = 17
+        //
+        // We pass this remaining work
+        // to our children.
+        targetSum = targetSum - root.val;
+
+        // =============================
+        // LEAF NODE CHECK
+        // =============================
+        // A valid path MUST end at a leaf.
+        //
+        // Leaf means:
+        // no left child
+        // no right child
+        if (root.left == null && root.right == null) {
+
+            // If remaining target becomes 0,
+            // it means the entire path
+            // exactly matched the target.
+            //
+            // Example:
+            // Need = 2
+            // Current node = 2
+            //
+            // Remaining becomes:
+            // 2 - 2 = 0
+            //
+            // Success ✅
+            return targetSum == 0;
+        }
+
+        // =============================
+        // ASK LEFT SUBTREE
+        // =============================
+        // "I already contributed my value.
+        // Can you complete the remaining sum?"
+        boolean leftAnswer =
+                hasPathSum(root.left, targetSum);
+
+        // =============================
+        // ASK RIGHT SUBTREE
+        // =============================
+        // Same question for right subtree.
+        boolean rightAnswer =
+                hasPathSum(root.right, targetSum);
+
+        // =============================
+        // FINAL DECISION
+        // =============================
+        // If either side found a valid path,
+        // answer is true.
+        //
+        // true  || false -> true
+        // false || true  -> true
+        // false || false -> false
+        return leftAnswer || rightAnswer;
+    }
+}
