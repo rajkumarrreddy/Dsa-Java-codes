@@ -1,0 +1,168 @@
+class Solution {
+
+    // This will store ALL valid paths.
+    // Example:
+    // [
+    //   [5,4,11,2],
+    //   [5,8,4,5]
+    // ]
+    List<List<Integer>> result = new ArrayList<>();
+
+    public List<List<Integer>> pathSum(TreeNode root, int targetSum) {
+
+        // Start DFS from root.
+        //
+        // targetSum = Remaining target to achieve
+        // currentPath = Path we've walked so far
+        dfs(root, targetSum, 0, result, new ArrayList<>());
+
+        return result;
+    }
+
+    private void dfs(TreeNode root,
+                     int targetSum,
+                     int curSum,
+                     List<List<Integer>> output,
+                     List<Integer> currentPath) {
+
+        // ==========================================
+        // BASE CASE
+        // ==========================================
+        // If we fall outside the tree,
+        // stop exploring.
+        //
+        // Example:
+        //
+        //      5
+        //     /
+        //   null
+        //
+        // Nothing exists here.
+        if (root == null)
+            return;
+
+
+        // ==========================================
+        // INCLUDE CURRENT NODE IN SUM
+        // ==========================================
+        //
+        // Suppose current sum = 20
+        //
+        // Current node = 2
+        //
+        // New sum:
+        //
+        // 20 + 2 = 22
+        //
+        curSum += root.val;
+
+
+        // ==========================================
+        // INCLUDE CURRENT NODE IN PATH
+        // ==========================================
+        //
+        // Example:
+        //
+        // Before:
+        // [5,4,11]
+        //
+        // Current node:
+        // 2
+        //
+        // After:
+        // [5,4,11,2]
+        //
+        currentPath.add(root.val);
+
+
+        // ==========================================
+        // LEAF NODE CHECK
+        // ==========================================
+        //
+        // Path Sum requires:
+        //
+        // ROOT -> LEAF path
+        //
+        // So first verify we're at a leaf.
+        //
+        if (root.left == null &&
+            root.right == null &&
+            curSum == targetSum) {
+
+            // ======================================
+            // VALID PATH FOUND
+            // ======================================
+            //
+            // Current path:
+            // [5,4,11,2]
+            //
+            // Save it into result.
+            //
+            // IMPORTANT:
+            //
+            // We MUST make a COPY.
+            //
+            // Wrong:
+            // output.add(currentPath);
+            //
+            // Because currentPath keeps changing
+            // during backtracking.
+            //
+            // Correct:
+            // Store a snapshot (copy).
+            //
+            output.add(new ArrayList<>(currentPath));
+        }
+
+
+        // ==========================================
+        // EXPLORE LEFT SUBTREE
+        // ==========================================
+        //
+        // Continue building path.
+        //
+        dfs(root.left,
+            targetSum,
+            curSum,
+            output,
+            currentPath);
+
+
+        // ==========================================
+        // EXPLORE RIGHT SUBTREE
+        // ==========================================
+        //
+        dfs(root.right,
+            targetSum,
+            curSum,
+            output,
+            currentPath);
+
+
+        // ==========================================
+        // BACKTRACK
+        // ==========================================
+        //
+        // We are leaving this node.
+        //
+        // Remove it from current path.
+        //
+        // Example:
+        //
+        // Before:
+        // [5,4,11,2]
+        //
+        // Remove 2
+        //
+        // After:
+        // [5,4,11]
+        //
+        // Why?
+        //
+        // Because when we return to parent,
+        // node 2 is no longer part of the path.
+        //
+        currentPath.remove(currentPath.size() - 1);
+    }
+}
+`
