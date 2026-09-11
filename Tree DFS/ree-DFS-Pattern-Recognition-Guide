@@ -1,0 +1,884 @@
+# 🌳 Tree DFS Pattern Recognition Guide
+
+## The Most Important Rule
+
+Before writing code for any Tree DFS problem, answer these questions:
+
+```text
+1. What does dfs(node) return to its parent?
+2. What information does the current node need from its children?
+3. What does the current node calculate?
+4. Do I need a global variable?
+```
+
+---
+
+# 1. Generic Tree DFS Template
+
+```java
+private ReturnType dfs(TreeNode root) {
+
+    // Base case:
+    // Decide what an empty tree should return.
+    if (root == null) {
+        return baseValue;
+    }
+
+    // Ask the left child for information.
+    ReturnType left = dfs(root.left);
+
+    // Ask the right child for information.
+    ReturnType right = dfs(root.right);
+
+    // Use the information returned by the children.
+
+    // Return the current subtree's information to the parent.
+    return something;
+}
+```
+
+## Mental Model
+
+```text
+dfs(root.left)  = Ask the left child a question.
+dfs(root.right) = Ask the right child a question.
+
+left  = Answer returned by the left child.
+right = Answer returned by the right child.
+```
+
+The meanings of `left` and `right` depend entirely on what `dfs()` returns.
+
+---
+
+# 2. DFS Returning Height
+
+## Question Asked to Every Node
+
+```text
+What is the height of your subtree?
+```
+
+## Meaning of Recursive Results
+
+```text
+left  = Height of the left subtree
+right = Height of the right subtree
+```
+
+## Formula
+
+```text
+Current height = 1 + maximum left or right height
+```
+
+## Code
+
+```java
+private int dfs(TreeNode root) {
+
+    // An empty tree has a height of 0.
+    if (root == null) {
+        return 0;
+    }
+
+    // Get the height of the left subtree.
+    int leftHeight = dfs(root.left);
+
+    // Get the height of the right subtree.
+    int rightHeight = dfs(root.right);
+
+    // Include the current node and choose the taller side.
+    return 1 + Math.max(leftHeight, rightHeight);
+}
+```
+
+## Used In
+
+- Maximum Depth of Binary Tree
+- Height of a Binary Tree
+- Diameter of Binary Tree
+- Balanced Binary Tree
+
+---
+
+# 3. DFS Returning Node Count
+
+## Question Asked to Every Node
+
+```text
+How many nodes are present in your subtree?
+```
+
+## Meaning of Recursive Results
+
+```text
+left  = Number of nodes in the left subtree
+right = Number of nodes in the right subtree
+```
+
+## Formula
+
+```text
+Current subtree count = 1 + left count + right count
+```
+
+## Code
+
+```java
+private int dfs(TreeNode root) {
+
+    // An empty tree contains 0 nodes.
+    if (root == null) {
+        return 0;
+    }
+
+    // Count the nodes in the left subtree.
+    int leftCount = dfs(root.left);
+
+    // Count the nodes in the right subtree.
+    int rightCount = dfs(root.right);
+
+    // Add left nodes, right nodes, and the current node.
+    return 1 + leftCount + rightCount;
+}
+```
+
+## Used In
+
+- Count Nodes in a Binary Tree
+- Tree Size
+- Count Complete Tree Nodes
+
+---
+
+# 4. DFS Returning Subtree Sum
+
+## Question Asked to Every Node
+
+```text
+What is the sum of all node values in your subtree?
+```
+
+## Meaning of Recursive Results
+
+```text
+left  = Sum of the left subtree
+right = Sum of the right subtree
+```
+
+## Formula
+
+```text
+Current subtree sum = current value + left sum + right sum
+```
+
+## Code
+
+```java
+private int dfs(TreeNode root) {
+
+    // An empty tree contributes 0 to the sum.
+    if (root == null) {
+        return 0;
+    }
+
+    // Calculate the sum of the left subtree.
+    int leftSum = dfs(root.left);
+
+    // Calculate the sum of the right subtree.
+    int rightSum = dfs(root.right);
+
+    // Add the current node value to both subtree sums.
+    return root.val + leftSum + rightSum;
+}
+```
+
+## Used In
+
+- Binary Tree Sum
+- Subtree Sum
+- Most Frequent Subtree Sum
+
+---
+
+# 5. DFS Returning Boolean
+
+## Question Asked to Every Node
+
+```text
+Does your subtree satisfy the required condition?
+```
+
+## Meaning of Recursive Results
+
+```text
+left  = Does the left subtree satisfy the condition?
+right = Does the right subtree satisfy the condition?
+```
+
+## General Code
+
+```java
+private boolean dfs(TreeNode root) {
+
+    // An empty subtree is normally considered valid.
+    if (root == null) {
+        return true;
+    }
+
+    // Check the left subtree.
+    boolean leftValid = dfs(root.left);
+
+    // Check the right subtree.
+    boolean rightValid = dfs(root.right);
+
+    // The current subtree is valid only when both sides are valid.
+    return leftValid && rightValid;
+}
+```
+
+## Important Note
+
+The exact condition differs between problems. For example:
+
+```text
+Same Tree      -> Compare both nodes and their subtrees.
+Symmetric Tree -> Compare the left side with the mirrored right side.
+Validate BST   -> Check whether values are inside an allowed range.
+Path Sum       -> Check whether a root-to-leaf path reaches the target.
+```
+
+---
+
+# 6. Return Height and Update a Global Answer
+
+This is the pattern used in **Diameter of Binary Tree**.
+
+The recursive function and the global variable have two different jobs:
+
+```text
+dfs() returns height to the parent.
+
+diameter stores the best diameter found anywhere in the tree.
+```
+
+## Why Two Values Are Needed
+
+The parent needs the child's height so that the parent can continue building a path upward.
+
+However, the complete diameter might pass through any node in the tree. Therefore, every node checks whether it creates a better diameter and updates the global answer.
+
+## Complete Code
+
+```java
+/**
+ * Definition for a binary tree node.
+ *
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *
+ *     TreeNode() {}
+ *
+ *     TreeNode(int val) {
+ *         this.val = val;
+ *     }
+ *
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+
+class Solution {
+
+    /*
+     * Stores the maximum diameter found anywhere in the tree.
+     *
+     * Diameter is measured using the number of edges
+     * in the longest path between any two nodes.
+     */
+    private int diameter = 0;
+
+    public int diameterOfBinaryTree(TreeNode root) {
+
+        /*
+         * Start DFS from the root.
+         *
+         * dfs() calculates heights and updates diameter
+         * while returning from the recursive calls.
+         */
+        dfs(root);
+
+        // R*turn the maximum diameter found.
+ *      return diameter;
+    }
+
+    private int dfs(TreeNode root) {
+
+        /*
+         * Base case:
+         *
+         * An empty subtree has a height of 0.
+         */
+        if (root == null) {
+    *       return 0;
+        }
+
+        /*
+         * Ask the left child:
+         * "What is the height of your subtree?"
+         */
+        int leftHeight = dfs(root.left);
+
+        /*
+         * Ask the right child:
+         * "What is the height of your subtree?"
+         */
+        int rightHeight = dfs(root.right);
+
+        /*
+         * A path passing through the current node can travel:
+         *
+         * deepest node on the left
+         *          ->
+         * current node
+         *          ->
+         * deepest node on the right
+         *
+         * Therefore:
+         *
+         * diameter through current node =
+         * left height + right height
+         */
+        int*currentDiameter = leftHeight + rightHeight;
+
+        /*
+         * Compare the diameter passing through the current node
+         * with the best diameter found previously.
+         */
+        diameter = Math.max(diameter, currentDiameter);
+
+        /*
+         * Return HEIGHT to the parent, not diameter.
+         *
+         * The parent can extend only one branch:
+         * either the left branch or the right branch.
+         *
+         * Therefore:
+         *
+         * current height =
+         * 1 for current node
+         * +
+         * maximum height of the two children
+         */
+        return 1 + Math.max(left*eight, rightHeight);
+    }
+}
+```
+
+*# Diameter Mental Model
+
+```text
+l*ftHeight  = Height returned by the*left child
+rightHeight = Height re*urned by the right child
+
+leftHeig*t + rightHeight
+    = Complete pat* passing through the current node
+*1 + Math.max(leftHeight, rightHeig*t)
+    = Height that can be extend*d toward the parent
+```
+
+## Most I*portant Difference
+
+```java
+diamet*r = Math.max(diameter, leftHeight * rightHeight);
+```
+
+This records a***complete path** that uses both s*des.
+
+```java
+return 1 + Math.max(*eftHeight, rightHeight);
+```
+
+This*returns an **extendable path** tha* uses only one side.
+
+A path going*to the parent cannot use both chil*ren because that would create a br*nching path rather than one contin*ous path.
+
+---
+
+# 7. Return Gain a*d Update a Global Answer
+
+This pat*ern is used in **Binary Tree Maxim*m Path Sum**.
+
+## Two Different Jo*s
+
+```text
+Return value = Best pat* that the parent can extend
+
+Globa* answer = Best complete path found*anywhere
+```
+
+## Code
+
+```java
+cla*s Solution {
+
+    // Node values c*n be negative, so start with the s*allest integer.
+    private int ma*PathSum = Integer.MIN_VALUE;
+
+    *ublic int maxPathSum(TreeNode root* {
+
+        // Calculate extendabl* gains and update the complete ans*er.
+        dfs(root);
+
+        re*urn maxPathSum;
+    }
+
+    private*int dfs(TreeNode root) {
+
+        */ An empty subtree contributes no *ain.
+        if (root == null) {
+ *          return 0;
+        }
+
+   *    /*
+         * Ignore a negativ* path because adding it would
+    *    * reduce the total path sum.
+ *       */
+        int leftGain = M*th.max(0, dfs(root.left));
+       *int rightGain = Math.max(0, dfs(ro*t.right));
+
+        /*
+         * * complete path through the current*node can use:
+         *
+         * left gain + current value + right*gain
+         */
+        int compl*tePath =
+                leftGain * root.val + rightGain;
+
+        //*Update the best complete path foun* anywhere.
+        maxPathSum = Ma*h.max(maxPathSum, completePath);
+
+*       /*
+         * Return an ext*ndable path to the parent.
+       * *
+         * The parent can conti*ue only one side,
+         * so ch*ose the better child.
+         */
+*       return root.val + Math.max(*eftGain, rightGain);
+    }
+}
+```
+
+*# Mental Model
+
+```text
+Global ans*er may use both children.
+
+Return *alue may use only one child.
+```
+
+*--
+
+# 8. Build the Answer During T*aversal
+
+Sometimes a parent does n*t need any calculated value from i*s children.
+
+In such cases, DFS ca* return `void` and directly build *he final answer.
+
+## Preorder Trav*rsal
+
+```java
+private void dfs(Tre*Node root, List<Integer> result) {*
+    // Stop when an empty child i* reached.
+    if (root == null) {
+*       return;
+    }
+
+    // Proce*s the current node first.
+    resu*t.add(root.val);
+
+    // Visit the*left subtree.
+    dfs(root.left, r*sult);
+
+    // Visit the right sub*ree.
+    dfs(root.right, result);
+*
+```
+
+## Inorder Traversal
+
+```jav*
+private void dfs(TreeNode root, L*st<Integer> result) {
+
+    if (roo* == null) {
+        return;
+    }
+*    // Visit left first.
+    dfs(r*ot.left, result);
+
+    // Process *he current node.
+    result.add(ro*t.val);
+
+    // Visit right.
+    d*s(root.right, result);
+}
+```
+
+## P*storder Traversal
+
+```java
+private*void dfs(TreeNode root, List<Integ*r> result) {
+
+    if (root == null* {
+        return;
+    }
+
+    // V*sit both children first.
+    dfs(r*ot.left, result);
+    dfs(root.rig*t, result);
+
+    // Process the cu*rent node last.
+    result.add(roo*.val);
+}
+```
+
+## Traversal Order S*ortcut
+
+```text
+Preorder  = Node, *eft, Right
+Inorder   = Left, Node,*Right
+Postorder = Left, Right, Nod*
+```
+
+---
+
+# 9. DFS With a Path Pa*ameter
+
+Some problems require info*mation about the path from the roo* to the current node.
+
+Instead of *eturning all information upward, p*ss the current state downward.
+
+##*Path Sum Example
+
+```java
+private *oolean dfs(
+        TreeNode root,*        int remainingSum
+) {
+
+    */ An empty node cannot complete th* required path.
+    if (root == nu*l) {
+        return false;
+   *}
+
+    /*
+*   ** Sub*ract the current node's value.
+   * *
+    ** The remaining sum tells the chil*ren
+     **how much is still required.
+     **
+    remaining*um -= root.val;
+
+    /*
+     **At a leaf node, the path is valid *hen
+     **nothing*remains*to be collected*
+     */
+    if*(root.left == null*&& root.right == null) {
+        r*turn*remainingSum == 0;
+    }
+
+    /*
+ *   **A*valid path may exist on either sid*.
+     */
+   *return dfs(root.left, remainingSum*
+            || dfs(root.right, re*ainingSum);
+}
+```
+
+*# Mental Model
+
+```text
+Informatio* going downward:
+remaining target*sum
+
+*nswer coming upward:
+true*or false
+```
+
+*--
+
+# *0. DFS Returning Multiple Values
+
+*ometimes one return value is not e*ough.
+
+A node*may need to return several related*pieces of information to its paren*.
+
+## Pair Class
+
+```java
+class Pa*r {
+
+    int height;
+    boolean b*lanced;
+
+    Pair*int height, boolean balanced) {
+  *     this.height = height;
+       *this*balanced = balanced;
+    }
+}
+```
+
+*# Example DFS
+
+```java*private Pair dfs(TreeNode root)*{
+
+    /*
+*    * An*empty tree:
+     *
+*    * height = 0*     * balanced = true
+    **/
+    if (root == null) {
+       *return*new Pair(0, true);
+    }
+
+    //*Get both*height and balanced status from th* left side.
+   *Pair left = dfs(root.left);
+
+    /* Get both height and balanced stat*s from the right*side.
+    Pair right = dfs(root.ri*ht);
+
+    //*Calculate the current node's heigh*.
+    int currentHeight =
+*           1 +*Math.max(left.height,*right.height);
+
+    /*
+     **Current subtree is balanced when:
+*    *
+     * 1. Left subtree is ba*anced.
+     * 2.*Right subtree is balanced.
+     * *.*Height difference is no more than *.
+     */
+    boolean currentBalan*ed =
+            left.balanced
+   *        && right.balanced
+        *   &&*Math.abs(left.height - right.heigh*) <= 1;
+
+    //*Return both results to*the parent.
+    return new Pair(cu*rentHeight, currentBalanced);
+}
+``*
+
+---
+
+# Tree DFS Pattern Recognit*on Checklist
+
+Before writing*code, fill in these blanks:
+
+```te*t
+Problem:
+
+dfs(node* returns:
+________________________*___________
+
+*eft means:
+_______________________*____________
+
+right*means:
+___________________________*________
+
+Information going downwa*d:
+_______________________________*____
+
+What current node calculates*
+_________________________________*__
+
+Global variable required:
+Yes * No
+
+Global variable stores:
+_____*______________________________
+
+*ase case returns:
+________________*___________________
+
+Final return *tatement:
+________________________*___________
+*``
+
+---
+
+# Quick Pattern Table
+
+``*text*Problem Type*            dfs() Returns         *    Extra Result
+-----------------*----------------------------------*----------------------
+Maximum*Depth           *Height                     None
+Co*nt Nodes*             Node count           *     None
+Subtree Sum             *Sum                        None
+Pa*h Sum                *Boolean*                   Remaining targe*
+Diameter                 *Height                     Global *iameter
+Maximum Path Sum        *Extendable gain            Global*maximum path*Traversal                Nothing  *                 Result list
+Balan*ed Tree*           Height or*Pair             Valid*ty*information
+Binary Tree*Paths       *Nothing                   *Current path and result
+``*
+
+*--
+
+* How to Approach a New Tree DFS Pr*blem
+
+## Step*1: Stand*on One Node
+
+Do*not*think about the entire*tree.
+
+Imagine*standing on*one node and ask*
+
+```text*What information do I need from my*children?
+```
+
+---
+
+## Step*2: Decide What DFS*Returns
+
+Examples*
+
+```text
+*eed subtree height?*      dfs returns*height.
+Need subtree*sum*          dfs returns sum.
+Need su*tree node count?   dfs returns cou*t.
+Need validity*             dfs returns boolean.
+*eed several values?       dfs retu*ns a Pair or object.
+```
+
+*--
+
+## Step *: Give*Meaning to Recursive*Calls
+
+Never*write*vague variables without understand*ng them.
+
+Instead of only writing:*
+```java
+int l = dfs(root.left);
+i*t r = dfs(root.right);
+```
+
+*ay:
+
+```java*int leftHeight = dfs*root.left);
+int rightHeight = dfs(*oot.right);
+```
+
+*he variable*names should explain what DFS*returns.
+
+---
+
+*# Step 4: Calculate*the Current Node's Answer
+
+Use the*children's*answers.
+
+Examples:
+
+```java*// Height
+int*height =*1 + Math.max(leftHeight, rightHeig*t);
+
+// Count
+int count*= 1 + leftCount + rightCount;
+
+// *um
+int*sum = root.val + leftSum + rightSu*;
+
+// Diameter through current nod*
+int diameter = leftHeight + right*eight;
+```
+
+---
+
+*# Step 5: Decide*What Goes*Upward
+
+Ask:
+
+```text*What information*does my parent need from*me?
+```
+
+*hat information becomes the return*statement.
+
+For diameter:
+
+```java*return 1 + Math.max(leftHeight, ri*htHeight);
+``*
+
+The parent needs height, not the*completed diameter.
+
+---
+
+* Golden Rules
+
+```text
+Rule 1:
+The*meaning*of left and right depends on what *fs() returns.
+
+Rule 2:
+The return*value*gives information to*the parent.
+
+Rule 3:
+A global*variable remembers an*answer that may occur anywhere.
+
+R*le 4:
+A complete path can use both*children.
+
+Rule*5:
+A path*returned to*the*parent usually uses only one child*
+
+Rule 6:
+Do not*memorize code. Define the*meaning*of dfs() first.
+
+Rule 7:
+If*you cannot*complete the sentence*below,*do not start coding:
+
+"dfs*node) returns __________________ t* its parent."
+```
+
+*--
+
+# Final Diameter Summary
+
+```t*xt
+dfs(node) returns:
+Height*of*the subtree rooted at node
+
+leftHe*ght:
+Height of*the left*subtree
+
+rightHeight:
+Height of th* right subtree
+
+diameter*through current node:
+leftHeight +*rightHeight
+
+global diameter:
+Maxi*um diameter found anywhere
+
+return*statement:
+1 +*maximum of left and*right heights*```
+
+*``*ava
+int leftHeight = dfs(root.left*;
+int rightHeight = dfs(root.right*;
+
+diam*ter = Math.max(
+        diameter,
+*       leftHeight + rightHeight
+);*
+return * + Math*max(
+        leftHeight,
+        r*ghtHeight
+);
+```
+
+*# One-Line Memory Trick*
+```text*Return height upward, but*save diameter globally.
+```
+*`*
