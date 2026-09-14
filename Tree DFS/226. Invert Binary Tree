@@ -1,0 +1,98 @@
+/**
+ * Definition for a binary tree node.
+ *
+ * Each TreeNode contains:
+ * 1. val   -> value stored in the node
+ * 2. left  -> reference to the left child
+ * 3. right -> reference to the right child
+ */
+class TreeNode {
+
+    int val;
+    TreeNode left;
+    TreeNode right;
+
+    TreeNode() {
+    }
+
+    TreeNode(int val) {
+        this.val = val;
+    }
+
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class Solution {
+
+    public TreeNode invertTree(TreeNode root) {
+
+        /*
+         * Start DFS from the root.
+         *
+         * The dfs() method visits every node and swaps
+         * that node's left and right children.
+         */
+        dfs(root);
+
+        /*
+         * We do not create a new tree.
+         *
+         * The original tree itself is modified,
+         * so we return the same root reference.
+         */
+        return root;
+    }
+
+    private void dfs(TreeNode root) {
+
+        /*
+         * BASE CASE:
+         *
+         * If root is null, there is no node to invert.
+         *
+         * This also stops the recursion when we move
+         * beyond a leaf node.
+         */
+        if (root == null) {
+            return;
+        }
+
+        /*
+         * SWAP THE LEFT AND RIGHT CHILDREN
+         *
+         * We cannot directly write:
+         *
+         * root.left = root.right;
+         * root.right = root.left;
+         *
+         * because after the first statement, the original
+         * left child reference would be lost.
+         *
+         * Therefore, we temporarily save the original
+         * left child.
+         */
+        TreeNode temp = root.left;
+
+        // Move the original right subtree to the left side.
+        root.left = root.right;
+
+        // Move the original left subtree from temp to the right side.
+        root.right = temp;
+
+        /*
+         * After swapping, invert the subtree that is
+         * currently on the left side.
+         */
+        dfs(root.left);
+
+        /*
+         * After swapping, invert the subtree that is
+         * currently on the right side.
+         */
+        dfs(root.right);
+    }
+}
