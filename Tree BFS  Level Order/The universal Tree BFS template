@@ -1,0 +1,42 @@
+class Solution {
+
+    public ReturnType bfs(TreeNode root) {
+
+        // Handle empty tree.
+        if (root == null) {
+            // Return suitable empty/default answer.
+        }
+
+        Queue<TreeNode> queue = new ArrayDeque<>();
+        queue.offer(root);
+
+        while (!queue.isEmpty()) {
+
+            // Number of nodes in the CURRENT level.
+            int levelSize = queue.size();
+
+            // Variables required for this level.
+            // Examples: sum, max, list, last value.
+
+            for (int i = 0; i < levelSize; i++) {
+
+                TreeNode node = queue.poll();
+
+                // 1. Use the current node.
+
+                // 2. Add children for the next level.
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+
+            // Finish calculation for this level.
+        }
+
+        // Return answer.
+    }
+}
