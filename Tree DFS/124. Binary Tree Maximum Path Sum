@@ -1,0 +1,179 @@
+/**
+ * Definition for a binary tree node.
+ */
+class TreeNode {
+
+    int val;
+    TreeNode left;
+    TreeNode right;
+
+    // Creates a node without assigning a value.
+    TreeNode() {
+    }
+
+    // Creates a node with the given value.
+    TreeNode(int val) {
+        this.val = val;
+    }
+
+    // Creates a node with a value, left child, and right child.
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+
+class Solution {
+
+    /*
+     * Stores the maximum complete path sum found anywhere in the tree.
+     *
+     * We use Integer.MIN_VALUE instead of 0 because every node
+     * in the tree could have a negative value.
+     *
+     * Example:
+     *
+     *      -3
+     *
+     * The correct maximum path sum is -3, not 0.
+     */
+    int maxSum = Integer.MIN_VALUE;
+
+
+    public int maxPathSum(TreeNode root) {
+
+        /*
+         * Start DFS from the root.
+         *
+         * We do not directly use the value returned by dfs(root)
+         * because dfs() returns only the best one-sided path.
+         *
+         * The actual maximum complete path is stored in maxSum.
+         */
+        dfs(root);
+
+        // Return the best complete path found anywhere in the tree.
+        return maxSum;
+    }
+
+
+    /*
+     * dfs(node) returns the best ONE-SIDED path starting from node.
+     *
+     * A one-sided path means:
+     *
+     *      node + left branch
+     *
+     * OR:
+     *
+     *      node + right branch
+     *
+     * We return only one branch because the parent needs a single
+     * continuous path that it can extend further.
+     */
+    private int dfs(TreeNode root) {
+
+        /*
+         * Base case:
+         *
+         * If the current node does not exist, it cannot contribute
+         * anything to the path sum.
+         */
+        if (root == null) {
+            return 0;
+        }
+
+
+        /*
+         * Recursively find the best one-sided path from the left child.
+         *
+         * Math.max(0, ...) means:
+         *
+         * If the left branch has a negative sum, ignore that branch.
+         *
+         * Example:
+         *
+         *        5
+         *       /
+         *     -10
+         *
+         * Including the left branch gives:
+         *
+         *      5 + (-10) = -5
+         *
+         * Ignoring the left branch gives:
+         *
+         *      5
+         *
+         * Therefore, we treat a harmful negative branch as 0,
+         * which means "do not include this branch."
+         */
+        int leftGain = Math.max(0, dfs(root.left));
+
+
+        /*
+         * Recursively find the best one-sided path from the right child.
+         *
+         * If the right branch is negative, ignore it by choosing 0.
+         */
+        int rightGain = Math.max(0, dfs(root.right));
+
+
+        /*
+         * Create a COMPLETE path using the current node as the
+         * connecting or turning point.
+         *
+         * The complete path looks like:
+         *
+         *      best left branch
+         *              \
+         *            current node
+         *              /
+         *      best right branch
+         *
+         * In path order:
+         *
+         *      left branch -> current node -> right branch
+         *
+         * Here we are allowed to use both branches because this path
+         * is being considered as a possible final answer.
+         */
+        int currentCompletePath =
+                leftGain + root.val + rightGain;
+
+
+        /*
+         * Compare the complete path passing through the current node
+         * with the best path found previously.
+         *
+         * If currentCompletePath is larger, maxSum is updated.
+         */
+        maxSum = Math.max(maxSum, currentCompletePath);
+
+
+        /*
+         * Return the best ONE-SIDED path to the parent.
+         *
+         * We can return:
+         *
+         *      root.val + leftGain
+         *
+         * OR:
+         *
+         *      root.val + rightGain
+         *
+         * We choose the better side using Math.max().
+         *
+         * We must not return:
+         *
+         *      root.val + leftGain + rightGain
+         *
+         * because that contains two branches. If the parent connected
+         * to both branches, the result would become a fork rather than
+         * one continuous path.
+         */
+        return root.val + Math.max(leftGain, rightGain);
+    }
+}
