@@ -1,0 +1,160 @@
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode() {}
+ *     TreeNode(int val) { this.val = val; }
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+
+class Solution {
+
+    public List<List<Integer>> zigzagLevelOrder(TreeNode root) {
+
+        // Final answer.
+        // Each inner list represents one level.
+        List<List<Integer>> result = new ArrayList<>();
+
+        // Empty tree means no levels exist.
+        if (root == null) {
+            return result;
+        }
+
+        // Queue is required for BFS.
+        // Think of this as a waiting line.
+        Queue<TreeNode> queue = new LinkedList<>();
+
+        // Start BFS from root.
+        queue.offer(root);
+
+        // Tells us the direction of the current level.
+        // true  = Left -> Right
+        // false = Right -> Left
+        boolean leftToRight = true;
+
+        // Keep running until there are no nodes left to process.
+        while (!queue.isEmpty()) {
+
+            // Number of nodes currently present in this level.
+            //
+            // Example:
+            // Queue = [2,3]
+            //
+            // size = 2
+            //
+            // Meaning:
+            // "Process exactly these 2 nodes because
+            // they belong to the current level."
+            int size = queue.size();
+
+            // Stores values of the current level.
+            //
+            // LinkedList is chosen because:
+            // addFirst() = O(1)
+            // addLast()  = O(1)
+            LinkedList<Integer> level = new LinkedList<>();
+
+            // Process all nodes that belong to this level.
+            for (int i = 0; i < size; i++) {
+
+                // Remove the next node from the queue.
+                TreeNode node = queue.poll();
+
+                /*
+                 * IMPORTANT IDEA
+                 *
+                 * queue controls HOW WE VISIT nodes.
+                 * level controls HOW WE STORE values.
+                 *
+                 * BFS always visits normally:
+                 * left child first
+                 * right child second
+                 *
+                 * Zigzag happens ONLY when inserting
+                 * into the level list.
+                 */
+
+                if (leftToRight) {
+
+                    // Normal direction.
+                    //
+                    // Example:
+                    // Add 2
+                    // [2]
+                    //
+                    // Add 3
+                    // [2,3]
+                    level.addLast(node.val);
+
+                } else {
+
+                    // Reverse direction.
+                    //
+                    // Example:
+                    // Add 2
+                    // [2]
+                    //
+                    // Add 3
+                    // [3,2]
+                    //
+                    // By inserting at the front,
+                    // we automatically reverse the order.
+                    level.addFirst(node.val);
+                }
+
+                /*
+                 * Current node's value is finished.
+                 *
+                 * Now prepare the NEXT LEVEL.
+                 *
+                 * Children are pushed into queue so
+                 * they can be processed later.
+                 */
+
+                if (node.left != null) {
+
+                    // Remember the left child for future processing.
+                    queue.offer(node.left);
+                }
+
+                if (node.right != null) {
+
+                    // Remember the right child for future processing.
+                    queue.offer(node.right);
+                }
+            }
+
+            /*
+             * At this point:
+             *
+             * level contains all values of current level.
+             *
+             * Example:
+             * [3,2]
+             *
+             * So save it into final answer.
+             */
+            result.add(level);
+
+            /*
+             * Flip the direction.
+             *
+             * true  -> false
+             * false -> true
+             *
+             * Left->Right becomes Right->Left.
+             */
+            leftToRight = !leftToRight;
+        }
+
+        // Finished processing every level.
+        return result;
+    }
+}
