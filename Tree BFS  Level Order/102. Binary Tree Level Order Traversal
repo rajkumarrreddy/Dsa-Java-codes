@@ -1,0 +1,107 @@
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode() {}
+ *     TreeNode(int val) { this.val = val; }
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+
+class Solution {
+
+    public List<List<Integer>> levelOrder(TreeNode root) {
+
+        // Final answer.
+        // Each inner list represents one level of the tree.
+        List<List<Integer>> result = new ArrayList<>();
+
+        // Edge case:
+        // If tree is empty, there are no levels to process.
+        if (root == null) {
+            return result;
+        }
+
+        // Queue is the heart of BFS.
+        // It helps us process nodes level by level.
+        Queue<TreeNode> queue = new ArrayDeque<>();
+
+        // Start BFS by putting root into the queue.
+        queue.offer(root);
+
+        // Continue until all nodes are processed.
+        while (!queue.isEmpty()) {
+
+            /*
+             * IMPORTANT:
+             * queue currently contains ALL nodes of ONE LEVEL.
+             *
+             * Example:
+             *       3
+             *      / \
+             *     9  20
+             *
+             * Before processing level 1,
+             * queue = [3]
+             *
+             * levelSize = 1
+             *
+             * Before processing level 2,
+             * queue = [9,20]
+             *
+             * levelSize = 2
+             */
+            int levelSize = queue.size();
+
+            // Stores values of current level.
+            List<Integer> currLevel = new ArrayList<>();
+
+            /*
+             * Process exactly 'levelSize' nodes.
+             * This guarantees we process only the current level.
+             */
+            for (int i = 0; i < levelSize; i++) {
+
+                // Remove front node from queue.
+                TreeNode currentNode = queue.poll();
+
+                // Add current node's value to current level.
+                currLevel.add(currentNode.val);
+
+                /*
+                 * Add children into queue.
+                 *
+                 * These children belong to the NEXT LEVEL.
+                 * They will be processed in the next iteration
+                 * of the while loop.
+                 */
+
+                if (currentNode.left != null) {
+                    queue.offer(currentNode.left);
+                }
+
+                if (currentNode.right != null) {
+                    queue.offer(currentNode.right);
+                }
+            }
+
+            /*
+             * Current level is completely processed.
+             *
+             * Example:
+             * currLevel = [9,20]
+             *
+             * Add it to final answer.
+             */
+            result.add(currLevel);
+        }
+
+        return result;
+    }
+}
