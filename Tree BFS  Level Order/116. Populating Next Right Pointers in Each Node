@@ -1,0 +1,171 @@
+import java.util.ArrayDeque;
+import java.util.Queue;
+
+/*
+// Definition for a Node.
+// LeetCode already provides this class.
+
+class Node {
+    public int val;
+    public Node left;
+    public Node right;
+    public Node next;
+
+    public Node() {
+    }
+
+    public Node(int val) {
+        this.val = val;
+    }
+
+    public Node(
+        int val,
+        Node left,
+        Node right,
+        Node next
+    ) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+        this.next = next;
+    }
+}
+*/
+
+class Solution {
+
+    public Node connect(Node root) {
+
+        /*
+         * Edge case:
+         *
+         * If the tree is empty, there are no nodes
+         * whose next pointers need to be connected.
+         */
+        if (root == null) {
+            return null;
+        }
+
+        /*
+         * BFS uses a queue to process the tree
+         * one level at a time.
+         */
+        Queue<Node> queue = new ArrayDeque<>();
+
+        // Add the root to begin BFS.
+        queue.offer(root);
+
+        /*
+         * Each execution of this while loop processes
+         * one complete level of the tree.
+         */
+        while (!queue.isEmpty()) {
+
+            /*
+             * At this moment, the queue contains exactly
+             * the nodes belonging to the current level.
+             *
+             * We store the size before adding children because
+             * those children belong to the next level.
+             */
+            int levelSize = queue.size();
+
+            /*
+             * previous stores the node that was processed
+             * immediately before the current node on the same level.
+             *
+             * At the beginning of every level, there is no
+             * previous node, so it starts as null.
+             *
+             * It must be declared inside the while loop.
+             * Otherwise, the last node of one level could be
+             * incorrectly connected to the first node of the next level.
+             */
+            Node previous = null;
+
+            /*
+             * Process precisely the nodes belonging to
+             * the current level.
+             */
+            for (int i = 0; i < levelSize; i++) {
+
+                /*
+                 * Remove the next node of the current level
+                 * from the front of the queue.
+                 */
+                Node currentNode = queue.poll();
+
+                /*
+                 * If a previous node exists, connect its next
+                 * pointer to the current node.
+                 *
+                 * Example current level:
+                 *
+                 * 2    3
+                 *
+                 * First iteration:
+                 * previous = null
+                 * currentNode = 2
+                 *
+                 * There is nothing to connect yet.
+                 *
+                 * Second iteration:
+                 * previous = 2
+                 * currentNode = 3
+                 *
+                 * Therefore:
+                 * 2.next = 3
+                 */
+                if (previous != null) {
+                    previous.next = currentNode;
+                }
+
+                /*
+                 * The current node becomes the previous node
+                 * for the next iteration.
+                 */
+                previous = currentNode;
+
+                /*
+                 * Add the left child to the queue.
+                 *
+                 * The child belongs to the next level,
+                 * so it will be processed during the next
+                 * execution of the while loop.
+                 */
+                if (currentNode.left != null) {
+                    queue.offer(currentNode.left);
+                }
+
+                /*
+                 * Add the right child to the queue.
+                 *
+                 * This child also belongs to the next level.
+                 */
+                if (currentNode.right != null) {
+                    queue.offer(currentNode.right);
+                }
+            }
+
+            /*
+             * After the for loop, previous refers to the last
+             * node of the current level.
+             *
+             * Its next pointer must point to null because
+             * there is no node after it on the same level.
+             *
+             * LeetCode's nodes initially have next = null,
+             * but setting it explicitly makes the intention clear.
+             */
+            previous.next = null;
+        }
+
+        /*
+         * Return the original root after modifying
+         * the next pointers throughout the tree.
+         *
+         * THIS IS THE FINAL RETURN STATEMENT.
+         */
+        return root;
+    }
+}
