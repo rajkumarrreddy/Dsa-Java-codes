@@ -1,0 +1,1409 @@
+# Tree BFS / Level Order Traversal
+
+## 1. What is Tree BFS?
+
+**BFS** stands for **Breadth-First Search**.
+
+In a binary tree, BFS processes nodes **level by level**, from top to bottom.
+
+Consider this tree:
+
+```text
+             1
+           /   \
+          2     3
+         / \     \
+        4   5     6
+```
+
+BFS traversal:
+
+```text
+Level 0: 1
+Level 1: 2, 3
+Level 2: 4, 5, 6
+```
+
+Flattened BFS order:
+
+```text
+1 → 2 → 3 → 4 → 5 → 6
+```
+
+---
+
+## 2. BFS vs DFS
+
+### BFS
+
+BFS explores the tree **horizontally**, one level at a time.
+
+```text
+Level 0 → Level 1 → Level 2
+```
+
+BFS uses a:
+
+```text
+Queue
+```
+
+### DFS
+
+DFS explores one branch deeply before returning to explore another branch.
+
+```text
+Root → Left subtree → Right subtree
+```
+
+DFS uses:
+
+```text
+Recursion or Stack
+```
+
+### Easy memory trick
+
+```text
+BFS → Breadth → Level by level → Queue
+DFS → Depth → Go deep first → Recursion/Stack
+```
+
+---
+
+# 3. Why Does BFS Use a Queue?
+
+A queue follows:
+
+```text
+FIFO = First In, First Out
+```
+
+Suppose the root is `1`.
+
+```text
+Queue = [1]
+```
+
+Remove `1` and add its children:
+
+```text
+Queue = [2, 3]
+```
+
+Remove `2` and add its children:
+
+```text
+Queue = [3, 4, 5]
+```
+
+Node `3` is processed before `4` and `5` because `3` entered the queue first.
+
+This waiting order ensures that all nodes of one level are processed before the next level begins.
+
+---
+
+# 4. Java Queue Syntax
+
+## Creating a queue
+
+```java
+Queue<TreeNode> queue = new ArrayDeque<>();
+```
+
+## Adding a node
+
+```java
+queue.offer(node);
+```
+
+## Removing the front node
+
+```java
+TreeNode node = queue.poll();
+```
+
+## Checking the front node without removing it
+
+```java
+TreeNode node = queue.peek();
+```
+
+## Checking whether the queue is empty
+
+```java
+queue.isEmpty();
+```
+
+## Getting the number of waiting nodes
+
+```java
+queue.size();
+```
+
+---
+
+# 5. Two Types of Tree BFS
+
+## Type 1: Simple BFS
+
+Use this when the problem only asks you to visit every node in BFS order.
+
+```java
+class Solution {
+
+    public List<Integer> bfs(TreeNode root) {
+
+        List<Integer> result = new ArrayList<>();
+
+        if (root == null) {
+            return result;
+        }
+
+        Queue<TreeNode> queue = new ArrayDeque<>();
+        queue.offer(root);
+
+        while (!queue.isEmpty()) {
+
+            TreeNode node = queue.poll();
+
+            result.add(node.val);
+
+            if (node.left != null) {
+                queue.offer(node.left);
+            }
+
+            if (node.right != null) {
+                queue.offer(node.right);
+            }
+        }
+
+        return result;
+    }
+}
+```
+
+This returns:
+
+```text
+[1, 2, 3, 4, 5, 6]
+```
+
+It does not separate nodes by level.
+
+---
+
+## Type 2: Level-by-Level BFS
+
+Use this when the problem asks about:
+
+- Each level
+- Maximum of every level
+- Average of every level
+- Right-side view
+- Left-side view
+- Zigzag order
+- Minimum depth
+- Connecting nodes on the same level
+
+```java
+while (!queue.isEmpty()) {
+
+    int levelSize = queue.size();
+
+    for (int i = 0; i < levelSize; i++) {
+
+        TreeNode node = queue.poll();
+
+        if (node.left != null) {
+            queue.offer(node.left);
+        }
+
+        if (node.right != null) {
+            queue.offer(node.right);
+        }
+    }
+}
+```
+
+---
+
+# 6. The Most Important BFS Concept: `levelSize`
+
+```java
+int levelSize = queue.size();
+```
+
+At the beginning of the `while` loop, the queue contains all nodes belonging to the current level.
+
+We save that count in `levelSize`.
+
+While processing those nodes, their children are added to the queue. Those children belong to the next level.
+
+Therefore, we must process exactly `levelSize` nodes.
+
+```java
+for (int i = 0; i < levelSize; i++) {
+    // Process current-level nodes
+}
+```
+
+## The most important memory rule
+
+```text
+One while-loop iteration = one complete level
+
+One for-loop iteration = one node in that level
+```
+
+After the `for` loop finishes:
+
+```text
+The queue contains nodes of the next level.
+```
+
+---
+
+# 7. Universal Tree BFS Template
+
+```java
+class Solution {
+
+    public ReturnType bfs(TreeNode root) {
+
+        // Handle an empty tree.
+        if (root == null) {
+            // Return the appropriate empty/default answer.
+        }
+
+        Queue<TreeNode> queue = new ArrayDeque<>();
+        queue.offer(root);
+
+        while (!queue.isEmpty()) {
+
+            // Number of nodes in the current level.
+            int levelSize = queue.size();
+
+            // Initialize information required for this level.
+            // Examples: level list, sum, maximum, previous node.
+
+            for (int i = 0; i < levelSize; i++) {
+
+                TreeNode node = queue.poll();
+
+                // Perform problem-specific work here.
+
+                // Add children for the next level.
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+
+            // Complete the current level's calculation here.
+        }
+
+        // Return the final answer.
+    }
+}
+```
+
+The BFS structure normally remains the same.
+
+Only the **problem-specific work** changes.
+
+---
+
+# 8. LeetCode 102: Binary Tree Level Order Traversal
+
+## Problem idea
+
+Return every level as a separate list.
+
+```text
+Input:
+
+             3
+           /   \
+          9     20
+               /  \
+              15   7
+
+Output:
+
+[[3], [9, 20], [15, 7]]
+```
+
+## Code
+
+```java
+class Solution {
+
+    public List<List<Integer>> levelOrder(TreeNode root) {
+
+        List<List<Integer>> result = new ArrayList<>();
+
+        if (root == null) {
+            return result;
+        }
+
+        Queue<TreeNode> queue = new ArrayDeque<>();
+        queue.offer(root);
+
+        while (!queue.isEmpty()) {
+
+            int levelSize = queue.size();
+
+            // Create a new list for the current level.
+            List<Integer> currentLevel = new ArrayList<>();
+
+            for (int i = 0; i < levelSize; i++) {
+
+                TreeNode node = queue.poll();
+
+                // Store the current node in its level list.
+                currentLevel.add(node.val);
+
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+
+            // Add the completed level to the final result.
+            result.add(currentLevel);
+        }
+
+        return result;
+    }
+}
+```
+
+## Pattern change
+
+```java
+List<Integer> currentLevel = new ArrayList<>();
+currentLevel.add(node.val);
+result.add(currentLevel);
+```
+
+---
+
+# 9. LeetCode 515: Largest Value in Each Tree Row
+
+## Problem idea
+
+Find the maximum value at every level.
+
+```text
+Input:
+
+             1
+           /   \
+          3     2
+         / \     \
+        5   3     9
+
+Output:
+
+[1, 3, 9]
+```
+
+## Code
+
+```java
+class Solution {
+
+    public List<Integer> largestValues(TreeNode root) {
+
+        List<Integer> result = new ArrayList<>();
+
+        if (root == null) {
+            return result;
+        }
+
+        Queue<TreeNode> queue = new ArrayDeque<>();
+        queue.offer(root);
+
+        while (!queue.isEmpty()) {
+
+            int levelSize = queue.size();
+
+            // Maximum value for the current level.
+            int max = Integer.MIN_VALUE;
+
+            for (int i = 0; i < levelSize; i++) {
+
+                TreeNode node = queue.poll();
+
+                max = Math.max(max, node.val);
+
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+
+            result.add(max);
+        }
+
+        return result;
+    }
+}
+```
+
+## Why use `Integer.MIN_VALUE`?
+
+Do not initialize `max` to `0`.
+
+The tree can contain negative values.
+
+```text
+Current level: [-5, -2, -10]
+```
+
+The correct maximum is:
+
+```text
+-2
+```
+
+If `max` started at `0`, the result would be wrong.
+
+---
+
+# 10. LeetCode 637: Average of Levels
+
+## Problem idea
+
+Calculate the average value of every level.
+
+## Code
+
+```java
+class Solution {
+
+    public List<Double> averageOfLevels(TreeNode root) {
+
+        List<Double> result = new ArrayList<>();
+
+        if (root == null) {
+            return result;
+        }
+
+        Queue<TreeNode> queue = new ArrayDeque<>();
+        queue.offer(root);
+
+        while (!queue.isEmpty()) {
+
+            int levelSize = queue.size();
+            long sum = 0;
+
+            for (int i = 0; i < levelSize; i++) {
+
+                TreeNode node = queue.poll();
+
+                sum += node.val;
+
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+
+            double average = (double) sum / levelSize;
+            result.add(average);
+        }
+
+        return result;
+    }
+}
+```
+
+## Pattern change
+
+```java
+long sum = 0;
+sum += node.val;
+
+double average = (double) sum / levelSize;
+result.add(average);
+```
+
+Use `long` for `sum` to reduce the risk of integer overflow.
+
+---
+
+# 11. LeetCode 199: Binary Tree Right Side View
+
+## Problem idea
+
+When looking at the tree from the right side, the visible node is the last node of every level.
+
+```text
+Level: [2, 3, 4]
+
+Last node = 4
+```
+
+Because BFS processes nodes from left to right:
+
+```java
+i == levelSize - 1
+```
+
+identifies the last node.
+
+## Code
+
+```java
+class Solution {
+
+    public List<Integer> rightSideView(TreeNode root) {
+
+        List<Integer> result = new ArrayList<>();
+
+        if (root == null) {
+            return result;
+        }
+
+        Queue<TreeNode> queue = new ArrayDeque<>();
+        queue.offer(root);
+
+        while (!queue.isEmpty()) {
+
+            int levelSize = queue.size();
+
+            for (int i = 0; i < levelSize; i++) {
+
+                TreeNode node = queue.poll();
+
+                // The last node of this level is visible
+                // from the right side.
+                if (i == levelSize - 1) {
+                    result.add(node.val);
+                }
+
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+        }
+
+        return result;
+    }
+}
+```
+
+## Important recognition
+
+```text
+First node of level → i == 0
+Last node of level  → i == levelSize - 1
+```
+
+Therefore:
+
+```text
+Left-side view  → first node of every level
+Right-side view → last node of every level
+```
+
+---
+
+# 12. Left Side View
+
+The logic is almost identical to the right-side view.
+
+The only change is:
+
+```java
+if (i == 0) {
+    result.add(node.val);
+}
+```
+
+## Code
+
+```java
+class Solution {
+
+    public List<Integer> leftSideView(TreeNode root) {
+
+        List<Integer> result = new ArrayList<>();
+
+        if (root == null) {
+            return result;
+        }
+
+        Queue<TreeNode> queue = new ArrayDeque<>();
+        queue.offer(root);
+
+        while (!queue.isEmpty()) {
+
+            int levelSize = queue.size();
+
+            for (int i = 0; i < levelSize; i++) {
+
+                TreeNode node = queue.poll();
+
+                if (i == 0) {
+                    result.add(node.val);
+                }
+
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+        }
+
+        return result;
+    }
+}
+```
+
+---
+
+# 13. LeetCode 111: Minimum Depth of Binary Tree
+
+## Problem idea
+
+Minimum depth means the shortest distance from the root to a **leaf node**.
+
+A leaf node has:
+
+```java
+node.left == null && node.right == null
+```
+
+BFS processes shallower levels before deeper levels.
+
+Therefore, the first leaf found by BFS gives the minimum depth.
+
+## Code
+
+```java
+class Solution {
+
+    public int minDepth(TreeNode root) {
+
+        if (root == null) {
+            return 0;
+        }
+
+        Queue<TreeNode> queue = new ArrayDeque<>();
+        queue.offer(root);
+
+        int depth = 1;
+
+        while (!queue.isEmpty()) {
+
+            int levelSize = queue.size();
+
+            for (int i = 0; i < levelSize; i++) {
+
+                TreeNode node = queue.poll();
+
+                // First leaf found is at the minimum depth.
+                if (node.left == null && node.right == null) {
+                    return depth;
+                }
+
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+
+            depth++;
+        }
+
+        return depth;
+    }
+}
+```
+
+## Important mistake to avoid
+
+This is not always a leaf:
+
+```java
+node.left == null || node.right == null
+```
+
+A node is a leaf only when both children are null:
+
+```java
+node.left == null && node.right == null
+```
+
+---
+
+# 14. LeetCode 103: Zigzag Level Order Traversal
+
+## Problem idea
+
+Traversal direction changes after every level.
+
+```text
+Level 0: left to right
+Level 1: right to left
+Level 2: left to right
+```
+
+We can still perform normal BFS.
+
+Only the insertion position inside the level list changes.
+
+## Code
+
+```java
+class Solution {
+
+    public List<List<Integer>> zigzagLevelOrder(TreeNode root) {
+
+        List<List<Integer>> result = new ArrayList<>();
+
+        if (root == null) {
+            return result;
+        }
+
+        Queue<TreeNode> queue = new ArrayDeque<>();
+        queue.offer(root);
+
+        boolean leftToRight = true;
+
+        while (!queue.isEmpty()) {
+
+            int levelSize = queue.size();
+            LinkedList<Integer> currentLevel = new LinkedList<>();
+
+            for (int i = 0; i < levelSize; i++) {
+
+                TreeNode node = queue.poll();
+
+                if (leftToRight) {
+                    currentLevel.addLast(node.val);
+                } else {
+                    currentLevel.addFirst(node.val);
+                }
+
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+
+            result.add(currentLevel);
+
+            // Reverse the direction for the next level.
+            leftToRight = !leftToRight;
+        }
+
+        return result;
+    }
+}
+```
+
+## Pattern change
+
+```java
+boolean leftToRight = true;
+```
+
+For left-to-right:
+
+```java
+currentLevel.addLast(node.val);
+```
+
+For right-to-left:
+
+```java
+currentLevel.addFirst(node.val);
+```
+
+After every level:
+
+```java
+leftToRight = !leftToRight;
+```
+
+---
+
+# 15. LeetCode 116: Populating Next Right Pointers
+
+## Important node difference
+
+This problem uses `Node`, not `TreeNode`.
+
+```java
+class Node {
+    int val;
+    Node left;
+    Node right;
+    Node next;
+}
+```
+
+The `next` pointer should connect nodes on the same level.
+
+```text
+4 → 5 → 6 → 7 → null
+```
+
+## Code
+
+```java
+class Solution {
+
+    public Node connect(Node root) {
+
+        if (root == null) {
+            return null;
+        }
+
+        Queue<Node> queue = new ArrayDeque<>();
+        queue.offer(root);
+
+        while (!queue.isEmpty()) {
+
+            int levelSize = queue.size();
+
+            // Tracks the previously processed node
+            // on the current level.
+            Node previous = null;
+
+            for (int i = 0; i < levelSize; i++) {
+
+                Node currentNode = queue.poll();
+
+                if (previous != null) {
+                    previous.next = currentNode;
+                }
+
+                previous = currentNode;
+
+                if (currentNode.left != null) {
+                    queue.offer(currentNode.left);
+                }
+
+                if (currentNode.right != null) {
+                    queue.offer(currentNode.right);
+                }
+            }
+
+            // Last node of the current level points to null.
+            previous.next = null;
+        }
+
+        return root;
+    }
+}
+```
+
+## Connection dry run
+
+Current level:
+
+```text
+[4, 5, 6, 7]
+```
+
+Processing:
+
+```text
+previous = null, current = 4
+No connection yet
+previous = 4
+```
+
+```text
+previous = 4, current = 5
+4.next = 5
+previous = 5
+```
+
+```text
+previous = 5, current = 6
+5.next = 6
+previous = 6
+```
+
+```text
+previous = 6, current = 7
+6.next = 7
+previous = 7
+```
+
+After the level:
+
+```text
+7.next = null
+```
+
+Final connections:
+
+```text
+4 → 5 → 6 → 7 → null
+```
+
+---
+
+# 16. How to Recognize a Tree BFS Problem
+
+Look for words such as:
+
+```text
+level order
+each level
+every level
+tree row
+same depth
+nearest node
+minimum depth
+right-side view
+left-side view
+average of each level
+maximum of each level
+connect nodes on the same level
+```
+
+Ask yourself:
+
+```text
+1. Does the problem ask about levels?
+
+2. Do I need one answer for every level?
+
+3. Do I need the first or last node of every level?
+
+4. Do I need the nearest or shallowest valid node?
+
+5. Do I need to connect or compare nodes on the same level?
+```
+
+If the answer is yes, BFS is usually a strong choice.
+
+---
+
+# 17. How One Template Changes Across Problems
+
+## Level order traversal
+
+```java
+currentLevel.add(node.val);
+```
+
+## Maximum of each level
+
+```java
+max = Math.max(max, node.val);
+```
+
+## Sum of each level
+
+```java
+sum += node.val;
+```
+
+## Average of each level
+
+```java
+double average = (double) sum / levelSize;
+```
+
+## Left-side view
+
+```java
+if (i == 0) {
+    result.add(node.val);
+}
+```
+
+## Right-side view
+
+```java
+if (i == levelSize - 1) {
+    result.add(node.val);
+}
+```
+
+## Minimum depth
+
+```java
+if (node.left == null && node.right == null) {
+    return depth;
+}
+```
+
+## Connect nodes on the same level
+
+```java
+if (previous != null) {
+    previous.next = node;
+}
+
+previous = node;
+```
+
+The queue and level-processing structure remains almost identical.
+
+---
+
+# 18. Common Mistakes
+
+## Mistake 1: Not handling an empty tree
+
+Correct:
+
+```java
+if (root == null) {
+    return result;
+}
+```
+
+Depending on the return type, you may return:
+
+```java
+return null;
+return 0;
+return result;
+```
+
+---
+
+## Mistake 2: Using the changing queue size
+
+Wrong:
+
+```java
+for (int i = 0; i < queue.size(); i++) {
+```
+
+The queue size changes when nodes are removed and children are added.
+
+Correct:
+
+```java
+int levelSize = queue.size();
+
+for (int i = 0; i < levelSize; i++) {
+```
+
+---
+
+## Mistake 3: Forgetting to add children
+
+```java
+if (node.left != null) {
+    queue.offer(node.left);
+}
+
+if (node.right != null) {
+    queue.offer(node.right);
+}
+```
+
+Without this, BFS stops after processing the root.
+
+---
+
+## Mistake 4: Adding the level too early
+
+Wrong:
+
+```java
+for (...) {
+    currentLevel.add(node.val);
+    result.add(currentLevel);
+}
+```
+
+Correct:
+
+```java
+for (...) {
+    currentLevel.add(node.val);
+}
+
+result.add(currentLevel);
+```
+
+Add the level only after it is completely processed.
+
+---
+
+## Mistake 5: Creating the level list outside the while loop
+
+Wrong:
+
+```java
+List<Integer> currentLevel = new ArrayList<>();
+
+while (!queue.isEmpty()) {
+```
+
+This reuses the same list for every level.
+
+Correct:
+
+```java
+while (!queue.isEmpty()) {
+
+    List<Integer> currentLevel = new ArrayList<>();
+```
+
+Every level gets a new list.
+
+---
+
+## Mistake 6: Starting maximum at zero
+
+Wrong:
+
+```java
+int max = 0;
+```
+
+Correct:
+
+```java
+int max = Integer.MIN_VALUE;
+```
+
+Node values can be negative.
+
+---
+
+## Mistake 7: Confusing `Node` with `TreeNode`
+
+Normal binary-tree problems generally use:
+
+```java
+TreeNode
+```
+
+LeetCode 116 and 117 use:
+
+```java
+Node
+```
+
+because these problems require:
+
+```java
+Node next;
+```
+
+---
+
+## Mistake 8: Using a visited set for a normal tree
+
+For a standard binary tree, a visited set is usually unnecessary.
+
+```java
+Set<TreeNode> visited = new HashSet<>();
+```
+
+is generally needed for graphs because graphs may contain cycles.
+
+---
+
+# 19. Time and Space Complexity
+
+For a tree containing `n` nodes:
+
+## Time complexity
+
+```text
+O(n)
+```
+
+Every node is:
+
+- Added to the queue once
+- Removed from the queue once
+- Processed once
+
+## Space complexity
+
+```text
+O(w)
+```
+
+`w` is the maximum width of the tree.
+
+The maximum width is the largest number of nodes present in the queue around one level.
+
+Worst case:
+
+```text
+O(n)
+```
+
+---
+
+# 20. BFS Interview Thought Process
+
+When seeing a new Tree BFS question, use this process:
+
+```text
+Step 1:
+Is the question asking about levels, depth,
+rows, nearest nodes, or same-level nodes?
+
+Step 2:
+Do I need to separate one level from another?
+
+Step 3:
+If levels matter, save:
+
+int levelSize = queue.size();
+
+Step 4:
+Ask what information is needed for one level:
+
+List?
+Sum?
+Maximum?
+Average?
+First node?
+Last node?
+Previous node?
+
+Step 5:
+Process exactly levelSize nodes.
+
+Step 6:
+Add each node's children for the next level.
+
+Step 7:
+After the for loop, complete the current
+level's calculation.
+```
+
+---
+
+# 21. Final Pattern Recognition Cheat Sheet
+
+```text
+Question says "all nodes level by level"
+→ Store every node in a level list
+
+Question says "largest in each row"
+→ Maintain max for each level
+
+Question says "average of each level"
+→ Maintain sum and divide by levelSize
+
+Question says "right-side view"
+→ Take the last node: i == levelSize - 1
+
+Question says "left-side view"
+→ Take the first node: i == 0
+
+Question says "minimum depth"
+→ Return when the first leaf is found
+
+Question says "zigzag"
+→ Change insertion direction after every level
+
+Question says "connect same-level nodes"
+→ Track the previous node
+```
+
+---
+
+# 22. Problems to Practice
+
+Practice in this order:
+
+```text
+1. LeetCode 102  - Binary Tree Level Order Traversal
+2. LeetCode 637  - Average of Levels in Binary Tree
+3. LeetCode 515  - Find Largest Value in Each Tree Row
+4. LeetCode 199  - Binary Tree Right Side View
+5. LeetCode 111  - Minimum Depth of Binary Tree
+6. LeetCode 103  - Binary Tree Zigzag Level Order Traversal
+7. LeetCode 116  - Populating Next Right Pointers
+8. LeetCode 117  - Populating Next Right Pointers II
+9. LeetCode 429  - N-ary Tree Level Order Traversal
+10. LeetCode 513 - Find Bottom Left Tree Value
+11. LeetCode 1302 - Deepest Leaves Sum
+```
+
+---
+
+# 23. Final Revision Summary
+
+```java
+Queue<TreeNode> queue = new ArrayDeque<>();
+queue.offer(root);
+
+while (!queue.isEmpty()) {
+
+    int levelSize = queue.size();
+
+    for (int i = 0; i < levelSize; i++) {
+
+        TreeNode node = queue.poll();
+
+        // Problem-specific work
+
+        if (node.left != null) {
+            queue.offer(node.left);
+        }
+
+        if (node.right != null) {
+            queue.offer(node.right);
+        }
+    }
+
+    // Finish the current level's work
+}
+```
+
+Remember:
+
+```text
+Queue                    → maintains BFS order
+while loop               → processes one level
+levelSize                → locks the current level's size
+for loop                 → processes nodes of that level
+offer children           → prepares the next level
+after the for loop       → current level is complete
+```
+
+## One-line summary
+
+```text
+Tree BFS problems are usually one queue template
+plus different work performed at each level.
+```
