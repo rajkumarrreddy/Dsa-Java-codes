@@ -1,0 +1,149 @@
+import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.List;
+import java.util.Queue;
+
+/**
+ * Definition for a binary tree node.
+ *
+ * LeetCode already provides this TreeNode class,
+ * so we should NOT write the TreeNode class again.
+ *
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *
+ *     TreeNode() {}
+ *
+ *     TreeNode(int val) {
+ *         this.val = val;
+ *     }
+ *
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+
+class Solution {
+
+    public List<Integer> largestValues(TreeNode root) {
+
+        /*
+         * This list stores the largest value
+         * found at every level of the tree.
+         *
+         * Example:
+         *
+         *              1
+         *            /   \
+         *           3     2
+         *          / \     \
+         *         5   3     9
+         *
+         * Answer: [1, 3, 9]
+         */
+        List<Integer> result = new ArrayList<>();
+
+        /*
+         * If root is null, the tree is empty.
+         * Therefore, return the empty result list.
+         */
+        if (root == null) {
+            return result;
+        }
+
+        /*
+         * BFS uses a queue because a queue follows FIFO:
+         * First In, First Out.
+         *
+         * This helps us process the tree level by level.
+         */
+        Queue<TreeNode> queue = new ArrayDeque<>();
+
+        /*
+         * Add the root node to start BFS.
+         */
+        queue.offer(root);
+
+        /*
+         * Continue until no nodes are left in the queue.
+         *
+         * Each execution of this while loop
+         * processes one complete level.
+         */
+        while (!queue.isEmpty()) {
+
+            /*
+             * At this point, the queue contains all the nodes
+             * belonging to the current level.
+             *
+             * Save the size before adding children because
+             * those children belong to the next level.
+             */
+            int levelSize = queue.size();
+
+            /*
+             * Stores the largest value of the current level.
+             *
+             * We use Integer.MIN_VALUE instead of 0
+             * because node values can be negative.
+             */
+            int max = Integer.MIN_VALUE;
+
+            /*
+             * Process exactly the number of nodes
+             * present in the current level.
+             */
+            for (int i = 0; i < levelSize; i++) {
+
+                /*
+                 * Remove the next node from the queue.
+                 */
+                TreeNode currentNode = queue.poll();
+
+                /*
+                 * Compare the current node's value with
+                 * the largest value found so far in this level.
+                 */
+                max = Math.max(max, currentNode.val);
+
+                /*
+                 * Add the left child to the queue.
+                 *
+                 * The child belongs to the next level.
+                 */
+                if (currentNode.left != null) {
+                    queue.offer(currentNode.left);
+                }
+
+                /*
+                 * Add the right child to the queue.
+                 *
+                 * The child also belongs to the next level.
+                 */
+                if (currentNode.right != null) {
+                    queue.offer(currentNode.right);
+                }
+            }
+
+            /*
+             * The current level has now been processed completely.
+             *
+             * Therefore, max contains the largest value
+             * from the current level.
+             */
+            result.add(max);
+        }
+
+        /*
+         * Return the final list after processing all levels.
+         *
+         * THIS IS THE FINAL RETURN STATEMENT.
+         */
+        return result;
+    }
+}
