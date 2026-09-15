@@ -1,0 +1,82 @@
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *
+ *     TreeNode() {}
+ *
+ *     TreeNode(int val) {
+ *         this.val = val;
+ *     }
+ *
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+
+class Solution {
+
+    public List<Double> averageOfLevels(TreeNode root) {
+
+        // Stores the final answer:
+        // Average value of each level
+        List<Double> result = new ArrayList<>();
+
+        // Edge case:
+        // Empty tree -> return empty list
+        if (root == null) {
+            return result;
+        }
+
+        // Queue used for BFS (Level Order Traversal)
+        Queue<TreeNode> q = new ArrayDeque<>();
+
+        // Start traversal from root
+        q.offer(root);
+
+        // Continue until all levels are processed
+        while (!q.isEmpty()) {
+
+            // Number of nodes currently present in this level
+            int size = q.size();
+
+            // Sum of all node values in current level
+            long sum = 0;
+
+            // Process exactly 'size' nodes
+            // (all nodes belonging to current level)
+            for (int i = 0; i < size; i++) {
+
+                // Remove current node
+                TreeNode node = q.poll();
+
+                // Add current node value to level sum
+                sum += node.val;
+
+                // Add left child for next level
+                if (node.left != null) {
+                    q.offer(node.left);
+                }
+
+                // Add right child for next level
+                if (node.right != null) {
+                    q.offer(node.right);
+                }
+            }
+
+            // Average of current level
+            double avg = (double) sum / size;
+
+            // Store answer for this level
+            result.add(avg);
+        }
+
+        // Return averages of all levels
+        return result;
+    }
+}637. Average of Levels in Binary Tree
