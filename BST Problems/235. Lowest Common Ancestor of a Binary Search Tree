@@ -1,0 +1,106 @@
+/**
+ * Definition for a binary tree node.
+ *
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *
+ *     TreeNode(int val) {
+ *         this.val = val;
+ *     }
+ * }
+ */
+
+class Solution {
+
+    public TreeNode lowestCommonAncestor(
+            TreeNode root,
+            TreeNode p,
+            TreeNode q) {
+
+        /*
+         * 'root' acts as our searching pointer.
+         *
+         * We start from the top of the BST and keep moving
+         * toward the side where BOTH p and q are present.
+         */
+        while (root != null) {
+
+            /*
+             * CASE 1: Both p and q are smaller than root.
+             *
+             * BST property:
+             *
+             *      smaller values are on the left
+             *      larger values are on the right
+             *
+             * Therefore, if both values are smaller,
+             * their LCA must be somewhere in the left subtree.
+             *
+             * We do not return anything yet.
+             * We only move our searching pointer to the left.
+             */
+            if (p.val < root.val && q.val < root.val) {
+                root = root.left;
+            }
+
+            /*
+             * CASE 2: Both p and q are larger than root.
+             *
+             * Since larger values are stored in the right subtree,
+             * their LCA must be somewhere in the right subtree.
+             *
+             * Again, we only move our searching pointer.
+             */
+            else if (p.val > root.val && q.val > root.val) {
+                root = root.right;
+            }
+
+            /*
+             * CASE 3: p and q are not on the same side.
+             *
+             * Reaching this else block means one of these happened:
+             *
+             * 1. p is on the left and q is on the right.
+             *
+             *              root
+             *              /  \
+             *             p    q
+             *
+             *    Their paths split at the current root.
+             *
+             * 2. q is on the left and p is on the right.
+             *
+             *              root
+             *              /  \
+             *             q    p
+             *
+             *    Their paths also split at the current root.
+             *
+             * 3. The current root is equal to p.
+             *
+             *    In that case, p is an ancestor of q.
+             *
+             * 4. The current root is equal to q.
+             *
+             *    In that case, q is an ancestor of p.
+             *
+             * In all these situations, the current root is
+             * the Lowest Common Ancestor.
+             */
+            else {
+                return root;
+            }
+        }
+
+        /*
+         * This is a fallback return.
+         *
+         * According to the problem, p and q exist in the BST,
+         * so the answer will normally be returned from inside
+         * the while loop.
+         */
+        return null;
+    }
+}
