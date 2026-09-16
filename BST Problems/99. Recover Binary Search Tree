@@ -1,0 +1,118 @@
+/**
+ * Definition for a binary tree node.
+ *
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *
+ *     TreeNode() {}
+ *
+ *     TreeNode(int val) {
+ *         this.val = val;
+ *     }
+ *
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+
+class Solution {
+
+    // The first node whose value is incorrect.
+    private TreeNode first;
+
+    // The second node whose value is incorrect.
+    private TreeNode second;
+
+    // The previously visited node during inorder traversal.
+    private TreeNode previous;
+
+    public void recoverTree(TreeNode root) {
+
+        /*
+         * Step 1:
+         * Perform inorder traversal.
+         *
+         * Since inorder traversal of a valid BST must be sorted,
+         * we can detect where the sorted order is broken.
+         */
+        inorder(root);
+
+        /*
+         * Step 2:
+         * Swap only the values of the two incorrect nodes.
+         *
+         * We do not change left or right references because the
+         * problem says that the tree structure must remain unchanged.
+         */
+        int temp = first.val;
+        first.val = second.val;
+        second.val = temp;
+    }
+
+    private void inorder(TreeNode current) {
+
+        // Base case:
+        // An empty node has nothing to process.
+        if (current == null) {
+            return;
+        }
+
+        /*
+         * Inorder traversal order:
+         *
+         * 1. Visit left subtree
+         * 2. Process current node
+         * 3. Visit right subtree
+         */
+
+        // Visit all smaller values first.
+        inorder(current.left);
+
+        /*
+         * Process the current node.
+         *
+         * In a valid BST inorder traversal:
+         *
+         * previous.val < current.val
+         *
+         * If previous.val > current.val, the increasing
+         * order has been broken.
+         */
+        if (previous != null && previous.val > current.val) {
+
+            /*
+             * During the first inversion, previous is the
+             * first incorrect node.
+             *
+             * We assign first only once because, in the
+             * non-adjacent case, we may find another inversion.
+             */
+            if (first == null) {
+                first = previous;
+            }
+
+            /*
+             * The current node is a candidate for the second
+             * incorrect node.
+             *
+             * If another inversion appears later, second will
+             * be updated to the correct misplaced node.
+             */
+            second = current;
+        }
+
+        /*
+         * The current node now becomes the previous node
+         * for the next node in inorder traversal.
+         */
+        previous = current;
+
+        // Visit larger values after processing the current node.
+        inorder(current.right);
+    }
+}
