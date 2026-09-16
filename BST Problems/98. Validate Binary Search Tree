@@ -1,0 +1,117 @@
+/**
+ * Definition for a binary tree node.
+ *
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *
+ *     TreeNode() {
+ *     }
+ *
+ *     TreeNode(int val) {
+ *         this.val = val;
+ *     }
+ *
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+
+class Solution {
+
+    public boolean isValidBST(TreeNode root) {
+
+        /*
+         * Initially, the root can contain any integer value.
+         *
+         * Therefore:
+         * Lower boundary = Long.MIN_VALUE
+         * Upper boundary = Long.MAX_VALUE
+         *
+         * We use long boundaries because a TreeNode can contain
+         * Integer.MIN_VALUE or Integer.MAX_VALUE.
+         */
+        return validate(root, Long.MIN_VALUE, Long.MAX_VALUE);
+    }
+
+    /*
+     * Function meaning:
+     *
+     * Check whether the subtree starting at "root" is a valid BST
+     * when every node must remain strictly between "min" and "max".
+     */
+    private boolean validate(TreeNode root, long min, long max) {
+
+        /*
+         * Base case:
+         *
+         * If we reach a null node, there is no node violating
+         * the BST property.
+         *
+         * Therefore, an empty subtree is considered valid.
+         */
+        if (root == null) {
+            return true;
+        }
+
+        /*
+         * The current node must be strictly inside its allowed range.
+         *
+         * Invalid when:
+         *
+         * root.val <= min
+         * OR
+         * root.val >= max
+         *
+         * We use <= and >= because duplicate values are not allowed
+         * under the strict BST rule used in this problem.
+         */
+        if (root.val <= min || root.val >= max) {
+            return false;
+        }
+
+        /*
+         * Validate the left subtree.
+         *
+         * Every value in the left subtree must be:
+         *
+         * 1. Greater than the existing minimum boundary.
+         * 2. Smaller than the current node's value.
+         *
+         * Therefore, the allowed range becomes:
+         *
+         * (min, root.val)
+         */
+        boolean isLeftValid =
+                validate(root.left, min, root.val);
+
+        /*
+         * Validate the right subtree.
+         *
+         * Every value in the right subtree must be:
+         *
+         * 1. Greater than the current node's value.
+         * 2. Smaller than the existing maximum boundary.
+         *
+         * Therefore, the allowed range becomes:
+         *
+         * (root.val, max)
+         */
+        boolean isRightValid =
+                validate(root.right, root.val, max);
+
+        /*
+         * The entire tree is a valid BST only when:
+         *
+         * 1. The left subtree is valid.
+         * 2. The right subtree is valid.
+         *
+         * If either side is invalid, the complete tree is invalid.
+         */
+        return isLeftValid && isRightValid;
+    }
+}
