@@ -1,0 +1,39 @@
+class Solution {
+
+    public TreeNode searchBST(TreeNode root, int val) {
+
+        // Base Case 1:
+        // If we reached a null node,
+        // the value does not exist in the BST.
+        if (root == null) {
+            return null;
+        }
+
+        // Base Case 2:
+        // Found the target value.
+        // Return the entire subtree rooted at this node.
+        if (root.val == val) {
+            return root;
+        }
+
+        // BST Property:
+        // All values in left subtree are smaller than root.
+        if (val < root.val) {
+
+            // Let the left subtree search for the answer.
+            // Whatever answer it finds,
+            // immediately return that answer upward.
+            return searchBST(root.left, val);
+        }
+
+        // BST Property:
+        // All values in right subtree are greater than root.
+        else {
+
+            // Let the right subtree search for the answer.
+            // Whatever answer it finds,
+            // immediately return that answer upward.
+            return searchBST(root.right, val);
+        }
+    }
+}
