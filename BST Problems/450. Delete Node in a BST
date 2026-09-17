@@ -1,0 +1,286 @@
+/**
+ * Definition for a binary tree node.
+ *
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *
+ *     TreeNode() {}
+ *
+ *     TreeNode(int val) {
+ *         this.val = val;
+ *     }
+ *
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+
+class Solution {
+
+    public TreeNode deleteNode(TreeNode root, int key) {
+
+        /*
+         * If the tree is empty, there is nothing to delete.
+         */
+        if (root == null) {
+            return null;
+        }
+
+        /*
+         * Special case:
+         *
+         * If the main root itself contains the key,
+         * it has no parent that can update its pointer.
+         *
+         * Therefore, directly delete it using helper().
+         *
+         * helper(root) returns the subtree that should
+         * become the new root of the complete BST.
+         */
+        if (root.val == key) {
+            return helper(root);
+        }
+
+        /*
+         * Save the original root before searching.
+         *
+         * The variable "root" will move left and right,
+         * but originalRoot remains at the top of the tree.
+         *
+         * No new TreeNode is created here.
+         * Both variables initially point to the same node.
+         */
+        TreeNode originalRoot = root;
+
+        /*
+         * Search for the PARENT of the node to delete.
+         *
+         * We need the parent because it must reconnect its
+         * left or right pointer to the replacement subtree.
+         */
+        while (root != null) {
+
+            /*
+             * If the key is smaller than the current value,
+             * the target can only exist in the left subtree.
+             */
+            if (key < root.val) {
+
+                /*
+                 * Before moving left, check whether the immediate
+                 * left child is the node that must be deleted.
+                 *
+                 * root.left != null prevents NullPointerException.
+                 */
+                if (root.left != null && root.left.val == key) {
+
+                    /*
+                     * Delete the left child and reconnect the
+                     * replacement returned by helper().
+                     *
+                     * Read this line as:
+                     *
+                     * "Delete my left child and place the returned
+                     * replacement back into my left pointer."
+                     */
+                    root.left = helper(root.left);
+
+                    // Target is deleted, so stop searching.
+                    break;
+
+                } else {
+
+                    /*
+                     * The immediate left child is not the target.
+                     * Continue searching inside the left subtree.
+                     */
+                    root = root.left;
+                }
+
+            } else {
+
+                /*
+                 * If the key is greater than the current value,
+                 * the target can only exist in the right subtree.
+                 */
+
+                /*
+                 * Before moving right, check whether the immediate
+                 * right child is the target node.
+                 */
+                if (root.right != null && root.right.val == key) {
+
+                    /*
+                     * Delete the right child and reconnect the
+                     * replacement returned by helper().
+                     *
+                     * Read this line as:
+                     *
+                     * "Delete my right child and place the returned
+                     * replacement back into my right pointer."
+                     */
+                    root.right = helper(root.right);
+
+                    // Target is deleted, so stop searching.
+                    break;
+
+                } else {
+
+                    /*
+                     * The immediate right child is not the target.
+                     * Continue searching inside the right subtree.
+                     */
+                    root = root.right;
+                }
+            }
+        }
+
+        /*
+         * Return the original root of the updated tree.
+         *
+         * Even though "root" moved during the search,
+         * originalRoot still points to the top of the BST.
+         */
+        return originalRoot;
+    }
+
+    /**
+     * Deletes the given node and returns the root of the
+     * subtree that should replace the deleted node.
+     */
+    private TreeNode helper(TreeNode root) {
+
+        /*
+         * CASE 1: No left child
+         *
+         * Example:
+         *
+         *      5
+         *       \
+         *        7
+         *
+         * Delete 5:
+         *
+         *      7
+         *
+         * The right child directly replaces the deleted node.
+         *
+         * This condition also handles a leaf node.
+         * For a leaf, root.right is also null, so null is returned.
+         */
+        if (root.left == null) {
+            return root.right;
+        }
+
+        /*
+         * CASE 2: No right child
+         *
+         * Example:
+         *
+         *        5
+         *       /
+         *      3
+         *
+         * Delete 5:
+         *
+         *      3
+         *
+         * The left child directly replaces the deleted node.
+         */
+        if (root.right == null) {
+            return root.left;
+        }
+
+        /*
+         * CASE 3: Both children exist
+         *
+         * Example:
+         *
+         *          5
+         *         / \
+         *        3   8
+         *         \
+         *          4
+         *
+         * We make the left subtree the replacement.
+         *
+         * Before returning the left subtree, attach the original
+         * right subtree to the rightmost node of the left subtree.
+         */
+
+        /*
+         * Save the original right subtree so that it is not lost.
+         */
+        TreeNode rightChild = root.right;
+
+        /*
+         * Find the rightmost node in the left subtree.
+         *
+         * The rightmost node is the largest node present
+         * inside the left subtree.
+         */
+        TreeNode lastRight = findLastRight(root.left);
+
+        /*
+         * Attach the saved right subtree to the rightmost node
+         * of the left subtree.
+         *
+         * Before:
+         *
+         *      3              8
+         *       \
+         *        4
+         *
+         * After:
+         *
+         *      3
+         *       \
+         *        4
+         *         \
+         *          8
+         */
+        lastRight.right = rightChild;
+
+        /*
+         * The reconstructed left subtree now contains both:
+         *
+         * 1. The original left subtree
+         * 2. The original right subtree
+         *
+         * Therefore, return the left subtree as the replacement
+         * for the deleted node.
+         */
+        return root.left;
+    }
+
+    /**
+     * Finds and returns the rightmost node of a subtree.
+     */
+    private TreeNode findLastRight(TreeNode root) {
+
+        /*
+         * Base case:
+         *
+         * If there is no node further toward the right,
+         * the current node is the rightmost node.
+         */
+        if (root.right == null) {
+            return root;
+        }
+
+        /*
+         * Recursive case:
+         *
+         * Continue moving to the right.
+         *
+         * Return whatever rightmost node the deeper
+         * recursive call finds.
+         */
+        return findLastRight(root.right);
+    }
+}
