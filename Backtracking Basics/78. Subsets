@@ -1,0 +1,104 @@
+class Solution {
+
+    public List<List<Integer>> subsets(int[] nums) {
+
+        // This will store the current subset being built.
+        // Example: [], [1], [1,2], etc.
+        List<Integer> curr = new ArrayList<>();
+
+        // This stores all subsets (the final answer).
+        List<List<Integer>> result = new ArrayList<>();
+
+        // Start backtracking from index 0.
+        bt(0, nums, curr, result);
+
+        return result;
+    }
+
+    private void bt(int start,
+                    int[] nums,
+                    List<Integer> curr,
+                    List<List<Integer>> result) {
+
+        // ----------------------------------------------------
+        // IMPORTANT:
+        // Every state of 'curr' is a valid subset.
+        //
+        // Example:
+        // curr = []
+        // curr = [1]
+        // curr = [1,2]
+        // curr = [1,2,3]
+        //
+        // So before exploring further choices,
+        // save the current subset.
+        //
+        // We create a NEW ArrayList because 'curr'
+        // keeps changing during recursion.
+        // ----------------------------------------------------
+        result.add(new ArrayList<>(curr));
+
+
+        // ----------------------------------------------------
+        // Try choosing every available number
+        // starting from 'start'.
+        //
+        // Why start?
+        // To avoid generating duplicates and
+        // to make sure we only move forward.
+        // ----------------------------------------------------
+        for (int i = start; i < nums.length; i++) {
+
+            // ------------------------------------------------
+            // CHOICE:
+            // Pick nums[i] and include it in subset.
+            //
+            // Example:
+            // curr = [1]
+            // nums[i] = 2
+            //
+            // curr becomes [1,2]
+            // ------------------------------------------------
+            curr.add(nums[i]);
+
+
+            // ------------------------------------------------
+            // EXPLORE:
+            // Now continue building subsets
+            // using elements AFTER i.
+            //
+            // Why i + 1 ?
+            //
+            // Because once we use nums[i],
+            // we shouldn't reuse it again.
+            //
+            // Example:
+            // Picked 2 at index 1
+            // Next choices should come from
+            // index 2 onwards.
+            // ------------------------------------------------
+            bt(i + 1, nums, curr, result);
+
+
+            // ------------------------------------------------
+            // UNDO (Backtrack):
+            //
+            // Remove the last chosen element.
+            //
+            // Why?
+            //
+            // So we can explore the next possibility.
+            //
+            // Example:
+            // curr = [1,2]
+            //
+            // After returning:
+            // curr = [1]
+            //
+            // Now we can try:
+            // [1,3]
+            // ------------------------------------------------
+            curr.remove(curr.size() - 1);
+        }
+    }
+}
