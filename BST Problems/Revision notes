@@ -1,0 +1,560 @@
+# BST Problems: Quick Revision Notes
+
+## 1. BST Core Rule
+
+For every node:
+
+```text
+All values in the left subtree  < root.val
+All values in the right subtree > root.val
+```
+
+### Two BST superpowers
+
+```text
+1. Value comparison tells us which direction to move.
+2. Inorder traversal gives values in sorted order.
+```
+
+---
+
+## 2. How to Recognize the Pattern
+
+```text
+Search / Insert / Delete
+→ Compare the target with root.val
+
+Validate BST
+→ Pass an allowed min-max range
+
+Kth smallest / Minimum difference
+→ Use inorder because it is sorted
+
+Recover swapped BST
+→ Find where inorder order breaks
+
+LCA in BST
+→ Check whether both nodes are on the same side
+
+Modify a subtree
+→ Reconnect the root returned by recursion
+```
+
+---
+
+## 3. Search in BST: LeetCode 700
+
+### Pattern
+
+```text
+target == root.val → found
+target < root.val  → search left
+target > root.val  → search right
+```
+
+```java
+class Solution {
+    public TreeNode searchBST(TreeNode root, int val) {
+        if (root == null || root.val == val) {
+            return root;
+        }
+
+        if (val < root.val) {
+            return searchBST(root.left, val);
+        }
+
+        return searchBST(root.right, val);
+    }
+}
+```
+
+### Important return rule
+
+```java
+return searchBST(root.left, val);
+```
+
+The deeper call's answer must travel back through every previous call.
+
+This is wrong:
+
+```java
+searchBST(root.left, val); // Result is ignored
+return null;
+```
+
+---
+
+## 4. Inorder Traversal
+
+```text
+Left → Node → Right
+```
+
+For a BST, this produces sorted order.
+
+```java
+private void inorder(TreeNode root) {
+    if (root == null) {
+        return;
+    }
+
+    inorder(root.left);
+
+    // Process the current node here
+    System.out.println(root.val);
+
+    inorder(root.right);
+}
+```
+
+### Meaning of `prev`
+
+```text
+prev = previously processed node in inorder order
+curr = node currently being processed
+```
+
+`prev` is not necessarily the parent.
+
+---
+
+## 5. Validate BST: LeetCode 98
+
+### Pattern
+
+Every node receives an allowed range:
+
+```text
+min < root.val < max
+```
+
+Moving left:
+
+```text
+Current root becomes the new maximum.
+```
+
+Moving right:
+
+```text
+Current root becomes the new minimum.
+```
+
+```java
+class Solution {
+    public boolean isValidBST(TreeNode root) {
+        return validate(root, Long.MIN_VALUE, Long.MAX_VALUE);
+    }
+
+    private boolean validate(TreeNode root, long min, long max) {
+        if (root == null) {
+            return true;
+        }
+
+        if (root.val <= min || root.val >= max) {
+            return false;
+        }
+
+        return validate(root.left, min, root.val)
+                && validate(root.right, root.val, max);
+    }
+}
+```
+
+### Important mistake
+
+Checking only immediate children is insufficient because every node must also obey restrictions created by its ancestors.
+
+---
+
+## 6. Recover BST: LeetCode 99
+
+### Pattern
+
+A valid BST inorder must be increasing.
+
+Violation:
+
+```java
+prev.val > curr.val
+```
+
+At the first violation:
+
+```text
+first  = prev
+second = curr
+```
+
+At later violations:
+
+```text
+second = curr
+```
+
+Finally, swap `first.val` and `second.val`.
+
+```java
+class Solution {
+    private TreeNode prev;
+    private TreeNode first;
+    private TreeNode second;
+
+    public void recoverTree(TreeNode root) {
+        inorder(root);
+
+        int temp = first.val;
+        first.val = second.val;
+        second.val = temp;
+    }
+
+    private void inorder(TreeNode curr) {
+        if (curr == null) {
+            return;
+        }
+
+        inorder(curr.left);
+
+        if (prev != null && prev.val > curr.val) {
+            if (first == null) {
+                first = prev;
+            }
+
+            second = curr;
+        }
+
+        prev = curr;
+
+        inorder(curr.right);
+    }
+}
+```
+
+### Memory shortcut
+
+```text
+first is assigned only once.
+second is updated whenever a violation occurs.
+```
+
+---
+
+## 7. LCA in BST: LeetCode 235
+
+### Pattern
+
+```text
+Both p and q smaller than root → go left
+Both p and q greater than root → go right
+Otherwise                     → root is LCA
+```
+
+```java
+class Solution {
+    public TreeNode lowestCommonAncestor(
+            TreeNode root,
+            TreeNode p,
+            TreeNode q) {
+
+        while (root != null) {
+            if (p.val < root.val && q.val < root.val) {
+                root = root.left;
+            } else if (p.val > root.val && q.val > root.val) {
+                root = root.right;
+            } else {
+                return root;
+            }
+        }
+
+        return null;
+    }
+}
+```
+
+### Why does `else` give the answer?
+
+It means:
+
+```text
+p and q are on different sides
+OR
+one of them is the current root
+```
+
+Therefore, the current root is where their paths meet.
+
+---
+
+## 8. Insert Into BST: LeetCode 701
+
+### Pattern
+
+Search until a `null` position is found, then create the node.
+
+```java
+class Solution {
+    public TreeNode insertIntoBST(TreeNode root, int val) {
+        if (root == null) {
+            return new TreeNode(val);
+        }
+
+        if (val < root.val) {
+            root.left = insertIntoBST(root.left, val);
+        } else {
+            root.right = insertIntoBST(root.right, val);
+        }
+
+        return root;
+    }
+}
+```
+
+### Why assignment is necessary
+
+```java
+root.left = insertIntoBST(root.left, val);
+```
+
+The recursive call returns the updated left subtree root. The parent must store that returned reference.
+
+---
+
+## 9. Delete Node in BST: LeetCode 450
+
+### Pattern
+
+```text
+Step 1: Search for the node.
+Step 2: Handle its children.
+Step 3: Return the updated subtree root.
+```
+
+### Three deletion cases
+
+```text
+No left child  → return right child
+No right child → return left child
+Two children   → use successor from right subtree
+```
+
+```java
+class Solution {
+    public TreeNode deleteNode(TreeNode root, int key) {
+        if (root == null) {
+            return null;
+        }
+
+        if (key < root.val) {
+            root.left = deleteNode(root.left, key);
+        } else if (key > root.val) {
+            root.right = deleteNode(root.right, key);
+        } else {
+            // Case 1: No left child
+            if (root.left == null) {
+                return root.right;
+            }
+
+            // Case 2: No right child
+            if (root.right == null) {
+                return root.left;
+            }
+
+            // Case 3: Two children
+            TreeNode successor = findMin(root.right);
+
+            // Copy successor value
+            root.val = successor.val;
+
+            // Remove original successor node
+            root.right = deleteNode(root.right, successor.val);
+        }
+
+        return root;
+    }
+
+    private TreeNode findMin(TreeNode root) {
+        while (root.left != null) {
+            root = root.left;
+        }
+
+        return root;
+    }
+}
+```
+
+### Why reconnect the return value?
+
+```java
+root.left = deleteNode(root.left, key);
+```
+
+Deletion may change the root of the left subtree. The parent must update its pointer to that new root.
+
+---
+
+## 10. Kth Smallest in BST: LeetCode 230
+
+### Pattern
+
+```text
+Inorder is sorted.
+Count nodes as they are visited.
+The kth visited node is the kth smallest.
+```
+
+```java
+class Solution {
+    private int count;
+    private int answer;
+
+    public int kthSmallest(TreeNode root, int k) {
+        inorder(root, k);
+        return answer;
+    }
+
+    private void inorder(TreeNode root, int k) {
+        if (root == null || count >= k) {
+            return;
+        }
+
+        inorder(root.left, k);
+
+        count++;
+
+        if (count == k) {
+            answer = root.val;
+            return;
+        }
+
+        inorder(root.right, k);
+    }
+}
+```
+
+---
+
+## 11. Master Return Rules
+
+### Rule 1: Return recursive result directly
+
+Use when recursion itself finds the final answer:
+
+```java
+return searchBST(root.left, val);
+```
+
+### Rule 2: Assign recursive result
+
+Use when recursion may change a subtree:
+
+```java
+root.left = insertIntoBST(root.left, val);
+root.right = deleteNode(root.right, key);
+```
+
+### Rule 3: Call recursion without returning
+
+Use when recursion only updates shared state:
+
+```java
+inorder(root.left);
+```
+
+Examples of shared state:
+
+```text
+prev, first, second, count, answer
+```
+
+### Rule 4: Return `root`
+
+Use when the function must send the current or updated subtree back to its parent:
+
+```java
+return root;
+```
+
+---
+
+## 12. Final BST Cheat Sheet
+
+```text
+BST search direction:
+target < root → left
+target > root → right
+
+BST inorder:
+Left → Node → Right
+Result is sorted.
+
+Validate:
+Pass min and max range.
+
+Recover:
+Find prev.val > curr.val.
+
+LCA:
+Both left  → move left
+Both right → move right
+Split      → current node is LCA
+
+Insert:
+Find null, create node, reconnect return value.
+
+Delete:
+0 children → null
+1 child    → return the child
+2 children → copy successor, delete successor
+
+Kth smallest:
+Inorder plus counter.
+```
+
+---
+
+## 13. Complexity
+
+Let `h` be the tree height.
+
+```text
+Search:   O(h)
+Insert:   O(h)
+Delete:   O(h)
+LCA:      O(h)
+
+Validate: O(n)
+Recover:  O(n)
+Kth:      O(h + k) with early stopping
+```
+
+```text
+Balanced BST: h ≈ log n
+Skewed BST:   h = n
+```
+
+---
+
+## 14. Five Questions to Ask in an Interview
+
+```text
+1. Can BST ordering eliminate one subtree?
+2. Does the problem require sorted inorder order?
+3. Does each node need a min-max range?
+4. Can recursion change the subtree root?
+5. Must the recursive answer be returned, assigned, or only used to update state?
+```
+
+---
+
+## One-Line Pattern Map
+
+```text
+Search   → Compare and move
+Validate → Allowed range
+Recover  → Broken inorder
+LCA      → Same side or split
+Insert   → Find null and connect
+Delete   → Search and restructure
+Kth      → Inorder and count
+```
