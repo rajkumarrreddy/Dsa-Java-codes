@@ -1,0 +1,118 @@
+import java.util.ArrayList;
+import java.util.List;
+
+class Solution {
+
+    public List<List<Integer>> permute(int[] nums) {
+
+        // Stores all the completed permutations.
+        //
+        // Example for nums = [1, 2, 3\]:
+        // [
+        //   [1, 2, 3],
+        //   [1, 3, 2],
+        //   [2, 1, 3],
+        //   [2, 3, 1],
+        //   [3, 1, 2],
+        //   [3, 2, 1]
+        // ]
+        List<List<Integer>> result = new ArrayList<>();
+
+        // Stores the permutation that we are currently building.
+        //
+        // It changes during recursion:
+        // [] -> [1] -> [1, 2] -> [1, 2, 3]
+        List<Integer> curr = new ArrayList<>();
+
+        // Start generating permutations.
+        backtrack(nums, curr, result);
+
+        // Return all the generated permutations.
+        return result;
+    }
+
+    private void backtrack(
+        int[] nums,
+        List<Integer> curr,
+        List<List<Integer>> result
+    ) {
+
+        // BASE CASE:
+        // If curr contains the same number of elements as nums,
+        // we have created one complete permutation.
+        //
+        // Example:
+        // nums = [1, 2, 3]
+        // curr = [2, 1, 3]
+        if (curr.size() == nums.length) {
+
+            // Add a COPY of curr into result.
+            //
+            // We must add a copy because the original curr will
+            // continue changing during backtracking.
+            result.add(new ArrayList<>(curr));
+
+            // This permutation is complete, so return to
+            // the previous recursive call.
+            return;
+        }
+
+        // Try every number as the choice for the current position.
+        //
+        // Important:
+        // Every recursive call gets its own loop,
+        // and every loop starts from i = 0.
+        for (int i = 0; i < nums.length; i++) {
+
+            // If nums[i] is already present in curr,
+            // we cannot select it again.
+            //
+            // Example:
+            // curr = [1, 2]
+            //
+            // nums[i] = 1 -> already used -> continue
+            // nums[i] = 2 -> already used -> continue
+            // nums[i] = 3 -> available -> select it
+            if (curr.contains(nums[i])) {
+
+                // Skip the remaining code in this iteration
+                // and move to the next value of i.
+                continue;
+            }
+
+            // STEP 1: CHOOSE
+            //
+            // Add the available number to the current permutation.
+            //
+            // Example:
+            // curr = [1, 2]
+            // nums[i] = 3
+            //
+            // After adding:
+            // curr = [1, 2, 3]
+            curr.add(nums[i]);
+
+            // STEP 2: EXPLORE
+            //
+            // Recursively fill the next position.
+            //
+            // The current function pauses here until this
+            // recursive call completely finishes.
+            backtrack(nums, curr, result);
+
+            // STEP 3: UNDO / BACKTRACK
+            //
+            // Remove the number that this loop iteration added.
+            //
+            // Example:
+            // curr = [1, 2, 3]
+            //
+            // After removing the last element:
+            // curr = [1, 2]
+            //
+            // This restores curr so the loop can try another
+            // number in the same position.
+            curr.remove(curr.size() - 1);
+        }
+    }
+}
