@@ -1,0 +1,134 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+class Solution {
+
+    public List<List<Integer>> subsetsWithDup(int[] nums) {
+
+        // Stores all unique subsets.
+        // Example for [1,2,2\]:
+        // [[], [1], [1,2], [1,2,2], [2], [2,2]]
+        List<List<Integer>> result = new ArrayList<>();
+
+        // Stores the subset that we are currently building.
+        // It changes during backtracking:
+        // [] -> [1] -> [1,2] -> [1,2,2]
+        List<Integer> curr = new ArrayList<>();
+
+        /*
+         * Sort the array so duplicate values are next to each other.
+         *
+         * Example:
+         * Before: [2,1,2]
+         * After:  [1,2,2]
+         *
+         * This allows us to detect duplicates using:
+         * nums[i] == nums[i - 1]
+         */
+        Arrays.sort(nums);
+
+        // Start creating subsets from index 0.
+        backtrack(0, nums, curr, result);
+
+        return result;
+    }
+
+    private void backtrack(
+            int start,
+            int[] nums,
+            List<Integer> curr,
+            List<List<Integer>> result
+    ) {
+
+        /*
+         * Every version of curr is a valid subset.
+         *
+         * Initially:
+         * curr = []
+         *
+         * So the empty subset is added first.
+         *
+         * Later, curr may be:
+         * [1]
+         * [1,2]
+         * [1,2,2]
+         * [2]
+         * [2,2]
+         */
+        result.add(new ArrayList<>(curr));
+
+        /*
+         * Try every number from "start" onward.
+         *
+         * We begin from start instead of 0 because subsets move
+         * only forward through the array.
+         *
+         * This prevents arrangements such as [2,1] after already
+         * creating [1,2]. In subsets, order does not matter.
+         */
+        for (int i = start; i < nums.length; i++) {
+
+            /*
+             * Skip duplicate choices at the SAME decision level.
+             *
+             * Example:
+             * nums = [1,2A,2B]
+             *
+             * From curr = [], choosing 2A creates the [2] branch.
+             * Choosing 2B would create another identical [2] branch.
+             *
+             * i > start:
+             * This means the current number is not the first choice
+             * examined in this recursive call.
+             *
+             * nums[i] == nums[i - 1\]:
+             * This means the current value is the same as
+             * the previous value.
+             *
+             * Therefore, the previous identical number has already
+             * represented this choice at the current level.
+             */
+            if (i > start && nums[i] == nums[i - 1]) {
+                continue;
+            }
+
+            /*
+             * CHOOSE:
+             * Add nums[i] to the current subset.
+             *
+             * Example:
+             * curr = [1]
+             * nums[i] = 2
+             *
+             * After adding:
+             * curr = [1,2]
+             */
+            curr.add(nums[i]);
+
+            /*
+             * EXPLORE:
+             * Build larger subsets using elements after index i.
+             *
+             * We pass i + 1 because an array element cannot be
+             * selected again in the same subset.
+             */
+            backtrack(i + 1, nums, curr, result);
+
+            /*
+             * UNDO:
+             * Remove the number we just added.
+             *
+             * Example:
+             * curr = [1,2]
+             *
+             * After removing the last element:
+             * curr = [1]
+             *
+             * This restores curr to its previous state so the loop
+             * can try another number.
+             */
+            curr.remove(curr.size() - 1);
+        }
+    }
+}
