@@ -1,0 +1,89 @@
+class Solution {
+
+    public List<List<Integer>> combinationSum(int[] candidates, int target) {
+
+        // Stores all valid combinations found so far
+        List<List<Integer>> result = new ArrayList<>();
+
+        // Current combination being built
+        List<Integer> curr = new ArrayList<>();
+
+        // Start backtracking from index 0
+        backtrack(0, candidates, target, curr, result);
+
+        return result;
+    }
+
+    private void backtrack(
+            int start,                 // Index from where we can choose numbers
+            int[] candidates,
+            int remaining,             // How much target is still left to achieve
+            List<Integer> curr,
+            List<List<Integer>> result
+    ) {
+
+        // Base Case:
+        // If remaining becomes 0,
+        // current combination exactly forms the target
+        if (remaining == 0) {
+
+            // Add a COPY of curr into result
+            // We must create a new ArrayList because
+            // curr will keep changing during backtracking
+            result.add(new ArrayList<>(curr));
+
+            return;
+        }
+
+        // Try every candidate starting from 'start'
+        for (int i = start; i < candidates.length; i++) {
+
+            // If current number is larger than the remaining target,
+            // choosing it would make the sum exceed the target
+            if (candidates[i] > remaining) {
+                continue;
+            }
+
+            // ---------------- CHOOSE ----------------
+
+            // Add current candidate into our path
+            curr.add(candidates[i]);
+
+            // Explore deeper
+
+            // IMPORTANT:
+            // We pass 'i' (not i+1)
+
+            // Why?
+
+            // Because the same number can be used
+            // unlimited times.
+
+            // Example:
+            // target = 7
+            // candidates = [2,3,6,7]
+
+            // If we choose 2,
+            // we should still be allowed to choose 2 again.
+
+            backtrack(
+                    i,
+                    candidates,
+                    remaining - candidates[i],
+                    curr,
+                    result
+            );
+
+            // ---------------- UNDO ----------------
+
+            // Remove the number we just added
+
+            // This restores curr to the state it had
+            // before choosing candidates[i]
+
+            // This allows the loop to try the next choice
+
+            curr.remove(curr.size() - 1);
+        }
+    }
+}
