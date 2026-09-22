@@ -1,0 +1,148 @@
+import java.util.*;
+
+class Solution {
+
+    public List<List<Integer>> combinationSum2(int[] candidates, int target) {
+
+        /*
+         * Sorting is necessary for two reasons:
+         *
+         * 1. Duplicate values come next to each other.
+         *    Example:
+         *    [10, 1, 2, 7, 6, 1, 5]
+         *          becomes
+         *    [1, 1, 2, 5, 6, 7, 10]
+         *
+         * 2. If one number becomes greater than the remaining target,
+         *    all numbers after it will also be greater.
+         */
+        Arrays.sort(candidates);
+
+        /*
+         * res stores all valid combinations.
+         *
+         * Example:
+         * [
+         *   [1, 1, 6],
+         *   [1, 2, 5],
+         *   [1, 7],
+         *   [2, 6]
+         * ]
+         */
+        List<List<Integer>> res = new ArrayList<>();
+
+        /*
+         * curr stores the combination that we are currently building.
+         *
+         * Example:
+         * []
+         * [1]
+         * [1, 2]
+         * [1, 2, 5]
+         */
+        List<Integer> curr = new ArrayList<>();
+
+        /*
+         * Start backtracking:
+         *
+         * rem = target because nothing has been selected yet.
+         * start = 0 because we can initially consider every index.
+         */
+        bt(candidates, target, 0, curr, res);
+
+        return res;
+    }
+
+    private void bt(
+        int[] candidates,
+        int rem,
+        int start,
+        List<Integer> curr,
+        List<List<Integer>> res
+    ) {
+
+        /*
+         * rem tells us how much more sum is required.
+         *
+         * If rem becomes 0, the numbers inside curr add up
+         * exactly to the original target.
+         *
+         * We add a COPY of curr because curr will continue
+         * changing during backtracking.
+         */
+        if (rem == 0) {
+            res.add(new ArrayList<>(curr));
+            return;
+        }
+
+        /*
+         * Start from 'start', not from 0.
+         *
+         * This prevents us from going backward and reusing
+         * elements that have already been considered.
+         */
+        for (int i = start; i < candidates.length; i++) {
+
+            /*
+             * Skip duplicate choices at the SAME recursion level.
+             *
+             * i > start:
+             * This means the current element is not the first option
+             * being considered at this recursion level.
+             *
+             * candidates[i] == candidates[i - 1\]:
+             * The current number is the same as the previous number.
+             *
+             * Choosing it would create the same branch again,
+             * so we skip it.
+             */
+            if (i > start && candidates[i] == candidates[i - 1]) {
+                continue;
+            }
+
+            /*
+             * If the current number is greater than the remaining target,
+             * we cannot select it.
+             *
+             * Since candidates is sorted, all elements after it will
+             * also be greater than rem. Therefore, we can completely
+             * stop this loop using break.
+             */
+            if (candidates[i] > rem) {
+                break;
+            }
+
+            /*
+             * CHOOSE:
+             * Add the current candidate to the combination.
+             */
+            curr.add(candidates[i]);
+
+            /*
+             * EXPLORE:
+             *
+             * rem - candidates[i\]:
+             * Reduce the remaining target by the chosen number.
+             *
+             * i + 1:
+             * Continue from the next index because every array position
+             * can be used only once.
+             */
+            bt(
+                candidates,
+                rem - candidates[i],
+                i + 1,
+                curr,
+                res
+            );
+
+            /*
+             * UNDO:
+             *
+             * Remove the number we just selected so that the current
+             * function call's loop can try another candidate.
+             */
+            curr.remove(curr.size() - 1);
+        }
+    }
+}
