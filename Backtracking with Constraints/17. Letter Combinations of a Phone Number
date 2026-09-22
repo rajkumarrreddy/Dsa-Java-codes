@@ -1,0 +1,80 @@
+import java.util.ArrayList;
+import java.util.List;
+
+class Solution {
+
+    public List<String> letterCombinations(String digits) {
+
+        List<String> result = new ArrayList<>();
+
+        // Handle empty input
+        if (digits == null || digits.length() == 0) {
+            return result;
+        }
+
+        // Index represents the digit.
+        // Value represents the letters mapped to that digit.
+        String[] mapping = {
+            "",     // 0
+            "",     // 1
+            "abc",  // 2
+            "def",  // 3
+            "ghi",  // 4
+            "jkl",  // 5
+            "mno",  // 6
+            "pqrs", // 7
+            "tuv",  // 8
+            "wxyz"  // 9
+        };
+
+        StringBuilder current = new StringBuilder();
+
+        backtrack(0, digits, mapping, current, result);
+
+        return result;
+    }
+
+    private void backtrack(
+        int index,
+        String digits,
+        String[] mapping,
+        StringBuilder current,
+        List<String> result
+    ) {
+
+        // Base case:
+        // We selected one letter for every digit.
+        if (index == digits.length()) {
+            result.add(current.toString());
+            return;
+        }
+
+        // Convert the current digit character into an integer.
+        // Example: '2' - '0' = 2
+        int digit = digits.charAt(index) - '0';
+
+        // Get all letters mapped to the current digit.
+        String letters = mapping[digit];
+
+        // Try every possible letter for the current digit.
+        for (int i = 0; i < letters.length(); i++) {
+
+            char letter = letters.charAt(i);
+
+            // Choose
+            current.append(letter);
+
+            // Explore choices for the next digit
+            backtrack(
+                index + 1,
+                digits,
+                mapping,
+                current,
+                result
+            );
+
+            // Undo the choice so that we can try another letter
+            current.deleteCharAt(current.length() - 1);
+        }
+    }
+}
