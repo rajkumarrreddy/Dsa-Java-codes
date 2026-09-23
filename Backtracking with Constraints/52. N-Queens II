@@ -1,0 +1,214 @@
+class Solution {
+
+    public int totalNQueens(int n) {
+
+        // Create an n x n chessboard.
+        // Each cell will contain either:
+        // '.' = empty position
+        // 'Q' = queen
+        char[][] board = new char[n][n];
+
+        // Initially, Java fills a char array with null characters.
+        // We replace them with '.' to represent empty positions.
+        for (int row = 0; row < n; row++) {
+            Arrays.fill(board[row], '.');
+        }
+
+        // Start placing queens from row 0.
+        // The backtrack method returns the total number
+        // of valid N-Queens arrangements.
+        return backtrack(0, board);
+    }
+
+    private int backtrack(int row, char[][] board) {
+
+        /*
+         * BASE CASE:
+         *
+         * Valid row indexes are:
+         * 0, 1, 2, ..., board.length - 1
+         *
+         * If row becomes equal to board.length,
+         * we have successfully placed one queen in every row.
+         *
+         * Therefore, this path represents one valid arrangement,
+         * so we return 1.
+         */
+        if (row == board.length) {
+            return 1;
+        }
+
+        // Stores how many valid arrangements can be created
+        // starting from the current row.
+        int count = 0;
+
+        /*
+         * Try placing a queen in every column of the current row.
+         *
+         * The row remains fixed.
+         * Only the column changes.
+         *
+         * For example, if row = 2:
+         *
+         * Try (2,0), (2,1), (2,2), and so on.
+         */
+        for (int col = 0; col < board.length; col++) {
+
+            /*
+             * Check whether placing a queen at the current
+             * row and column is safe.
+             *
+             * If it is not safe, skip this column and
+             * continue to the next column.
+             */
+            if (!isSafe(row, col, board)) {
+                continue;
+            }
+
+            /*
+             * CHOOSE:
+             *
+             * The position is safe, so place a queen.
+             */
+            board[row][col] = 'Q';
+
+            /*
+             * EXPLORE:
+             *
+             * After placing a queen in the current row,
+             * recursively try to place a queen in the next row.
+             *
+             * The recursive call returns the number of valid
+             * arrangements found from the next row.
+             *
+             * Add that number to the current count.
+             */
+            count += backtrack(row + 1, board);
+
+            /*
+             * UNDO / BACKTRACK:
+             *
+             * Remove the queen that we placed.
+             *
+             * This restores the board so we can try placing
+             * the queen in another column of the current row.
+             */
+            board[row][col] = '.';
+        }
+
+        /*
+         * Return the total number of valid arrangements
+         * discovered from the current row.
+         */
+        return count;
+    }
+
+    private boolean isSafe(
+        int row,
+        int col,
+        char[][] board
+    ) {
+
+        /*
+         * Queens are placed row by row from top to bottom.
+         *
+         * Therefore, when checking a new position,
+         * lower rows are still empty.
+         *
+         * We only need to check:
+         *
+         * 1. Same column upward
+         * 2. Upper-left diagonal
+         * 3. Upper-right diagonal
+         */
+
+        /*
+         * CHECK 1: Same column upward
+         *
+         * The column remains fixed as 'col'.
+         * Only the row changes.
+         *
+         * Start one row above the proposed position
+         * and continue moving upward.
+         */
+        for (int r = row - 1; r >= 0; r--) {
+
+            // If a queen exists in the same column,
+            // it can attack the proposed position vertically.
+            if (board[r][col] == 'Q') {
+                return false;
+            }
+        }
+
+        /*
+         * CHECK 2: Upper-left diagonal
+         *
+         * To move upper-left:
+         *
+         * Row decreases    -> r--
+         * Column decreases -> c--
+         *
+         * Example:
+         *
+         * (3,3) -> (2,2) -> (1,1) -> (0,0)
+         */
+        for (
+            int r = row - 1, c = col - 1;
+            r >= 0 && c >= 0;
+            r--, c--
+        ) {
+
+            // Both row and column are changing,
+            // so we check board[r][c].
+            if (board[r][c] == 'Q') {
+                return false;
+            }
+        }
+
+        /*
+         * CHECK 3: Upper-right diagonal
+         *
+         * To move upper-right:
+         *
+         * Row decreases    -> r--
+         * Column increases -> c++
+         *
+         * Example:
+         *
+         * (3,0) -> (2,1) -> (1,2) -> (0,3)
+         */
+        for (
+            int r = row - 1, c = col + 1;
+
+            /*
+             * r >= 0 prevents the row from moving
+             * above the chessboard.
+             *
+             * c < board.length prevents the column
+             * from moving beyond the right boundary.
+             *
+             * For n = 4, valid column indexes are:
+             * 0, 1, 2, and 3.
+             */
+            r >= 0 && c < board.length;
+
+            // Move one position upward and one position right.
+            r--, c++
+        ) {
+
+            // If a queen exists on this diagonal,
+            // the proposed position is unsafe.
+            if (board[r][c] == 'Q') {
+                return false;
+            }
+        }
+
+        /*
+         * We did not find a queen in the same column,
+         * upper-left diagonal, or upper-right diagonal.
+         *
+         * Therefore, placing a queen here is safe.
+         */
+        return true;
+    }
+}
