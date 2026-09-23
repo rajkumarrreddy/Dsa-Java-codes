@@ -1,0 +1,240 @@
+class Solution {
+
+    public List<List<String>> solveNQueens(int n) {
+
+        // Stores all valid N-Queens board configurations.
+        // Each List<String> represents one complete board.
+        List<List<String>> result = new ArrayList<>();
+
+        // Create an n x n chessboard.
+        // We use char[][] because placing and removing queens
+        // is easier by directly changing individual positions.
+        char[][] board = new char[n][n];
+
+        // Initially, fill every position with '.'
+        // '.' means the position is empty.
+        for (int row = 0; row < n; row++) {
+            Arrays.fill(board[row], '.');
+        }
+
+        // Start backtracking from row 0.
+        // Our goal is to place exactly one queen in every row.
+        backtrack(0, board, result);
+
+        // Return all valid board configurations.
+        return result;
+    }
+
+    private void backtrack(
+        int row,
+        char[][] board,
+        List<List<String>> result
+    ) {
+
+        /*
+         * BASE CASE:
+         *
+         * If row becomes equal to board.length, it means
+         * we successfully placed one queen in every row.
+         *
+         * For an n x n board, valid row indexes are:
+         * 0, 1, 2, ..., n - 1
+         *
+         * Therefore, row == n means all rows are completed.
+         */
+        if (row == board.length) {
+
+            // Convert the current char[][] board into List<String>
+            // and store it as one valid answer.
+            result.add(createBoard(board));
+
+            // Stop this recursive path because the board is complete.
+            return;
+        }
+
+        /*
+         * Try placing the queen in every column of the current row.
+         *
+         * The row remains fixed during this loop.
+         * Only the column changes.
+         *
+         * Example for row 2:
+         *
+         * Try (2,0), then (2,1), then (2,2), and so on.
+         */
+        for (int col = 0; col < board.length; col++) {
+
+            /*
+             * Before placing a queen, check whether another queen
+             * can attack this position.
+             *
+             * If the position is not safe, skip this column
+             * and move to the next column.
+             */
+            if (!isSafe(row, col, board)) {
+                continue;
+            }
+
+            /*
+             * CHOOSE:
+             *
+             * The current position is safe, so place a queen here.
+             */
+            board[row][col] = 'Q';
+
+            /*
+             * EXPLORE:
+             *
+             * We have placed a queen in the current row.
+             * Now recursively try to place a queen in the next row.
+             *
+             * row + 1 moves us one level deeper in the recursion.
+             */
+            backtrack(row + 1, board, result);
+
+            /*
+             * UNDO / BACKTRACK:
+             *
+             * Remove the queen that we placed earlier.
+             *
+             * Why?
+             * After exploring this choice, we must restore the board
+             * so that the loop can try another column in the same row.
+             */
+            board[row][col] = '.';
+        }
+    }
+
+    private boolean isSafe(
+        int row,
+        int col,
+        char[][] board
+    ) {
+
+        /*
+         * We only check upward because queens are placed
+         * row by row, from top to bottom.
+         *
+         * Therefore, when checking the current position:
+         *
+         * - Previous rows may contain queens.
+         * - The current row does not have a queen yet.
+         * - Lower rows are still empty.
+         *
+         * We check three directions:
+         *
+         * 1. Same column upward
+         * 2. Upper-left diagonal
+         * 3. Upper-right diagonal
+         */
+
+        /*
+         * CHECK 1: Same column upward
+         *
+         * The column stays fixed as 'col'.
+         * Only the row moves upward.
+         *
+         * r-- means:
+         * row - 1, row - 2, row - 3, ...
+         */
+        for (int r = row - 1; r >= 0; r--) {
+
+            // If a queen exists in the same column,
+            // it can attack the proposed position vertically.
+            if (board[r][col] == 'Q') {
+                return false;
+            }
+        }
+
+        /*
+         * CHECK 2: Upper-left diagonal
+         *
+         * To move upper-left:
+         *
+         * Row decreases    -> r--
+         * Column decreases -> c--
+         *
+         * Example:
+         * (3,3) -> (2,2) -> (1,1) -> (0,0)
+         */
+        for (
+            int r = row - 1, c = col - 1;
+            r >= 0 && c >= 0;
+            r--, c--
+        ) {
+
+            // Use board[r][c] because both the row
+            // and column are changing diagonally.
+            if (board[r][c] == 'Q') {
+                return false;
+            }
+        }
+
+        /*
+         * CHECK 3: Upper-right diagonal
+         *
+         * To move upper-right:
+         *
+         * Row decreases    -> r--
+         * Column increases -> c++
+         *
+         * Example:
+         * (3,0) -> (2,1) -> (1,2) -> (0,3)
+         */
+        for (
+            int r = row - 1, c = col + 1;
+
+            /*
+             * r >= 0:
+             * Prevents us from going above the board.
+             *
+             * c < board.length:
+             * Prevents us from going beyond the right side.
+             *
+             * If n = 4, valid column indexes are 0, 1, 2, 3.
+             * Therefore, c must always remain smaller than 4.
+             */
+            r >= 0 && c < board.length;
+
+            // Move one position upward and one position right.
+            r--, c++
+        ) {
+
+            // If we find a queen on the upper-right diagonal,
+            // the proposed position is not safe.
+            if (board[r][c] == 'Q') {
+                return false;
+            }
+        }
+
+        /*
+         * If no queen was found in any of the three directions,
+         * the current position is safe for placing a queen.
+         */
+        return true;
+    }
+
+    private List<String> createBoard(char[][] board) {
+
+        // This list will represent one completed board.
+        List<String> solution = new ArrayList<>();
+
+        /*
+         * Convert every char[] row into a String.
+         *
+         * Example:
+         *
+         * char[] row = {'.', 'Q', '.', '.'}
+         *
+         * becomes:
+         *
+         * ".Q.."
+         */
+        for (char[] row : board) {
+            solution.add(new String(row));
+        }
+
+        // Return the converted board.
+        return solution;
+    }
+}
