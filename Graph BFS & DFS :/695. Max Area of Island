@@ -1,0 +1,95 @@
+class Solution {
+
+    public int maxAreaOfIsland(int[][] grid) {
+
+        // Stores the largest island area found so far.
+        // If the grid has no land, it will remain 0.
+        int maxArea = 0;
+
+        // Visit every row in the grid.
+        for (int row = 0; row < grid.length; row++) {
+
+            // Visit every column in the current row.
+            for (int col = 0; col < grid[0].length; col++) {
+
+                // If this cell contains 1, we have found land.
+                //
+                // Since previously visited islands are changed from 1 to 0,
+                // finding a 1 here means this is the starting point of a
+                // new island that has not yet been explored.
+                if (grid[row][col] == 1) {
+
+                    // DFS explores the complete connected island.
+                    //
+                    // Unlike Number of Islands, this DFS returns an integer:
+                    // the total number of land cells in this island.
+                    int currentArea = dfs(row, col, grid);
+
+                    // Compare the current island's area with the largest
+                    // island area found previously.
+                    maxArea = Math.max(maxArea, currentArea);
+                }
+            }
+        }
+
+        // After checking every cell, return the largest area found.
+        return maxArea;
+    }
+
+    private int dfs(int row, int col, int[][] grid) {
+
+        // Stop the recursion if the current position is invalid.
+        //
+        // row < 0:
+        // We moved above the first row.
+        //
+        // col < 0:
+        // We moved to the left of the first column.
+        //
+        // row >= grid.length:
+        // We moved below the final row.
+        //
+        // col >= grid[0].length:
+        // We moved to the right of the final column.
+        //
+        // grid[row][col] == 0:
+        // The cell is either water or land that we already visited.
+        if (row < 0
+                || col < 0
+                || row >= grid.length
+                || col >= grid[0].length
+                || grid[row][col] == 0) {
+
+            // An invalid cell or water contributes nothing to the area.
+            return 0;
+        }
+
+        // Mark this land cell as visited by changing it from 1 to 0.
+        //
+        // This prevents the same cell from being counted multiple times.
+        // It also prevents neighboring cells from calling each other forever.
+        grid[row][col] = 0;
+
+        // Start with 1 because the current cell itself is one land cell.
+        //
+        // Each DFS call explores one direction and returns the number
+        // of connected land cells found in that direction.
+        //
+        // row - 1: move up
+        // row + 1: move down
+        // col - 1: move left
+        // col + 1: move right
+        //
+        // Total island area =
+        // current cell
+        // + area above
+        // + area below
+        // + area on the left
+        // + area on the right
+        return 1
+                + dfs(row - 1, col, grid)
+                + dfs(row + 1, col, grid)
+                + dfs(row, col - 1, grid)
+                + dfs(row, col + 1, grid);
+    }
+}
