@@ -1,0 +1,590 @@
+# Graph BFS and DFS: Major LeetCode Patterns
+
+## Core Idea
+
+```text
+DFS → Goes deeply into one path before returning
+BFS → Explores nodes level by level
+```
+
+A graph problem may be hidden as:
+
+```text
+Grid cells       → Nodes
+Cell movement    → Edges
+
+Courses          → Nodes
+Prerequisites    → Directed edges
+
+Words            → Nodes
+Transformations  → Edges
+```
+
+---
+
+# 1. Basic DFS Traversal
+
+## Use When
+
+- Exploring all reachable nodes
+- Marking connected nodes
+- Flood fill
+- Processing one complete component
+
+```java
+private void dfs(
+    int node,
+    List<List<Integer>> graph,
+    boolean[] visited
+) {
+    visited[node] = true;
+
+    for (int neighbor : graph.get(node)) {
+        if (!visited[neighbor]) {
+            dfs(neighbor, graph, visited);
+        }
+    }
+}
+```
+
+## Important Rule
+
+```text
+Mark the node visited before exploring its neighbors.
+```
+
+---
+
+# 2. Basic BFS Traversal
+
+## Use When
+
+- Exploring level by level
+- Finding minimum steps
+- Finding the shortest path in an unweighted graph
+
+```java
+private void bfs(
+    int start,
+    List<List<Integer>> graph,
+    boolean[] visited
+) {
+    Queue<Integer> queue = new ArrayDeque<>();
+
+    visited[start] = true;
+    queue.offer(start);
+
+    while (!queue.isEmpty()) {
+        int node = queue.poll();
+
+        for (int neighbor : graph.get(node)) {
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                queue.offer(neighbor);
+            }
+        }
+    }
+}
+```
+
+## Important Rule
+
+```text
+Mark a node visited when adding it to the queue,
+not when removing it.
+```
+
+---
+
+# 3. Connected Components
+
+## Recognition
+
+Look for:
+
+- Number of islands
+- Number of provinces
+- Number of connected groups
+- Number of separate networks
+
+## Pattern
+
+```java
+int components = 0;
+boolean[] visited = new boolean[n];
+
+for (int node = 0; node < n; node++) {
+    if (!visited[node]) {
+        components++;
+        dfs(node, graph, visited);
+    }
+}
+```
+
+## Mental Model
+
+```text
+Outer loop → Finds a new component
+DFS/BFS    → Explores the complete component
+```
+
+## Problems
+
+- 200. Number of Islands
+- 547. Number of Provinces
+
+---
+
+# 4. Grid DFS
+
+## Recognition
+
+Look for:
+
+- Islands
+- Connected cells
+- Flood fill
+- Area of a region
+- Surrounded regions
+
+## Pattern
+
+```java
+private void dfs(int row, int col, int[][] grid) {
+    if (
+        row < 0 ||
+        col < 0 ||
+        row >= grid.length ||
+        col >= grid[0].length ||
+        grid[row][col] == 0
+    ) {
+        return;
+    }
+
+    // Mark the cell as visited.
+    grid[row][col] = 0;
+
+    dfs(row - 1, col, grid);
+    dfs(row + 1, col, grid);
+    dfs(row, col - 1, grid);
+    dfs(row, col + 1, grid);
+}
+```
+
+## Mental Model
+
+```text
+Each cell = Node
+Valid movement = Edge
+```
+
+## Problems
+
+- 733. Flood Fill
+- 200. Number of Islands
+- 695. Max Area of Island
+
+---
+
+# 5. Component Size / Maximum Area
+
+## Recognition
+
+Look for:
+
+- Size of a connected component
+- Maximum island area
+- Largest connected region
+
+## Pattern
+
+```java
+private int dfs(int row, int col, int[][] grid) {
+    if (
+        row < 0 ||
+        col < 0 ||
+        row >= grid.length ||
+        col >= grid[0].length ||
+        grid[row][col] == 0
+    ) {
+        return 0;
+    }
+
+    grid[row][col] = 0;
+
+    return 1
+        + dfs(row - 1, col, grid)
+        + dfs(row + 1, col, grid)
+        + dfs(row, col - 1, grid)
+        + dfs(row, col + 1, grid);
+}
+```
+
+## Important Point
+
+```java
+return 1 + ...
+```
+
+The `1` counts the current cell.
+
+## Problem
+
+- 695. Max Area of Island
+
+---
+
+# 6. Shortest Path in an Unweighted Graph
+
+## Recognition
+
+Look for:
+
+- Minimum steps
+- Minimum moves
+- Shortest path
+- Fewest transformations
+- Nearest destination
+
+## Algorithm
+
+```text
+Use BFS
+```
+
+## Pattern
+
+```java
+Queue<Integer> queue = new ArrayDeque<>();
+boolean[] visited = new boolean[n];
+
+queue.offer(start);
+visited[start] = true;
+
+int distance = 0;
+
+while (!queue.isEmpty()) {
+    int size = queue.size();
+
+    for (int i = 0; i < size; i++) {
+        int node = queue.poll();
+
+        if (node == destination) {
+            return distance;
+        }
+
+        for (int neighbor : graph.get(node)) {
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                queue.offer(neighbor);
+            }
+        }
+    }
+
+    distance++;
+}
+
+return -1;
+```
+
+## Important Rule
+
+```text
+One complete BFS level = One unit of distance
+```
+
+## Problems
+
+- 1091. Shortest Path in Binary Matrix
+- 127. Word Ladder
+- 752. Open the Lock
+
+---
+
+# 7. Multi-Source BFS
+
+## Recognition
+
+Look for:
+
+- Multiple starting sources
+- Infection or fire spreading
+- Rotting happening simultaneously
+- Distance from the nearest source
+- Minimum time until everything changes
+
+## Main Idea
+
+Add all starting sources to the queue before beginning BFS.
+
+```java
+Queue<int[]> queue = new ArrayDeque<>();
+
+for (int row = 0; row < rows; row++) {
+    for (int col = 0; col < cols; col++) {
+        if (grid[row][col] == SOURCE) {
+            queue.offer(new int[]{row, col});
+        }
+    }
+}
+```
+
+Then perform normal level-order BFS:
+
+```java
+int time = 0;
+
+while (!queue.isEmpty()) {
+    int size = queue.size();
+
+    for (int i = 0; i < size; i++) {
+        int[] current = queue.poll();
+
+        // Process valid neighbors.
+    }
+
+    time++;
+}
+```
+
+## Mental Model
+
+```text
+Level 0 → All starting sources
+Level 1 → Cells reached after one step
+Level 2 → Cells reached after two steps
+```
+
+## Problems
+
+- 994. Rotting Oranges
+- 542. 01 Matrix
+
+---
+
+# 8. Cycle Detection
+
+## Undirected Graph
+
+Use a `parent`.
+
+```java
+private boolean hasCycle(
+    int node,
+    int parent,
+    List<List<Integer>> graph,
+    boolean[] visited
+) {
+    visited[node] = true;
+
+    for (int neighbor : graph.get(node)) {
+        if (!visited[neighbor]) {
+            if (hasCycle(neighbor, node, graph, visited)) {
+                return true;
+            }
+        } else if (neighbor != parent) {
+            return true;
+        }
+    }
+
+    return false;
+}
+```
+
+```text
+Visited neighbor + not the parent = Cycle
+```
+
+## Directed Graph
+
+Use three states:
+
+```text
+0 → Unvisited
+1 → Currently in the DFS path
+2 → Completely processed
+```
+
+```java
+private boolean hasCycle(
+    int node,
+    List<List<Integer>> graph,
+    int[] state
+) {
+    if (state[node] == 1) {
+        return true;
+    }
+
+    if (state[node] == 2) {
+        return false;
+    }
+
+    state[node] = 1;
+
+    for (int neighbor : graph.get(node)) {
+        if (hasCycle(neighbor, graph, state)) {
+            return true;
+        }
+    }
+
+    state[node] = 2;
+    return false;
+}
+```
+
+```text
+Reach state 1 again → Cycle exists
+Reach state 2       → Already processed safely
+```
+
+## Problems
+
+- 207. Course Schedule
+- 261. Graph Valid Tree
+
+---
+
+# 9. Topological Sort
+
+## Recognition
+
+Look for:
+
+- Course prerequisites
+- Task ordering
+- Dependency ordering
+- Find a valid execution order
+
+## Kahn's BFS Pattern
+
+```java
+Queue<Integer> queue = new ArrayDeque<>();
+
+for (int node = 0; node < n; node++) {
+    if (indegree[node] == 0) {
+        queue.offer(node);
+    }
+}
+
+List<Integer> order = new ArrayList<>();
+
+while (!queue.isEmpty()) {
+    int node = queue.poll();
+    order.add(node);
+
+    for (int neighbor : graph.get(node)) {
+        indegree[neighbor]--;
+
+        if (indegree[neighbor] == 0) {
+            queue.offer(neighbor);
+        }
+    }
+}
+```
+
+## Cycle Check
+
+```java
+if (order.size() != n) {
+    // The directed graph contains a cycle.
+}
+```
+
+## Problems
+
+- 207. Course Schedule
+- 210. Course Schedule II
+
+---
+
+# Pattern Selection Cheat Sheet
+
+```text
+Visit all reachable nodes      → DFS or BFS
+
+Check if a path exists        → DFS or BFS
+
+Count connected groups        → Outer loop + DFS/BFS
+
+Find component size           → DFS returning int
+
+Minimum steps or moves        → BFS
+
+Multiple starting sources     → Multi-source BFS
+
+Undirected cycle              → Parent tracking
+
+Directed cycle                → Three-state DFS
+
+Dependency ordering           → Topological sort
+```
+
+---
+
+# DFS vs BFS
+
+## Choose DFS
+
+```text
+Explore a complete component
+Count islands or regions
+Calculate component size
+Detect cycles using recursion
+```
+
+## Choose BFS
+
+```text
+Minimum steps
+Shortest unweighted path
+Level-by-level traversal
+Simultaneous spreading
+Nearest source
+```
+
+---
+
+# Complexity
+
+## Adjacency List
+
+```text
+Time  → O(V + E)
+Space → O(V)
+```
+
+## Grid
+
+```text
+Time  → O(rows × columns)
+Space → O(rows × columns)
+```
+
+---
+
+# Golden Rules
+
+1. First identify the nodes and edges.
+2. Determine whether the graph is directed or undirected.
+3. Use `visited` to prevent repeated exploration.
+4. Mark BFS nodes visited when adding them to the queue.
+5. Use an outer loop for disconnected graphs.
+6. Use BFS for shortest paths in unweighted graphs.
+7. Use multi-source BFS when several sources act simultaneously.
+8. Undirected cycles need parent tracking.
+9. Directed cycles need current-path tracking.
+10. A grid is often a graph hidden inside a matrix.
+
+---
+
+# Recommended Practice Order
+
+- [ ] 733. Flood Fill
+- [ ] 200. Number of Islands
+- [ ] 695. Max Area of Island
+- [ ] 994. Rotting Oranges
+- [ ] 1091. Shortest Path in Binary Matrix
+- [ ] 1971. Find if Path Exists in Graph
+- [ ] 547. Number of Provinces
+- [ ] 207. Course Schedule
+- [ ] 210. Course Schedule II
