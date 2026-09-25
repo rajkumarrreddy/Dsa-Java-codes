@@ -1,0 +1,149 @@
+class Solution {
+
+    public int[][] floodFill(int[][] image, int sr, int sc, int color) {
+
+        /*
+         * Save the original color of the starting cell.
+         *
+         * DFS should only travel through cells that:
+         * 1. Are connected to the starting cell.
+         * 2. Have this original color.
+         *
+         * Example:
+         * If image[sr][sc] is 1, DFS should only travel
+         * through connected cells whose value is also 1.
+         */
+        int originalColor = image[sr][sc];
+
+
+        /*
+         * If the original color and new color are identical,
+         * nothing needs to be changed.
+         *
+         * More importantly, without this check, DFS could keep
+         * revisiting cells because recoloring the cell would not
+         * visually mark it as visited.
+         *
+         * Example:
+         * originalColor = 1
+         * newColor = 1
+         *
+         * Changing 1 to 1 does not mark the cell as visited,
+         * so DFS could move endlessly between neighboring cells.
+         */
+        if (originalColor == color) {
+            return image;
+        }
+
+
+        /*
+         * Start DFS only from the provided starting position.
+         *
+         * We do not need nested loops because Flood Fill should
+         * change only the connected region containing (sr, sc).
+         *
+         * A disconnected cell with the same original color
+         * should not be changed.
+         */
+        dfs(image, sr, sc, originalColor, color);
+
+
+        // Return the image after the connected region is recolored.
+        return image;
+    }
+
+
+    private void dfs(
+        int[][] image,
+        int row,
+        int col,
+        int originalColor,
+        int newColor
+    ) {
+
+        /*
+         * BASE CONDITION 1: Check whether the current position
+         * has moved outside the image.
+         *
+         * row < 0:
+         * Moved above the first row.
+         *
+         * col < 0:
+         * Moved left of the first column.
+         *
+         * row >= image.length:
+         * Moved below the last row.
+         *
+         * col >= image[0].length:
+         * Moved right of the last column.
+         */
+        if (
+            row < 0 ||
+            col < 0 ||
+            row >= image.length ||
+            col >= image[0].length
+        ) {
+            return;
+        }
+
+
+        /*
+         * BASE CONDITION 2: Stop if the current cell does not
+         * contain the original color.
+         *
+         * DFS is allowed to travel only through connected cells
+         * that have the same color as the starting cell.
+         *
+         * This condition also stops DFS from revisiting cells
+         * that have already been changed to newColor.
+         */
+        if (image[row][col] != originalColor) {
+            return;
+        }
+
+
+        /*
+         * Change the current cell to the new color.
+         *
+         * This serves two purposes:
+         * 1. It performs the required flood fill.
+         * 2. It marks the current cell as visited.
+         *
+         * We recolor the cell only after checking that the cell
+         * is valid and contains the original color.
+         */
+        image[row][col] = newColor;
+
+
+        /*
+         * Explore the cell below the current cell.
+         *
+         * row + 1 means move one row down.
+         */
+        dfs(image, row + 1, col, originalColor, newColor);
+
+
+        /*
+         * Explore the cell above the current cell.
+         *
+         * row - 1 means move one row up.
+         */
+        dfs(image, row - 1, col, originalColor, newColor);
+
+
+        /*
+         * Explore the cell to the right.
+         *
+         * col + 1 means move one column to the right.
+         */
+        dfs(image, row, col + 1, originalColor, newColor);
+
+
+        /*
+         * Explore the cell to the left.
+         *
+         * col - 1 means move one column to the left.
+         */
+        dfs(image, row, col - 1, originalColor, newColor);
+    }
+}
