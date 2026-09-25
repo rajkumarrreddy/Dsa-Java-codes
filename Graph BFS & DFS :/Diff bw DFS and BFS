@@ -1,0 +1,255 @@
+# DFS vs BFS
+
+## Core Difference
+
+### DFS (Depth First Search)
+
+- Go as deep as possible before backtracking.
+- Uses Recursion or Stack.
+- Good for exploring connected components.
+
+```text
+A
+|
+B
+|
+C
+|
+D
+```
+
+Traversal:
+
+```text
+A → B → C → D
+```
+
+---
+
+### BFS (Breadth First Search)
+
+- Explore level by level.
+- Uses Queue.
+- Good for shortest distance/time problems.
+
+```text
+      A
+     / \
+    B   C
+   / \
+  D   E
+```
+
+Traversal:
+
+```text
+A
+B C
+D E
+```
+
+---
+
+# When to Use DFS
+
+Use DFS when the goal is to:
+
+- Explore a connected component
+- Count islands
+- Calculate area
+- Flood Fill
+- Check path existence
+- Backtracking
+
+### Keywords
+
+```text
+Connected
+Island
+Region
+Cluster
+Flood Fill
+Area
+Explore
+```
+
+### Examples
+
+- 200. Number of Islands
+- 695. Max Area of Island
+- 733. Flood Fill
+- 79. Word Search
+- 130. Surrounded Regions
+
+---
+
+# When to Use BFS
+
+Use BFS when the goal is to find:
+
+- Minimum distance
+- Minimum steps
+- Minimum time
+- Nearest node/cell
+- Level order traversal
+- Spread simulations
+
+### Keywords
+
+```text
+Shortest
+Nearest
+Minimum Steps
+Minimum Distance
+Minute by Minute
+Spread
+Infection
+Fire
+Level Order
+```
+
+### Examples
+
+- 994. Rotting Oranges
+- 542. 01 Matrix
+- 102. Binary Tree Level Order Traversal
+- 127. Word Ladder
+
+---
+
+# Why DFS Works for Number of Islands
+
+Question:
+
+```text
+How many connected islands exist?
+```
+
+Need:
+
+```text
+Visit all connected land cells.
+```
+
+✅ DFS
+
+---
+
+# Why DFS Fails for Rotting Oranges
+
+Question:
+
+```text
+How many minutes until all oranges rot?
+```
+
+DFS immediately goes deep:
+
+```text
+2 → 1 → 1 → 1 → 1
+```
+
+Problem:
+
+```text
+Time information is lost.
+```
+
+DFS cannot naturally track:
+
+```text
+Minute 1
+Minute 2
+Minute 3
+```
+
+❌ DFS
+
+---
+
+# Why BFS Works for Rotting Oranges
+
+BFS processes nodes level by level.
+
+```text
+Level 1 = Minute 1
+Level 2 = Minute 2
+Level 3 = Minute 3
+```
+
+Exactly matches:
+
+```text
+Spread over time
+```
+
+✅ BFS
+
+---
+
+# Multi-Source BFS
+
+Normal BFS:
+
+```java
+queue.offer(start);
+```
+
+One starting point.
+
+Multi-Source BFS:
+
+```java
+queue.offer(source1);
+queue.offer(source2);
+queue.offer(source3);
+```
+
+Multiple sources spread simultaneously.
+
+### Examples
+
+- 994. Rotting Oranges
+- 542. 01 Matrix
+- Walls and Gates
+
+---
+
+# Interview Shortcut
+
+Connected Component?
+→ DFS
+
+Count Area?
+→ DFS
+
+Explore Region?
+→ DFS
+
+---------------------
+
+Shortest Distance?
+→ BFS
+
+Minimum Steps?
+→ BFS
+
+Minimum Time?
+→ BFS
+
+Spread/Infection?
+→ BFS
+
+Nearest Something?
+→ BFS
+
+Level Order?
+→ BFS
+
+---
+
+# Golden Rule
+
+DFS = Connectivity
+
+BFS = Distance / Time / Levels
