@@ -1,0 +1,201 @@
+import java.util.*;
+
+class Solution {
+
+    public int shortestPathBinaryMatrix(int[][] grid) {
+
+        /*
+         * The matrix is n x n.
+         *
+         * The destination is:
+         * row = n - 1
+         * col = n - 1
+         */
+        int n = grid.length;
+
+
+        /*
+         * 0 represents an open cell.
+         * 1 represents a blocked cell.
+         *
+         * If the starting cell is blocked, we cannot begin.
+         *
+         * If the destination is blocked, we cannot reach it.
+         */
+        if (grid[0][0] == 1 ||
+            grid[n - 1][n - 1] == 1) {
+
+            return -1;
+        }
+
+
+        /*
+         * The queue stores the cells that BFS must process.
+         *
+         * Each int[] stores:
+         * index 0 -> row
+         * index 1 -> column
+         */
+        Queue<int[]> queue = new LinkedList<>();
+
+
+        /*
+         * BFS starts from the top-left cell.
+         */
+        queue.offer(new int[] {0, 0});
+
+
+        /*
+         * Mark the starting cell as visited.
+         *
+         * Originally:
+         * 0 = open and unvisited
+         *
+         * After changing it:
+         * 1 = blocked or already visited
+         *
+         * Marking it immediately prevents another cell
+         * from adding (0,0) into the queue again.
+         */
+        grid[0][0] = 1;
+
+
+        /*
+         * The starting cell itself is part of the path.
+         *
+         * Therefore, pathLength begins at 1, not 0.
+         */
+        int pathLength = 1;
+
+
+        /*
+         * Eight possible movements:
+         *
+         * top-left, up, top-right,
+         * left, right,
+         * bottom-left, down, bottom-right
+         */
+        int[][] directions = {
+            {-1, -1},
+            {-1,  0},
+            {-1,  1},
+            { 0, -1},
+            { 0,  1},
+            { 1, -1},
+            { 1,  0},
+            { 1,  1}
+        };
+
+
+        /*
+         * Continue BFS while there are cells waiting
+         * to be explored.
+         */
+        while (!queue.isEmpty()) {
+
+
+            /*
+             * Capture the number of cells in the current level.
+             *
+             * All these cells have the same path length
+             * from the starting cell.
+             */
+            int size = queue.size();
+
+
+            /*
+             * Process one complete BFS level.
+             */
+            for (int i = 0; i < size; i++) {
+
+
+                /*
+                 * Remove the next cell from the queue.
+                 */
+                int[] current = queue.poll();
+
+                int row = current[0];
+                int col = current[1];
+
+
+                /*
+                 * If the current cell is the bottom-right cell,
+                 * BFS has reached the destination.
+                 *
+                 * Because BFS explores level by level,
+                 * pathLength is the shortest possible distance.
+                 */
+                if (row == n - 1 && col == n - 1) {
+                    return pathLength;
+                }
+
+
+                /*
+                 * Check all eight neighboring cells.
+                 */
+                for (int[] direction : directions) {
+
+                    int newRow = row + direction[0];
+                    int newCol = col + direction[1];
+
+
+                    /*
+                     * Skip the neighbor if:
+                     *
+                     * 1. It is above the grid.
+                     * 2. It is left of the grid.
+                     * 3. It is below the grid.
+                     * 4. It is right of the grid.
+                     * 5. It is blocked or already visited.
+                     */
+                    if (newRow < 0 ||
+                        newCol < 0 ||
+                        newRow >= n ||
+                        newCol >= n ||
+                        grid[newRow][newCol] != 0) {
+
+                        continue;
+                    }
+
+
+                    /*
+                     * Mark this cell visited immediately.
+                     *
+                     * We must mark it before adding it to the
+                     * queue so that another neighboring cell
+                     * cannot add it again.
+                     */
+                    grid[newRow][newCol] = 1;
+
+
+                    /*
+                     * Add the valid neighboring cell.
+                     *
+                     * It will be processed during the next
+                     * BFS level.
+                     */
+                    queue.offer(new int[] {
+                        newRow,
+                        newCol
+                    });
+                }
+            }
+
+
+            /*
+             * One complete BFS level has finished.
+             *
+             * Every cell added during this level is now
+             * one step farther from the starting cell.
+             */
+            pathLength++;
+        }
+
+
+        /*
+         * If the queue becomes empty without reaching
+         * the destination, no valid path exists.
+         */
+        return -1;
+    }
+}
