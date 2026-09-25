@@ -1,0 +1,183 @@
+class Solution {
+
+    public int closedIsland(int[][] grid) {
+
+        /*
+         * IMPORTANT:
+         *
+         * 0 = land
+         * 1 = water
+         *
+         * This is opposite to Number of Islands,
+         * where 1 represented land.
+         */
+
+        int rows = grid.length;
+        int cols = grid[0].length;
+
+
+        /*
+         * STEP 1: Remove all land connected to the boundary.
+         *
+         * Any land cell touching the boundary cannot form
+         * a closed island because one side is exposed outside
+         * the grid instead of being surrounded by water.
+         *
+         * If a boundary land cell is connected to other land cells,
+         * that entire island is also not closed.
+         *
+         * Therefore, run DFS from every boundary land cell
+         * and convert that entire connected component into water.
+         */
+
+
+        /*
+         * Check the first and last columns of every row.
+         *
+         * First column:
+         * grid[row][0]
+         *
+         * Last column:
+         * grid[row][cols - 1]
+         */
+        for (int row = 0; row < rows; row++) {
+
+            // Remove land connected to the left boundary.
+            if (grid[row][0] == 0) {
+                dfs(row, 0, grid);
+            }
+
+            // Remove land connected to the right boundary.
+            if (grid[row][cols - 1] == 0) {
+                dfs(row, cols - 1, grid);
+            }
+        }
+
+
+        /*
+         * Check the first and last rows of every column.
+         *
+         * First row:
+         * grid[0][col]
+         *
+         * Last row:
+         * grid[rows - 1][col]
+         */
+        for (int col = 0; col < cols; col++) {
+
+            // Remove land connected to the top boundary.
+            if (grid[0][col] == 0) {
+                dfs(0, col, grid);
+            }
+
+            // Remove land connected to the bottom boundary.
+            if (grid[rows - 1][col] == 0) {
+                dfs(rows - 1, col, grid);
+            }
+        }
+
+
+        /*
+         * After removing all boundary-connected land,
+         * every land cell still containing 0 must belong
+         * to a closed island.
+         */
+        int closedIslands = 0;
+
+
+        /*
+         * STEP 2: Search the remaining grid.
+         *
+         * We only need to inspect internal cells because all
+         * boundary land has already been removed.
+         */
+        for (int row = 1; row < rows - 1; row++) {
+
+            for (int col = 1; col < cols - 1; col++) {
+
+                /*
+                 * Finding a 0 means that we discovered
+                 * a new closed island.
+                 */
+                if (grid[row][col] == 0) {
+
+                    // Count this connected component once.
+                    closedIslands++;
+
+                    /*
+                     * Remove the complete island so another cell
+                     * belonging to the same island is not counted again.
+                     */
+                    dfs(row, col, grid);
+                }
+            }
+        }
+
+
+        // Return the number of closed islands found.
+        return closedIslands;
+    }
+
+
+    private void dfs(int row, int col, int[][] grid) {
+
+        /*
+         * Stop DFS when:
+         *
+         * 1. row < 0:
+         *    The position is above the grid.
+         *
+         * 2. col < 0:
+         *    The position is left of the grid.
+         *
+         * 3. row >= grid.length:
+         *    The position is below the grid.
+         *
+         * 4. col >= grid[0].length:
+         *    The position is right of the grid.
+         *
+         * 5. grid[row][col] == 1:
+         *    The current cell is water or already visited.
+         */
+        if (row < 0 ||
+            col < 0 ||
+            row >= grid.length ||
+            col >= grid[0].length ||
+            grid[row][col] == 1) {
+
+            return;
+        }
+
+
+        /*
+         * The current cell contains land, so mark it visited.
+         *
+         * We change:
+         *
+         * 0 -> 1
+         *
+         * This allows 1 to represent:
+         * - original water, or
+         * - land already visited by DFS.
+         *
+         * Mark the cell before recursive calls to prevent
+         * repeatedly moving between neighboring cells.
+         */
+        grid[row][col] = 1;
+
+
+        /*
+         * Visit all four directly connected neighbors.
+         *
+         * Diagonal cells are not connected in this problem.
+         */
+
+        dfs(row - 1, col, grid); // Up
+
+        dfs(row + 1, col, grid); // Down
+
+        dfs(row, col - 1, grid); // Left
+
+        dfs(row, col + 1, grid); // Right
+    }
+}
