@@ -1,0 +1,215 @@
+import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.List;
+import java.util.Queue;
+
+class Solution {
+
+    public boolean canFinish(int numCourses, int[][] prerequisites) {
+
+        /*
+         * ADJACENCY LIST:
+         *
+         * graph.get(course) stores all the courses that can be taken
+         * after completing this course.
+         *
+         * Example:
+         * If 0 must be completed before 1, we create:
+         *
+         * 0 -> 1
+         *
+         * Therefore, graph.get(0) will contain 1.
+         */
+        List<List<Integer>> graph = new ArrayList<>();
+
+
+        /*
+         * Initially, graph is empty.
+         *
+         * We create one empty neighbor list for every course.
+         *
+         * If numCourses = 4, after this loop:
+         *
+         * graph = [
+         *     [],   // Course 0
+         *     [],   // Course 1
+         *     [],   // Course 2
+         *     []    // Course 3
+         * ]
+         */
+        for (int course = 0; course < numCourses; course++) {
+            graph.add(new ArrayList<>());
+        }
+
+
+        /*
+         * inDegree[course] represents the number of prerequisites
+         * that must be completed before taking that course.
+         *
+         * Example:
+         *
+         * 0 -> 2
+         * 1 -> 2
+         *
+         * Course 2 has two prerequisites, so:
+         *
+         * inDegree[2] = 2
+         */
+        int[] inDegree = new int[numCourses];
+
+
+        /*
+         * Build the directed graph and calculate the indegree
+         * of every course.
+         *
+         * Every pair has the form:
+         *
+         * [course, prerequisite]
+         *
+         * Example:
+         *
+         * [1, 0]
+         *
+         * This means course 0 must be completed before course 1.
+         *
+         * Direction:
+         *
+         * prerequisite -> course
+         * 0            -> 1
+         */
+        for (int[] pair : prerequisites) {
+
+            // The course that we want to take.
+            int course = pair[0];
+
+            // The course that must be completed first.
+            int prerequisite = pair[1];
+
+
+            /*
+             * Store the directed edge:
+             *
+             * prerequisite -> course
+             *
+             * This tells us which course becomes closer to being
+             * available after completing the prerequisite.
+             */
+            graph.get(prerequisite).add(course);
+
+
+            /*
+             * The current course has one more prerequisite.
+             *
+             * Example:
+             *
+             * [1, 0]
+             *
+             * Course 1 depends on course 0, so:
+             *
+             * inDegree[1]++
+             */
+            inDegree[course]++;
+        }
+
+
+        /*
+         * The queue contains courses that are currently available.
+         *
+         * A course is available when its indegree is zero, meaning
+         * it has no pending prerequisites.
+         */
+        Queue<Integer> queue = new ArrayDeque<>();
+
+
+        /*
+         * Check every course and initially add all courses having
+         * zero prerequisites to the queue.
+         *
+         * We must check every course because there may be multiple
+         * courses that can be taken immediately.
+         */
+        for (int course = 0; course < numCourses; course++) {
+
+            // Zero indegree means there are no pending prerequisites.
+            if (inDegree[course] == 0) {
+                queue.offer(course);
+            }
+        }
+
+
+        /*
+         * Counts the number of courses successfully completed.
+         *
+         * At the end:
+         *
+         * completedCourses == numCourses
+         *
+         * means we were able to complete every course.
+         */
+        int completedCourses = 0;
+
+
+        /*
+         * Continue while at least one course is available.
+         */
+        while (!queue.isEmpty()) {
+
+            /*
+             * Remove one currently available course.
+             *
+             * Because it entered the queue only when its indegree
+             * became zero, all of its prerequisites are complete.
+             */
+            int currentCourse = queue.poll();
+
+
+            // We have successfully completed the current course.
+            completedCourses++;
+
+
+            /*
+             * Check all courses that depend on currentCourse.
+             *
+             * Example:
+             *
+             * graph.get(0) = [1, 2]
+             *
+             * This means that completing course 0 helps unlock
+             * courses 1 and 2.
+             */
+            for (int nextCourse : graph.get(currentCourse)) {
+
+                /*
+                 * currentCourse was one prerequisite of nextCourse.
+                 *
+                 * Since currentCourse is now completed, nextCourse
+                 * has one fewer pending prerequisite.
+                 */
+                inDegree[nextCourse]--;
+
+
+                /*
+                 * If nextCourse's indegree becomes zero, all of its
+                 * prerequisites have now been completed.
+                 *
+                 * Therefore, nextCourse becomes available and can
+                 * enter the queue.
+                 */
+                if (inDegree[nextCourse] == 0) {
+                    queue.offer(nextCourse);
+                }
+            }
+        }
+
+
+        /*
+         * If completedCourses equals numCourses, every course was
+         * processed, so we can finish all courses.
+         *
+         * If completedCourses is smaller than numCourses, some
+         * courses never reached indegree zero. They are blocked by
+         * a circular dependency, so we cannot finish every course.
+         */
+        return completedCourses == numCourses;
+    }
+}
