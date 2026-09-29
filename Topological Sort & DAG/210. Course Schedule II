@@ -1,0 +1,285 @@
+import java.util.*;
+
+class Solution {
+
+    public int[] findOrder(int numCourses, int[][] prerequisites) {
+
+        /*
+         * STEP 1: CREATE THE ADJACENCY LIST
+         *
+         * graph.get(course) stores all courses that depend on
+         * the current course.
+         *
+         * Example:
+         *
+         * If course 0 must be completed before course 1:
+         *
+         * 0 -> 1
+         *
+         * Then:
+         *
+         * graph.get(0) = [1]
+         */
+        List<List<Integer>> graph = new ArrayList<>();
+
+
+        /*
+         * Create one empty list for every course.
+         *
+         * If numCourses = 4, the graph initially looks like:
+         *
+         * graph = [
+         *     [],   // Course 0
+         *     [],   // Course 1
+         *     [],   // Course 2
+         *     []    // Course 3
+         * ]
+         *
+         * We will later fill these lists using the prerequisite pairs.
+         */
+        for (int course = 0; course < numCourses; course++) {
+            graph.add(new ArrayList<>());
+        }
+
+
+        /*
+         * STEP 2: CREATE THE INDEGREE ARRAY
+         *
+         * inDegree[course] tells us how many prerequisites
+         * are still required before we can take that course.
+         *
+         * Example:
+         *
+         * 0 -> 2
+         * 1 -> 2
+         *
+         * Course 2 has two prerequisites.
+         *
+         * Therefore:
+         *
+         * inDegree[2] = 2
+         */
+        int[] inDegree = new int[numCourses];
+
+
+        /*
+         * STEP 3: BUILD THE GRAPH AND CALCULATE INDEGREES
+         *
+         * Every pair is given as:
+         *
+         * [course, prerequisite]
+         *
+         * Example:
+         *
+         * [1, 0]
+         *
+         * This means course 0 must be completed before course 1.
+         *
+         * Therefore, the directed edge is:
+         *
+         * prerequisite -> course
+         * 0            -> 1
+         */
+        for (int[] pair : prerequisites) {
+
+            // The course we eventually want to take.
+            int course = pair[0];
+
+            // The course that must be completed first.
+            int prerequisite = pair[1];
+
+
+            /*
+             * Add the directed edge:
+             *
+             * prerequisite -> course
+             *
+             * graph.get(prerequisite) stores all courses
+             * unlocked by completing prerequisite.
+             */
+            graph.get(prerequisite).add(course);
+
+
+            /*
+             * The current course has one additional prerequisite.
+             *
+             * For [1, 0\]:
+             *
+             * inDegree[1]++;
+             *
+             * because course 1 is waiting for course 0.
+             */
+            inDegree[course]++;
+        }
+
+
+        /*
+         * STEP 4: CREATE A QUEUE
+         *
+         * The queue contains all courses currently available
+         * to take.
+         *
+         * A course is available when:
+         *
+         * inDegree[course] == 0
+         *
+         * This means that it has no pending prerequisites.
+         */
+        Queue<Integer> queue = new ArrayDeque<>();
+
+
+        /*
+         * Add every course having zero indegree to the queue.
+         *
+         * There may be multiple courses that have no prerequisites,
+         * so we must check every course.
+         */
+        for (int course = 0; ourse < numCourses; course++) {
+
+            if (inDegree[course] == 0) {
+                queue.offer(course);
+            }
+        }
+
+
+        /*
+         * STEP 5: CREATE THE RESULT ARRAY
+         *
+         * LeetCode expects us to return an int[] containing
+         * a valid order in which the courses can be completed.
+         *
+         * The maximum result size is numCourses because each
+         * course should appear exactly once.
+         */
+        int[] result = new int[numCourses];
+
+
+        /*
+         * index points to the next empty position in result.
+         *
+         * It also tells us how many courses have been processed.
+         *
+         * Initially:
+         *
+         * index = 0
+         *
+         * After storing one course:
+         *
+         * index = 1
+         */
+        int index = 0;
+
+
+        /*
+         * STEP 6: PROCESS AVAILABLE COURSES
+         *
+         * Continue as long as there is at least one course
+         * whose prerequisites have all been completed.
+         */
+        while (!queue.isEmpty()) {
+
+            /*
+             * Remove one available course from the queue.
+             *
+             * This course entered the queue only after its
+             * indegree became zero.
+             */
+            int currentCourse = queue.poll();
+
+
+            /*
+             * Store the current course in the topological order.
+             *
+             * Arrays do not have an add() method, so we place
+             * the course using an index.
+             *
+             * Example:
+             *
+             * result[0] = 0
+             * result[1] = 1
+             */
+            result[index] = currentCourse;
+
+
+            /*
+             * Move index to the next empty position.
+             *
+             * This can also be written as:
+             *
+             * result[index++] = currentCourse;
+             */
+            index++;
+
+
+            /*
+             * Check every course that depends on currentCourse.
+             *
+             * Example:
+             *
+             * graph.get(0) = [1, 2]
+             *
+             * This means that completing course 0 helps unlock
+             * courses 1 and 2.
+             */
+            for (int nextCourse : graph.get(currentCourse)) {
+
+                /*
+                 * currentCourse was one prerequisite of nextCourse.
+                 *
+                 * Since currentCourse is now completed, reduce the
+                 * number of pending prerequisites for nextCourse.
+                 */
+                inDegree[nextCourse]--;
+
+
+                /*
+                 * If nextCourse's indegree becomes zero, all of its
+                 * prerequisites have now been completed.
+                 *
+                 * Therefore, nextCourse becomes available.
+                 */
+                if (inDegree[nextCourse] == 0) {
+                    queue.offer(nextCourse);
+                }
+            }
+        }
+
+
+        /*
+         * STEP 7: CHECK FOR A CYCLE
+         *
+         * index tells us how many courses were added to result.
+         *
+         * If:
+         *
+         * index == numCourses
+         *
+         * then every course was processed, so a valid order exists.
+         *
+         * If:
+         *
+         * index != numCourses
+         *
+         * then some courses never reached zero indegree.
+         * Those courses are blocked by a circular dependency.
+         *
+         * Therefore, no valid ordering exists.
+         */
+        if (index != numCourses) {
+
+            /*
+             * LeetCode asks us to return an empty array when
+             * completing all courses is impossible.
+             */
+            return new int[0];
+        }
+
+
+        /*
+         * Every course was successfully processed.
+         *
+         * result now contains one valid topological ordering.
+         */
+        return result;
+    }
+}
