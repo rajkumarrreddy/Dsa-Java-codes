@@ -1,0 +1,1224 @@
+# Kahn's Algorithm: Topological Sort Using BFS
+
+## 1. What is Topological Sorting?
+
+Topological sorting is an ordering of the vertices of a **directed graph** such that:
+
+> For every directed edge `u -> v`, node `u` appears before node `v` in the ordering.
+
+In simple words:
+
+If `v` depends on `u`, then `u` must be completed before `v`.
+
+### Real-world example
+
+Imagine the following course dependencies:
+
+```text
+Learn Java -> Learn Spring Boot -> Build Backend Project
+```
+
+You cannot learn Spring Boot before learning Java.
+
+Therefore, one valid order is:
+
+```text
+Java
+Spring Boot
+Backend Project
+```
+
+This dependency-based ordering is called **topological ordering**.
+
+---
+
+## 2. When Is Topological Sorting Possible?
+
+Topological sorting is possible only for a:
+
+```text
+Directed Acyclic Graph
+```
+
+This is commonly called a:
+
+```text
+DAG
+```
+
+### Directed
+
+The edges have a direction.
+
+```text
+A -> B
+```
+
+This means `A` must come before `B`.
+
+### Acyclic
+
+The graph must not contain a cycle.
+
+For example:
+
+```text
+A -> B
+B -> C
+C -> A
+```
+
+This graph contains a cycle.
+
+It says:
+
+- A must come before B
+- B must come before C
+- C must come before A
+
+There is no possible starting point.
+
+Therefore, topological sorting is impossible.
+
+---
+
+# 3. What is Kahn's Algorithm?
+
+Kahn's Algorithm is a **BFS-based algorithm** used to:
+
+1. Find a topological ordering.
+2. Detect a cycle in a directed graph.
+
+It uses:
+
+- An adjacency list
+- An indegree array
+- A queue
+- BFS traversal
+
+---
+
+# 4. Main Intuition
+
+Think of every node as a task.
+
+Before performing a task, all its prerequisites must be completed.
+
+For example:
+
+```text
+0 -> 1
+0 -> 2
+1 -> 3
+2 -> 3
+```
+
+Here:
+
+- Node `0` has no prerequisite.
+- Node `1` depends on `0`.
+- Node `2` depends on `0`.
+- Node `3` depends on both `1` and `2`.
+
+Therefore:
+
+```text
+0 must come before 1
+0 must come before 2
+1 and 2 must come before 3
+```
+
+One valid topological order is:
+
+```text
+0, 1, 2, 3
+```
+
+Another valid order is:
+
+```text
+0, 2, 1, 3
+```
+
+Topological ordering is not always unique.
+
+---
+
+# 5. What is Indegree?
+
+The **indegree** of a node represents the number of incoming edges to that node.
+
+In dependency language:
+
+> Indegree tells us how many prerequisites a node still has.
+
+Consider:
+
+```text
+0 -> 1
+0 -> 2
+1 -> 3
+2 -> 3
+```
+
+The indegrees are:
+
+```text
+Node 0 = 0
+Node 1 = 1
+Node 2 = 1
+Node 3 = 2
+```
+
+Explanation:
+
+- Node `0` has no incoming edge.
+- Node `1` has one incoming edge from `0`.
+- Node `2` has one incoming edge from `0`.
+- Node `3` has two incoming edges from `1` and `2`.
+
+Therefore:
+
+```text
+indegree = [0, 1, 1, 2]
+```
+
+---
+
+# 6. Why Do We Start With Indegree 0?
+
+A node with indegree `0` has no prerequisites.
+
+That means it can be processed immediately.
+
+For example:
+
+```text
+0 -> 1
+0 -> 2
+```
+
+Node `0` has no incoming edges.
+
+Therefore, node `0` is ready to be processed.
+
+Nodes `1` and `2` cannot be processed initially because they depend on node `0`.
+
+This is why Kahn's Algorithm places all nodes with indegree `0` into a queue.
+
+---
+
+# 7. How Kahn's Algorithm Works
+
+## Step 1: Build the graph
+
+Create an adjacency list.
+
+For every edge:
+
+```text
+u -> v
+```
+
+Store `v` inside the adjacency list of `u`.
+
+```java
+adj.get(u).add(v);
+```
+
+---
+
+## Step 2: Calculate indegrees
+
+For every edge:
+
+```text
+u -> v
+```
+
+Increase the indegree of `v`.
+
+```java
+indegree[v]++;
+```
+
+We increase `v` because an edge is entering `v`.
+
+---
+
+## Step 3: Add all nodes with indegree 0 to the queue
+
+These nodes have no prerequisites.
+
+```java
+if (indegree[node] == 0) {
+    queue.offer(node);
+}
+```
+
+There can be multiple nodes with indegree `0`.
+
+All of them must be added to the queue.
+
+---
+
+## Step 4: Process nodes using BFS
+
+Take one node from the queue.
+
+```java
+int current = queue.poll();
+```
+
+Add it to the topological ordering.
+
+```java
+topologicalOrder.add(current);
+```
+
+This means the node has now been processed.
+
+---
+
+## Step 5: Remove the current node's outgoing edges
+
+Suppose we process:
+
+```text
+0 -> 1
+```
+
+Because node `0` is finished, node `1` has one fewer remaining prerequisite.
+
+Therefore:
+
+```java
+indegree[1]--;
+```
+
+We are not physically deleting the edge.
+
+Reducing the indegree logically represents removing the dependency.
+
+---
+
+## Step 6: Add newly available nodes
+
+After reducing a neighbor's indegree, check whether it became `0`.
+
+```java
+if (indegree[neighbor] == 0) {
+    queue.offer(neighbor);
+}
+```
+
+If it becomes `0`, all its prerequisites have been completed.
+
+Therefore, it is now ready to be processed.
+
+---
+
+## Step 7: Detect a cycle
+
+Count how many nodes are processed.
+
+If:
+
+```text
+processedNodes == totalNodes
+```
+
+then all nodes were processed and the graph does not contain a cycle.
+
+If:
+
+```text
+processedNodes < totalNodes
+```
+
+then some nodes could not be processed because they were trapped inside a cycle.
+
+Therefore:
+
+```java
+if (topologicalOrder.size() != vertices) {
+    // Cycle exists
+}
+```
+
+---
+
+# 8. Detailed Dry Run
+
+Consider:
+
+```text
+0 -> 1
+0 -> 2
+1 -> 3
+2 -> 3
+```
+
+## Initial indegrees
+
+```text
+Node 0 = 0
+Node 1 = 1
+Node 2 = 1
+Node 3 = 2
+```
+
+```text
+indegree = [0, 1, 1, 2]
+```
+
+Only node `0` has indegree `0`.
+
+```text
+Queue = [0]
+Answer = []
+```
+
+---
+
+## Iteration 1
+
+Remove node `0`.
+
+```text
+Queue = []
+Answer = [0]
+```
+
+Node `0` has two neighbors:
+
+```text
+1 and 2
+```
+
+Reduce their indegrees.
+
+```text
+indegree[1] = 1 - 1 = 0
+indegree[2] = 1 - 1 = 0
+```
+
+Both nodes are now ready.
+
+```text
+Queue = [1, 2]
+indegree = [0, 0, 0, 2]
+```
+
+---
+
+## Iteration 2
+
+Remove node `1`.
+
+```text
+Queue = [2]
+Answer = [0, 1]
+```
+
+Node `1` points to node `3`.
+
+Reduce the indegree of node `3`.
+
+```text
+indegree[3] = 2 - 1 = 1
+```
+
+Node `3` is not added to the queue because it still has one dependency.
+
+```text
+Queue = [2]
+indegree = [0, 0, 0, 1]
+```
+
+---
+
+## Iteration 3
+
+Remove node `2`.
+
+```text
+Queue = []
+Answer = [0, 1, 2]
+```
+
+Node `2` also points to node `3`.
+
+Reduce the indegree of node `3`.
+
+```text
+indegree[3] = 1 - 1 = 0
+```
+
+Node `3` is now ready.
+
+```text
+Queue = [3]
+indegree = [0, 0, 0, 0]
+```
+
+---
+
+## Iteration 4
+
+Remove node `3`.
+
+```text
+Queue = []
+Answer = [0, 1, 2, 3]
+```
+
+Node `3` has no outgoing edges.
+
+The queue becomes empty.
+
+All four nodes were processed.
+
+Therefore:
+
+```text
+Topological order = [0, 1, 2, 3]
+```
+
+---
+
+# 9. Cycle Detection Example
+
+Consider:
+
+```text
+0 -> 1
+1 -> 2
+2 -> 0
+```
+
+The indegrees are:
+
+```text
+Node 0 = 1
+Node 1 = 1
+Node 2 = 1
+```
+
+```text
+indegree = [1, 1, 1]
+```
+
+No node has indegree `0`.
+
+Therefore:
+
+```text
+Queue = []
+```
+
+BFS cannot start.
+
+```text
+Processed nodes = 0
+Total nodes = 3
+```
+
+Because:
+
+```text
+processedNodes != totalNodes
+```
+
+the graph contains a cycle.
+
+---
+
+# 10. Complete Java Code With Detailed Comments
+
+```java
+import java.util.*;
+
+public class KahnsAlgorithm {
+
+    /*
+     * This method returns one valid topological ordering
+     * using Kahn's Algorithm.
+     *
+     * vertices:
+     * Total number of nodes in the graph.
+     * Nodes are numbered from 0 to vertices - 1.
+     *
+     * edges:
+     * Each edges[i] contains [u, v], representing:
+     * u -> v
+     *
+     * This means u must appear before v.
+     */
+    public static List<Integer> topologicalSort(
+            int vertices,
+            int[][] edges) {
+
+        /*
+         * Create an adjacency list.
+         *
+         * adj.get(u) stores all nodes that can be reached
+         * directly from node u.
+         *
+         * If there is an edge u -> v,
+         * v will be stored inside adj.get(u).
+         */
+        List<List<Integer>> adj = new ArrayList<>();
+
+        /*
+         * Create one empty neighbor list for every node.
+         */
+        for (int node = 0; node < vertices; node++) {
+            adj.add(new ArrayList<>());
+        }
+
+        /*
+         * indegree[node] represents the number of incoming
+         * edges to that node.
+         *
+         * In dependency language, it represents how many
+         * prerequisites the node still has.
+         */
+        int[] indegree = new int[vertices];
+
+        /*
+         * Build the adjacency list and indegree array.
+         */
+        for (int[] edge : edges) {
+
+            /*
+             * edge[0] is the source node.
+             * edge[1] is the destination node.
+             */
+            int source = edge[0];
+            int destination = edge[1];
+
+            /*
+             * Store the directed edge:
+             *
+             * source -> destination
+             */
+            adj.get(source).add(destination);
+
+            /*
+             * Since one edge enters the destination,
+             * increase its indegree.
+             */
+            indegree[destination]++;
+        }
+
+        /*
+         * The queue stores nodes that are ready to be processed.
+         *
+         * A node is ready when its indegree is 0,
+         * meaning it has no remaining prerequisites.
+         */
+        Queue<Integer> queue = new LinkedList<>();
+
+        /*
+         * Add every node whose indegree is initially 0.
+         *
+         * These nodes can appear at the beginning of a
+         * topological ordering.
+         */
+        for (int node = 0; node < vertices; node++) {
+            if (indegree[node] == 0) {
+                queue.offer(node);
+            }
+        }
+
+        /*
+         * This list stores the final topological order.
+         */
+        List<Integer> topologicalOrder = new ArrayList<>();
+
+        /*
+         * Perform BFS.
+         */
+        while (!queue.isEmpty()) {
+
+            /*
+             * Remove one node whose prerequisites have
+             * already been completed.
+             */
+            int currentNode = queue.poll();
+
+            /*
+             * Add the node to the topological ordering.
+             */
+            topologicalOrder.add(currentNode);
+
+            /*
+             * Visit every node that depends directly
+             * on the current node.
+             */
+            for (int neighbor : adj.get(currentNode)) {
+
+                /*
+                 * The current node has been completed.
+                 *
+                 * Therefore, the neighbor has one fewer
+                 * remaining prerequisite.
+                 */
+                indegree[neighbor]--;
+
+                /*
+                 * If the neighbor's indegree becomes 0,
+                 * all its prerequisites have been completed.
+                 *
+                 * It is now ready to be processed.
+                 */
+                if (indegree[neighbor] == 0) {
+                    queue.offer(neighbor);
+                }
+            }
+        }
+
+        /*
+         * If we could not process every node, some nodes
+         * are trapped inside a directed cycle.
+         *
+         * A topological ordering does not exist in that case.
+         */
+        if (topologicalOrder.size() != vertices) {
+            return new ArrayList<>();
+        }
+
+        /*
+         * All nodes were processed.
+         *
+         * Therefore, the graph is a DAG and the list contains
+         * one valid topological ordering.
+         */
+        return topologicalOrder;
+    }
+
+    public static void main(String[] args) {
+
+        int vertices = 4;
+
+        int[][] edges = {
+            {0, 1},
+            {0, 2},
+            {1, 3},
+            {2, 3}
+        };
+
+        List<Integer> answer =
+                topologicalSort(vertices, edges);
+
+        if (answer.isEmpty()) {
+            System.out.println(
+                "Topological ordering is not possible because the graph contains a cycle."
+            );
+        } else {
+            System.out.println(
+                "Topological order: " + answer
+            );
+        }
+    }
+}
+```
+
+## Output
+
+```text
+Topological order: [0, 1, 2, 3]
+```
+
+Depending on the order in which nodes enter the queue, another valid answer may be:
+
+```text
+Topological order: [0, 2, 1, 3]
+```
+
+Both are correct because all dependencies are respected.
+
+---
+
+# 11. Short Interview Template
+
+```java
+public List<Integer> topoSort(int vertices, int[][] edges) {
+
+    List<List<Integer>> adj = new ArrayList<>();
+
+    for (int i = 0; i < vertices; i++) {
+        adj.add(new ArrayList<>());
+    }
+
+    int[] indegree = new int[vertices];
+
+    for (int[] edge : edges) {
+        int source = edge[0];
+        int destination = edge[1];
+
+        adj.get(source).add(destination);
+        indegree[destination]++;
+    }
+
+    Queue<Integer> queue = new LinkedList<>();
+
+    for (int node = 0; node < vertices; node++) {
+        if (indegree[node] == 0) {
+            queue.offer(node);
+        }
+    }
+
+    List<Integer> order = new ArrayList<>();
+
+    while (!queue.isEmpty()) {
+
+        int current = queue.poll();
+        order.add(current);
+
+        for (int neighbor : adj.get(current)) {
+
+            indegree[neighbor]--;
+
+            if (indegree[neighbor] == 0) {
+                queue.offer(neighbor);
+            }
+        }
+    }
+
+    if (order.size() != vertices) {
+        return new ArrayList<>();
+    }
+
+    return order;
+}
+```
+
+---
+
+# 12. Cycle Detection Template
+
+Sometimes the problem only asks whether a cycle exists.
+
+In that case, we do not necessarily need to store the entire ordering.
+
+We can maintain a count of processed nodes.
+
+```java
+public boolean hasCycle(int vertices, int[][] edges) {
+
+    List<List<Integer>> adj = new ArrayList<>();
+
+    for (int i = 0; i < vertices; i++) {
+        adj.add(new ArrayList<>());
+    }
+
+    int[] indegree = new int[vertices];
+
+    for (int[] edge : edges) {
+        int source = edge[0];
+        int destination = edge[1];
+
+        adj.get(source).add(destination);
+        indegree[destination]++;
+    }
+
+    Queue<Integer> queue = new LinkedList<>();
+
+    for (int node = 0; node < vertices; node++) {
+        if (indegree[node] == 0) {
+            queue.offer(node);
+        }
+    }
+
+    int processedNodes = 0;
+
+    while (!queue.isEmpty()) {
+
+        int current = queue.poll();
+
+        processedNodes++;
+
+        for (int neighbor : adj.get(current)) {
+
+            indegree[neighbor]--;
+
+            if (indegree[neighbor] == 0) {
+                queue.offer(neighbor);
+            }
+        }
+    }
+
+    /*
+     * If all nodes were processed, there is no cycle.
+     *
+     * If some nodes remain unprocessed, the graph
+     * contains a cycle.
+     */
+    return processedNodes != vertices;
+}
+```
+
+---
+
+# 13. Time and Space Complexity
+
+Let:
+
+```text
+V = number of vertices
+E = number of edges
+```
+
+## Time Complexity
+
+```text
+O(V + E)
+```
+
+Reason:
+
+- Building the adjacency list takes `O(E)`.
+- Calculating indegrees takes `O(E)`.
+- Finding initial zero-indegree nodes takes `O(V)`.
+- Every node enters the queue at most once: `O(V)`.
+- Every edge is processed once: `O(E)`.
+
+Therefore:
+
+```text
+O(V + E)
+```
+
+## Space Complexity
+
+```text
+O(V + E)
+```
+
+Reason:
+
+- Adjacency list stores all vertices and edges.
+- Indegree array stores `V` values.
+- Queue can contain up to `V` nodes.
+- Result list can contain `V` nodes.
+
+---
+
+# 14. How to Recognize Kahn's Algorithm Problems
+
+Look for words such as:
+
+- Prerequisite
+- Dependency
+- Course order
+- Task scheduling
+- Build order
+- Recipe ingredients
+- Alien dictionary
+- Before and after relationships
+- Directed graph cycle detection
+- Find a valid ordering
+- Can all tasks be completed?
+- Which nodes are eventually available?
+
+The mental question should be:
+
+```text
+Does one item need to be completed before another item?
+```
+
+If yes, think:
+
+```text
+Directed graph + Topological sort
+```
+
+If the problem naturally talks about:
+
+```text
+Number of prerequisites remaining
+```
+
+think:
+
+```text
+Kahn's Algorithm + Indegree + Queue
+```
+
+---
+
+# 15. Common Mistakes
+
+## Mistake 1: Increasing the source's indegree
+
+For:
+
+```text
+u -> v
+```
+
+Wrong:
+
+```java
+indegree[u]++;
+```
+
+Correct:
+
+```java
+indegree[v]++;
+```
+
+The edge enters `v`, not `u`.
+
+---
+
+## Mistake 2: Adding only one zero-indegree node
+
+There may be multiple valid starting nodes.
+
+Wrong idea:
+
+```text
+Find one node with indegree 0.
+```
+
+Correct idea:
+
+```text
+Add every node with indegree 0 to the queue.
+```
+
+---
+
+## Mistake 3: Marking nodes as visited
+
+Kahn's Algorithm generally does not require a separate visited array.
+
+The indegree array controls when a node becomes available.
+
+A node enters the queue when:
+
+```java
+indegree[node] == 0
+```
+
+---
+
+## Mistake 4: Adding a node before its indegree becomes 0
+
+A node must be added only when all its dependencies are completed.
+
+Correct:
+
+```java
+indegree[neighbor]--;
+
+if (indegree[neighbor] == 0) {
+    queue.offer(neighbor);
+}
+```
+
+---
+
+## Mistake 5: Forgetting cycle detection
+
+The queue becoming empty does not automatically mean success.
+
+Always check:
+
+```java
+topologicalOrder.size() == vertices
+```
+
+or:
+
+```java
+processedNodes == vertices
+```
+
+---
+
+## Mistake 6: Using Kahn's Algorithm for an undirected graph
+
+Topological sorting applies to directed dependency relationships.
+
+It does not apply to a normal undirected graph.
+
+---
+
+## Mistake 7: Assuming topological order is unique
+
+A graph can have multiple correct topological orderings.
+
+If two nodes simultaneously have indegree `0`, either may be processed first.
+
+---
+
+# 16. Core Mental Model
+
+Remember this sentence:
+
+> Indegree represents remaining prerequisites.
+
+The complete process is:
+
+```text
+1. Count every node's prerequisites.
+2. Add nodes with zero prerequisites to the queue.
+3. Complete one available node.
+4. Remove it as a prerequisite from its neighbors.
+5. Add newly available neighbors to the queue.
+6. Continue until the queue is empty.
+7. If every node was completed, the ordering is valid.
+8. Otherwise, a cycle exists.
+```
+
+---
+
+# 17. Kahn's Algorithm vs Normal BFS
+
+## Normal BFS
+
+Normal BFS explores nodes level by level based on connectivity.
+
+A node may be added when it is first discovered.
+
+It commonly uses:
+
+```java
+Queue<Integer> queue;
+boolean[] visited;
+```
+
+## Kahn's Algorithm
+
+Kahn's Algorithm processes nodes based on dependencies.
+
+A node may be added only when its indegree becomes `0`.
+
+It commonly uses:
+
+```java
+Queue<Integer> queue;
+int[] indegree;
+```
+
+The queue does not simply mean:
+
+```text
+These nodes were discovered.
+```
+
+It means:
+
+```text
+These nodes have no remaining dependencies and are ready.
+```
+
+---
+
+# 18. Kahn's Algorithm vs DFS Topological Sort
+
+## Kahn's Algorithm
+
+Uses:
+
+```text
+BFS + Queue + Indegree
+```
+
+Node is added to the answer when it is removed from the queue.
+
+Cycle detection:
+
+```text
+processedNodes != totalNodes
+```
+
+## DFS Topological Sort
+
+Uses:
+
+```text
+DFS + Recursion + Stack
+```
+
+Node is added to the stack after all its neighbors are processed.
+
+Cycle detection usually requires:
+
+```text
+visited array + currentPath array
+```
+
+## When is Kahn's Algorithm easier?
+
+Kahn's Algorithm is often easier when the question involves:
+
+- Prerequisite counts
+- Available tasks
+- Course scheduling
+- Cycle detection
+- Dependency processing
+- Returning an order
+
+---
+
+# 19. Important LeetCode Problems
+
+## Basic
+
+- LeetCode 207: Course Schedule
+- LeetCode 210: Course Schedule II
+
+## Intermediate
+
+- LeetCode 802: Find Eventual Safe States
+- LeetCode 1462: Course Schedule IV
+- LeetCode 2115: Find All Possible Recipes from Given Supplies
+
+## Advanced
+
+- LeetCode 1203: Sort Items by Groups Respecting Dependencies
+- LeetCode 269: Alien Dictionary
+- LeetCode 444: Sequence Reconstruction
+
+---
+
+# 20. Final Revision Cheat Sheet
+
+```text
+Kahn's Algorithm = BFS Topological Sort
+
+Required structures:
+- Adjacency list
+- Indegree array
+- Queue
+- Result list or processed count
+
+Steps:
+1. Build adjacency list.
+2. Calculate indegree of every node.
+3. Add all indegree-0 nodes to queue.
+4. Remove a node from queue.
+5. Add it to the answer.
+6. Reduce indegrees of its neighbors.
+7. If a neighbor becomes 0, add it to queue.
+8. Continue until queue is empty.
+9. If processed count != total nodes, a cycle exists.
+
+Time Complexity:
+O(V + E)
+
+Space Complexity:
+O(V + E)
+
+Main memory trick:
+Indegree = remaining prerequisites.
+Queue = tasks currently ready.
+Reducing indegree = completing one prerequisite.
+No zero-indegree node while nodes remain = cycle.
+```
