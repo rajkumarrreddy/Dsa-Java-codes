@@ -1,0 +1,127 @@
+## Core Idea
+
+A node is:
+
+- **Safe** if every path from it eventually stops at a terminal node.
+- **Unsafe** if it is part of a cycle or can reach a cycle.
+
+```text
+Can reach a cycle     → Unsafe
+Cannot reach a cycle  → Safe
+```
+
+## DFS States
+
+```text
+0 = Unvisited
+1 = Currently in the DFS path
+2 = Confirmed safe
+3 = Confirmed unsafe
+```
+
+If DFS reaches a node with `state[node] == 1`, that node is already in the current path, so we found a cycle.
+
+## Java Code
+
+```java
+import java.util.*;
+
+class Solution {
+
+    public List<Integer> eventualSafeNodes(int[][] graph) {
+        int n = graph.length;
+
+        // 0 = unvisited, 1 = current path
+        // 2 = safe, 3 = unsafe
+        int[] state = new int[n];
+
+        List<Integer> safeNodes = new ArrayList<>();
+
+        // Check every node
+        for (int node = 0; node < n; node++) {
+            if (dfs(node, graph, state)) {
+                safeNodes.add(node);
+            }
+        }
+
+        return safeNodes;
+    }
+
+    private boolean dfs(int node, int[][] graph, int[] state) {
+
+        // Node is already in the current path → cycle
+        if (state[node] == 1) {
+            return false;
+        }
+
+        // Already confirmed safe
+        if (state[node] == 2) {
+            return true;
+        }
+
+        // Already confirmed unsafe
+        if (state[node] == 3) {
+            return false;
+        }
+
+        // Add node to current DFS path
+        state[node] = 1;
+
+        // Check every neighbor
+        for (int neighbor : graph[node]) {
+
+            // One unsafe neighbor makes this node unsafe
+            if (!dfs(neighbor, graph, state)) {
+                state[node] = 3;
+                return false;
+            }
+        }
+
+        // Every neighbor is safe
+        state[node] = 2;
+        return true;
+    }
+}
+```
+
+## Important Logic
+
+```java
+for (int neighbor : graph[node]) {
+    if (!dfs(neighbor, graph, state)) {
+        state[node] = 3;
+        return false;
+    }
+}
+```
+
+Meaning:
+
+```text
+Any neighbor unsafe → Current node unsafe
+All neighbors safe  → Current node safe
+```
+
+## Why `graph[node]`?
+
+Because the input is:
+
+```java
+int[][] graph
+```
+
+```text
+Array       → graph[node]
+ArrayList   → graph.get(node)
+```
+
+## Complexity
+
+```text
+Time:  O(V + E)
+Space: O(V)
+```
+
+## Memory Line
+
+> Mark the node as currently exploring, check all its neighbors, and mark it safe only if every neighbor is safe.
