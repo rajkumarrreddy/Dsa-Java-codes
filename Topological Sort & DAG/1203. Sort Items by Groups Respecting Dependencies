@@ -1,0 +1,277 @@
+1. Give every item with group[i] == -1 a unique group.
+
+2. Create:
+   - itemGraph for item dependencies
+   - groupGraph for group dependencies
+   - itemIndegree array
+   - groupIndegree array
+
+3. For every dependency previousItem → currentItem:
+   - Add previousItem → currentItem to itemGraph.
+   - Increase itemIndegree[currentItem].
+   - If both items belong to different groups:
+       - Add previousGroup → currentGroup to groupGraph.
+       - Increase groupIndegree[currentGroup].
+
+4. Topologically sort all items.
+
+5. Topologically sort all groups.
+
+6. If all items or all groups were not processed:
+   - A cycle exists.
+   - Return an empty array.
+
+7. Traverse items in their topological order and place each item
+   into the bucket of its group.
+
+8. Traverse groups in their topological order and append the
+   complete item bucket of every group to the answer.
+
+9. Return the answer.
+
+import java.util.*;
+
+class Solution {
+
+    public int[] sortItems(
+            int n,
+            int m,
+            int[] group,
+            List<List<Integer>> beforeItems) {
+
+        /*
+         * STEP 1: Assign a unique group to every ungrouped item.
+         *
+         * If group[item] == -1, the item does not belong to
+         * any existing group.
+         *
+         * We assign it a new unique group so that every item
+         * belongs to exactly one group.
+         */
+        for (int item = 0; item < n; item++) {
+            if (group[item] == -1) {
+                group[item] = m;
+                m++;
+            }
+        }
+
+        /*
+         * STEP 2: Create two graphs.
+         *
+         * itemGraph:
+         * Stores dependencies between individual items.
+         *
+         * groupGraph:
+         * Stores dependencies between different groups.
+         */
+        List<List<Integer>> item*raph = new ArrayList<>();
+        List<List<Integer>> groupGraph = new ArrayList<>();
+
+        // Create one adjacency list for every item.
+        for (int item = 0; item < n; item++) {
+            itemGraph.add(new ArrayList<>());
+        }
+
+        // Create one adjacency list for every group.
+        // m may have increased after assigning groups to -1 items.
+        for (int currentGroup = 0; currentGroup < m; currentGroup++) {
+            groupGraph.add(new ArrayList<>());
+        }
+
+        /*
+         * itemIndegree[item\]:
+         * Number of item prerequisites remaining for this item.
+         *
+         * groupIndegree[group\]:
+         * Number of group prerequisites remaining for this group.
+         */
+        int[] itemIndegree = new int[n];
+        int[] groupIndegree = new int[m];
+
+        /*
+         * STEP 3: Build the item graph and group graph.
+         *
+         * beforeItems[currentItem] contains all items that must
+         * appear before currentItem.
+         */
+        for (int currentItem = 0; currentItem < n; currentItem++) {
+
+            for (int previousItem : beforeItems.get(currentItem)) {
+
+                /*
+                 * previousItem must appear before currentItem.
+                 *
+                 * Therefore, create:
+                 *
+                 * previousItem → currentItem
+                 */
+                itemGraph.get(previousItem).add(currentItem);
+
+                /*
+                 * currentItem has one more prerequisite.
+                 */
+                itemIndegree[currentItem]++;
+
+                // Find the groups containing the two items.
+                int previousGroup = group[previousItem];
+                int currentGroup = group[currentItem];
+
+                /*
+                 * If the items belong to different groups,
+                 * the complete previousGroup block must appear
+                 * before the complete currentGroup block.
+                 *
+                 * Therefore, create:
+                 *
+                 * previousGroup → currentGroup
+                 */
+                if (previousGroup != currentGroup) {
+                    groupGraph.get(previousGroup).add(currentGroup);
+
+                    /*
+                     * currentGroup has one more prerequisite group.
+                     */
+                    groupIndegree[currentGroup]++;
+                }
+            }
+        }
+
+        /*
+         * STEP 4: Topologically sort all items.
+         *
+         * This gives an order in which every prerequisite item
+         * appears before its dependent item.
+         */
+        List<Integer> itemOrder =
+                topologicalSort(itemGraph, itemIndegree);
+
+        /*
+         * STEP 5: Topologically sort all groups.
+         *
+         * This gives an order in which the complete group blocks
+         * should appear.
+         */
+        List<Integer> groupOrder =
+                topologicalSort(groupGraph, groupIndegree);
+
+        /*
+         * STEP 6: Detect cycles.
+         *
+         * If itemOrder contains fewer than n items,
+         * the item graph contains a cycle.
+         *
+         * If groupOrder contains fewer than m groups,
+         * the group graph contains a cycle.
+         *
+         * In either case, a valid arrangement is impossible.
+         */
+        if (itemOrder.size() != n || groupOrder.size() != m) {
+            return new int[0];
+        }
+
+        /*
+         * STEP 7: Create one bucket for every group.
+         *
+         * Each bucket will contain the items belonging to that
+         * group in their topologically sorted order.
+         */
+        List<List<Integer>> groupedItems = new ArrayList<>();
+
+        for (int currentGroup = 0; currentGroup < m; currentGroup++) {
+            groupedItems.add(new ArrayList<>());
+        }
+
+        /*
+         * Traverse itemOrder instead of the original item order.
+         *
+         * This ensures that the order inside each group bucket
+         * respects all item dependencies.
+         */
+        for (int item : itemOrder) {
+            int itemGroup = group[item];
+            groupedItems.get(itemGroup).add(item);
+        }
+
+        /*
+         * STEP 8: Build the final answer.
+         *
+         * Visit groups in their topological order.
+         * For every group, append all items from its bucket.
+         *
+         * Since an entire group's bucket is added together,
+         * items belonging to the same group remain contiguous.
+         */
+        int[] answer = new int[n];
+        int index = 0;
+
+        for (int currentGroup : groupOrder) {
+
+            for (int item : groupedItems.get(currentGroup)) {
+                answer[index] = item;
+                index++;
+            }
+        }
+
+        return answer;
+    }
+
+    /*
+     * Kahn's algorithm for topological sorting.
+     *
+     * This method works for both:
+     * 1. The item graph
+     * 2. The group graph
+     */
+    private List<Integer> topologicalSort(
+            List<List<Integer>> graph,
+            int[] indegree) {
+
+        Queue<Integer> queue = new LinkedList<>();
+
+        /*
+         * Nodes with indegree 0 have no remaining prerequisites,
+         * so they can be processed immediately.
+         */
+        for (int node = 0; node < indegree.length; node++) {
+            if (indegree[node] == 0) {
+                queue.offer(node);
+            }
+        }
+
+        List<Integer> order = new ArrayList<>();
+
+        while (!queue.isEmpty()) {
+
+            // Remove a node that has no remaining prerequisites.
+            int currentNode = queue.poll();
+
+            // Add it to the topological ordering.
+            order.add(currentNode);
+
+            /*
+             * Visit every node that depends on currentNode.
+             */
+            for (int neighbor : graph.get(currentNode)) {
+
+                /*
+                 * currentNode has been processed, so the neighbor
+                 * has one fewer remaining prerequisite.
+                 */
+                indegree[neighbor]--;
+
+                /*
+                 * If all prerequisites of the neighbor have now
+                 * been processed, add it to the queue.
+                 */
+                if (indegree[neighbor] == 0) {
+                    queue.offer(neighbor);
+                }
+            }
+        }
+
+        /*
+         * If order.size() is smaller than the number of nodes,
+         * the graph contains a cycle.
+         */
+        return order;
+    }*}
