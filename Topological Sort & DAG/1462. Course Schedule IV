@@ -1,0 +1,63 @@
+class Solution {
+
+    public List<Boolean> checkIfPrerequisite(
+            int numCourses,
+            int[][] prerequisites,
+            int[][] queries) {
+
+        // Create an adjacency list for the directed graph
+        List<List<Integer>> graph = new ArrayList<>();
+
+        for (int course = 0; course < numCourses; course++) {
+            graph.add(new ArrayList<>());
+        }
+
+        // Build the graph:
+        // [a, b] means a must be completed before b
+        // Therefore, create the directed edge a -> b
+        for (int[] prerequisite : prerequisites) {
+            int prerequisiteCourse = prerequisite[0];
+            int nextCourse = prerequisite[1];
+
+            graph.get(prerequisiteCourse).add(nextCourse);
+        }
+
+        // reachable[source][destination] is true when
+        // source is a prerequisite of destination
+        boolean[][] reachable = new boolean[numCourses][numCourses];
+
+        // Run DFS using every course as the starting course
+        for (int source = 0; source < numCourses; source++) {
+
+            boolean[] visited = new boolean[numCourses];
+
+            dfs(source, source, graph, reachable, visited);
+        }
+
+        // Answer every query using the precomputed matrix
+       	
+    }
+
+    private void dfs(
+            int source,
+            int current,
+            List<List<Integer>> graph,
+            boolean[][] reachable,
+            boolean[] visited) {
+
+        // Mark the current course as visited during this DFS
+        visited[current] = true;
+
+        // Visit every course that can be taken after current
+        for (int neighbor : graph.get(current)) {
+
+            // The original source can reach this neighbor
+            reachable[source][neighbor] = true;
+
+            // Continue only if this node was not already visited
+            if (!visited[neighbor]) {
+                dfs(source, neighbor, graph, reachable, visited);
+            }
+        }
+    }
+}
