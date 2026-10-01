@@ -1,0 +1,142 @@
+import java.util.*;
+
+class Solution {
+
+    public List<String> findAllRecipes(
+            String[] recipes,
+            List<List<String>> ingredients,
+            String[] supplies) {
+
+        /*
+         * graph stores:
+         * ingredient -> recipes that depend on that ingredient
+         *
+         * Example:
+         * yeast -> [bread]
+         * flour -> [bread]
+         * bread -> [sandwich]
+         */
+        Map<String, List<String>> graph = new HashMap<>();
+
+        /*
+         * indegree stores:
+         * recipe -> number of ingredients that recipe still needs
+         *
+         * Example:
+         * bread needs yeast and flour
+         * So initially: bread -> 2
+         */
+        Map<String, Integer> indegree = new HashMap<>();
+
+        /*
+         * Build the graph and calculate the initial indegree
+         * of every recipe.
+         */
+        for (int i = 0; i < recipes.length; i++) {
+
+            // Current recipe
+            String recipe = recipes[i];
+
+            /*
+             * Initially, the recipe needs all its ingredients.
+             * Therefore, its indegree is the total number
+             * of ingredients required.
+             */
+            indegree.put(recipe, ingredients.get(i).size());
+
+            /*
+             * Connect every ingredient to the recipe
+             * that requires it.
+             */
+            for (String ingredient : ingredients.get(i)) {
+
+                /*
+                 * If the ingredient does not exist in the graph,
+                 * create an empty list for it.
+                 *
+                 * Then add the current recipe to that list.
+                 */
+                graph.computeIfAbsent(
+                        ingredient,
+                        key -> new ArrayList<>()
+                ).add(recipe);
+            }
+        }
+
+        /*
+         * The queue stores everything currently available.
+         *
+         * Initially, it contains supplies.
+         * Later, it will also contain prepared recipes.
+         */
+        Queue<String> queue = new ArrayDeque<>();
+
+        // Add every initial supply to the queue
+        for (String supply : supplies) {
+            queue.offer(supply);
+        }
+
+        // Stores all recipes that we successfully prepare
+        List<String> answer = new ArrayList<>();
+
+        /*
+         * Run BFS using Kahn's Topological Sort.
+         */
+        while (!queue.isEmpty()) {
+
+            /*
+             * Remove one available item.
+             *
+             * It can be an original supply or a recipe
+             * that we prepared earlier.
+             */
+            String availableItem = queue.poll();
+
+            /*
+             * Find every recipe that requires this available item.
+             *
+             * If no recipe depends on the item, getOrDefault()
+             * returns an empty list and the loop does nothing.
+             */
+            for (String recipe :
+                    graph.getOrDefault(
+                            availableItem,
+                            Collections.emptyList()
+                    )) {
+
+                /*
+                 * One required ingredient is now available,
+                 * so reduce the recipe's indegree by 1.
+                 */
+                int remainingIngredients = indegree.get(recipe) - 1;
+
+                // Save the updated value
+                indegree.put(recipe, remainingIngredients);
+
+                /*
+                 * If indegree becomes 0, all ingredients
+                 * required for this recipe are available.
+                 */
+                if (remainingIngredients == 0) {
+
+                    // The recipe can be prepared
+                    answer.add(recipe);
+
+                    /*
+                     * The prepared recipe can now be used as an
+                     * ingredient for another recipe.
+                     *
+                     * Therefore, add it to the queue.
+                     */
+                    queue.offer(recipe);
+                }
+            }
+        }
+
+        /*
+         * Recipes blocked by missing ingredients or cycles
+         * never reach an indegree of 0.
+         */
+        return answer;
+    }
+}
