@@ -1,0 +1,252 @@
+class Solution {
+
+    /*
+     * FIND OPERATION
+     *
+     * This method returns the ultimate parent, or leader,
+     * of the province to which the given city belongs.
+     *
+     * Example:
+     *
+     * parent[2] = 1
+     * parent[1] = 0
+     * parent[0] = 0
+     *
+     * City 2's ultimate parent is City 0.
+     */
+    private int find(int city, int[] parent) {
+
+        /*
+         * If a city is its own parent, it is the ultimate parent
+         * or leader of its province.
+         */
+        if (parent[city] == city) {
+            return city;
+        }
+
+        /*
+         * Recursively find the ultimate parent.
+         *
+         * We also directly connect this city to its ultimate parent.
+         * This optimization is called path compression.
+         *
+         * Before:
+         * 2 -> 1 -> 0
+         *
+         * After find(2):
+         * 2 ------> 0
+         * 1 ------> 0
+         */
+        parent[city] = find(parent[city], parent);
+
+        return parent[city];
+    }
+
+    /*
+     * UNION OPERATION
+     *
+     * This method tries to combine the provinces containing
+     * city1 and city2.
+     *
+     * It returns:
+     * true  -> Two different provinces were merged
+     * false -> Both cities were already in the same province
+     */
+    private boolean union(
+        int city1,
+        int city2,
+        int[] parent,
+        int[] rank
+    ) {
+
+        /*
+         * Find the leader of the province containing city1.
+         */
+        int parent1 = find(city1, parent);
+
+        /*
+         * Find the leader of the province containing city2.
+         */
+        int parent2 = find(city2, parent);
+
+        /*
+         * If both cities have the same ultimate parent,
+         * they already belong to the same province.
+         *
+         * Therefore, no merge is required.
+         */
+        if (parent1 == parent2) {
+            return false;
+        }
+
+        /*
+         * Union by rank:
+         *
+         * We attach the shorter tree below the taller tree.
+         * This prevents the DSU tree from becoming unnecessarily tall.
+         */
+
+        if (rank[parent1] < rank[parent2]) {
+
+            /*
+             * The tree of parent1 is shorter.
+             * Attach parent1 below parent2.
+             */
+            parent[parent1] = parent2;
+
+        } else if (rank[parent1] > rank[parent2]) {
+
+            /*
+             * The tree of parent2 is shorter.
+             * Attach parent2 below parent1.
+             */
+            parent[parent2] = parent1;
+
+        } else {
+
+            /*
+             * Both trees have the same rank.
+             *
+             * We can make either parent the new leader.
+             * Here, we choose parent1 as the leader
+             * and attach parent2 below it.
+             */
+            parent[parent2] = parent1;
+
+            /*
+             * Because two trees of equal rank were combined,
+             * the resulting tree becomes one level taller.
+             *
+             * Therefore, increase the rank of the new leader.
+             */
+            rank[parent1]++;
+        }
+
+        /*
+         * The cities previously belonged to different provinces,
+         * and those provinces have now been merged.
+         */
+        return true;
+    }
+
+    public int findCircleNum(int[][] isConnected) {
+
+        /*
+         * The number of rows is equal to the number of cities.
+         */
+        int numberOfCities = isConnected.length;
+
+        /*
+         * parent[i] stores the parent of City i.
+         *
+         * By following parents, we can find the leader
+         * of the entire province.
+         */
+        int[] parent = new int[numberOfCities];
+
+        /*
+         * rank[i] represents an approximate height
+         * of the DSU tree whose leader is City i.
+         */
+        int[] rank = new int[numberOfCities];
+
+        /*
+         * Initially, every city is its own parent.
+         *
+         * For three cities:
+         *
+         * parent = [0, 1, 2]
+         *
+         * Provinces:
+         * {0} {1} {2}
+         */
+        for (int city = 0; city < numberOfCities; city++) {
+            parent[city] = city;
+        }
+
+        /*
+         * Initially, every city is considered a separate province.
+         *
+         * If there are three cities:
+         *
+         * {0} {1} {2}
+         *
+         * provinces = 3
+         */
+        int provinces = numberOfCities;
+
+        /*
+         * city1 represents the first city in the pair.
+         */
+        for (int city1 = 0; city1 < numberOfCities; city1++) {
+
+            /*
+             * city2 starts from city1 + 1.
+             *
+             * For three cities, we check:
+             *
+             * (0,1)
+             * (0,2)
+             * (1,2)
+             *
+             * We do not check (0,0), (1,1), or (2,2)
+             * because those are self-connections.
+             *
+             * We also do not check (1,0) after checking (0,1)
+             * because the matrix is symmetric and both positions
+             * represent the same connection.
+             */
+            for (
+                int city2 = city1 + 1;
+                city2 < numberOfCities;
+                city2++
+            ) {
+
+                /*
+                 * A value of 1 means city1 and city2
+                 * are directly connected.
+                 */
+                if (isConnected[city1][city2] == 1) {
+
+                    /*
+                     * Try to combine the provinces containing
+                     * city1 and city2.
+                     *
+                     * merged will be true only if the cities
+                     * previously belonged to different provinces.
+                     */
+                    boolean merged = union(
+                        city1,
+                        city2,
+                        parent,
+                        rank
+                    );
+
+                    /*
+                     * If two separate provinces were combined,
+                     * the total province count decreases by one.
+                     *
+                     * Example:
+                     *
+                     * Before:
+                     * {0} {1} {2}
+                     * provinces = 3
+                     *
+                     * After merging 0 and 1:
+                     * {0,1} {2}
+                     * provinces = 2
+                     */
+                    if (merged) {
+                        provinces--;
+                    }
+                }
+            }
+        }
+
+        /*
+         * After processing all direct connections,
+         * provinces stores the number of separate connected groups.
+         */
+        return provinces;
+    }
+}
