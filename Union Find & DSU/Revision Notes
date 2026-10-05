@@ -1,0 +1,280 @@
+# Union Find / DSU Revision Notes
+
+## Purpose
+
+DSU is used to:
+
+- Merge connected components
+- Check whether two nodes are connected
+- Count connected components
+- Detect redundant edges or cycles in undirected graphs
+- Group equivalent elements
+- Implement Kruskal's Minimum Spanning Tree algorithm
+
+## Main Idea
+
+Every component has one representative called its **root**.
+
+```java
+find(a) == find(b)
+```
+
+If both nodes have the same root, they belong to the same component.
+
+## Java Template
+
+```java
+class DSU {
+    int[] parent;
+    int[] size;
+    int components;
+
+    DSU(int n) {
+        parent = new int[n];
+        size = new int[n];
+        components = n;
+
+        for (int node = 0; node < n; node++) {
+            parent[node] = node;
+            size[node] = 1;
+        }
+    }
+
+    int find(int node) {
+        if (parent[node] != node) {
+            parent[node] = find(parent[node]);
+        }
+
+        return parent[node];
+    }
+
+    boolean union(int nodeA, int nodeB) {
+        int rootA = find(nodeA);
+        int rootB = find(nodeB);
+
+        if (rootA == rootB) {
+            return false;
+        }
+
+        if (size[rootA] < size[rootB]) {
+            int temp = rootA;
+            rootA = rootB;
+            rootB = temp;
+        }
+
+        parent[rootB] = rootA;
+        size[rootA] += size[rootB];
+        components--;
+
+        return true;
+    }
+
+    boolean connected(int nodeA, int nodeB) {
+        return find(nodeA) == find(nodeB);
+    }
+
+    int componentSize(int node) {
+        return size[find(node)];
+    }
+
+    int getComponents() {
+        return components;
+    }
+}
+```
+
+## Variables
+
+```text
+parent[node]  → immediate parent of the node
+size[root]    → number of nodes in the component
+components    → number of separate components
+```
+
+Initially:
+
+```text
+parent[i] = i
+size[i] = 1
+components = n
+```
+
+## Find
+
+```java
+int find(int node)
+```
+
+Returns the root of the node's component.
+
+```java
+parent[node] = find(parent[node]);
+```
+
+This is **path compression**. It makes nodes point directly to their root.
+
+## Union
+
+```java
+boolean union(int a, int b)
+```
+
+Steps:
+
+1. Find both roots.
+2. If roots are equal, they are already connected.
+3. Attach the smaller component under the larger component.
+4. Update the component size.
+5. Decrease the component count.
+
+```text
+true  → components were merged
+false → nodes were already connected
+```
+
+## Union by Size
+
+```java
+if (size[rootA] < size[rootB]) {
+    swap(rootA, rootB);
+}
+
+parent[rootB] = rootA;
+size[rootA] += size[rootB];
+```
+
+Always attach the smaller component under the larger component.
+
+## Important Patterns
+
+### Check Connectivity
+
+```java
+find(a) == find(b)
+```
+
+### Count Components
+
+Start with:
+
+```java
+components = n;
+```
+
+For every successful union:
+
+```java
+components--;
+```
+
+### Detect Redundant Edge
+
+```java
+if (!dsu.union(a, b)) {
+    // Edge is redundant and creates a cycle
+}
+```
+
+### Minimum Connections Required
+
+If there are `k` components:
+
+```text
+Required connections = k - 1
+```
+
+### Group Nodes by Root
+
+```java
+Map<Integer, List<Integer>> groups = new HashMap<>();
+
+for (int node = 0; node < n; node++) {
+    int root = dsu.find(node);
+
+    groups.computeIfAbsent(
+        root,
+        key -> new ArrayList<>()
+    ).add(node);
+}
+```
+
+## Pattern Recognition
+
+Think about DSU when the problem mentions:
+
+- Connected components
+- Merge groups
+- Same group
+- Network connectivity
+- Redundant edge
+- Undirected cycle
+- Equality or equivalence
+- Allowed swaps
+- Account merging
+- Minimum spanning tree
+
+## DSU vs DFS/BFS
+
+Use **DSU** when:
+
+- Connections are repeatedly added
+- You need fast connectivity checks
+- You need to merge or count components
+- You need to detect a redundant undirected edge
+
+Use **DFS/BFS** when:
+
+- You need the actual path
+- You need distance or traversal order
+- You need to visit every node in a component
+
+## Complexity
+
+```text
+Initialization: O(n)
+Find:           O(α(n)) amortized
+Union:          O(α(n)) amortized
+Space:          O(n)
+```
+
+`find()` and `union()` are practically constant time after optimization.
+
+## Common Mistakes
+
+```java
+// Wrong: comparing direct parents
+parent[a] == parent[b]
+
+// Correct: comparing roots
+find(a) == find(b)
+```
+
+```java
+// Wrong: connecting normal nodes
+parent[b] = a;
+
+// Correct: connecting roots
+parent[rootB] = rootA;
+```
+
+```java
+// Size is meaningful at the root
+size[find(node)]
+```
+
+Only decrease `components` when a successful merge happens.
+
+## Recommended Problems
+
+1. `547` Number of Provinces
+2. `684` Redundant Connection
+3. `1319` Network Connected
+4. `990` Equality Equations
+5. `1202` Smallest String With Swaps
+6. `721` Accounts Merge
+7. `1579` Remove Max Number of Edges
+8. `1584` Min Cost to Connect All Points
+
+## One-Line Revision
+
+> DSU uses `find()` to identify a component's root and `union()` to merge two different components.
