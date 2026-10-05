@@ -1,0 +1,294 @@
+class Solution {
+
+    /*
+     * parent[computer] stores the parent of that computer
+     * in the DSU structure.
+     *
+     * If:
+     * parent[computer] == computer
+     *
+     * then that computer is the root or leader of its component.
+     */
+    private int[] parent;
+
+    /*
+     * rank[root] stores the approximate height of the DSU tree.
+     *
+     * We use rank to attach the shorter tree under the taller tree.
+     * This prevents the DSU tree from becoming unnecessarily tall.
+     */
+    private int[] rank;
+
+    public int makeConnected(int n, int[][] connections) {
+
+        /*
+         * To connect n computers, we need at least n - 1 cables.
+         *
+         * Example:
+         *
+         * 4 computers need at least 3 cables:
+         *
+         * 0 --- 1 --- 2 --- 3
+         *
+         * If we have fewer than n - 1 cables, rearranging the
+         * available cables will not be enough.
+         */
+        if (connections.length < n - 1) {
+            return -1;
+        }
+
+        /*
+         * Computers are numbered from 0 to n - 1.
+         *
+         * Therefore, arrays of size n are enough.
+         */
+        parent = new int[n];
+        rank = new int[n];
+
+        /*
+         * Initially, no computers are connected.
+         *
+         * Every computer starts as the parent or leader
+         * of its own separate component.
+         *
+         * For n = 4:
+         *
+         * parent = [0, 1, 2, 3]
+         *
+         * Components:
+         *
+         * {0} {1} {2} {3}
+         */
+        for (int computer = 0; computer < n; computer++) {
+            parent[computer] = computer;
+        }
+
+        /*
+         * Initially, every computer is a separate component.
+         *
+         * If n = 4:
+         *
+         * {0} {1} {2} {3}
+         *
+         * Therefore:
+         *
+         * components = 4
+         */
+        int components = n;
+
+        /*
+         * Process every existing cable connection.
+         *
+         * Each connection contains two computers:
+         *
+         * connection[0] = first computer
+         * connection[1] = second computer
+         */
+        for (int[] connection : connections) {
+
+            int computer1 = connection[0];
+            int computer2 = connection[1];
+
+            /*
+             * Try to join the components containing
+             * computer1 and computer2.
+             *
+             * union() returns true when the computers belonged
+             * to two different components.
+             *
+             * For example:
+             *
+             * Before:
+             * {0,1} {2,3}
+             *
+             * After union(1,2):
+             * {0,1,2,3}
+             *
+             * Two components became one, so reduce the
+             * component count by one.
+             */
+            if (union(computer1, computer2)) {
+                components--;
+            }
+
+            /*
+             * If union() returns false, both computers were
+             * already part of the same component.
+             *
+             * That cable is redundant because another path
+             * already exists between the computers.
+             *
+             * The number of components does not change.
+             */
+        }
+
+        /*
+         * If k separate components remain, we need k - 1
+         * cables to connect all components.
+         *
+         * Examples:
+         *
+         * 1 component  needs 0 operations
+         * 2 components need 1 operation
+         * 3 components need 2 operations
+         * 4 components need 3 operations
+         *
+         * Therefore:
+         *
+         * operations = components - 1
+         */
+        return components - 1;
+    }
+
+    /*
+     * Finds the final root or leader of the component
+     * containing the given computer.
+     *
+     * Example:
+     *
+     * parent[3] = 2
+     * parent[2] = 0
+     * parent[0] = 0
+     *
+     * Parent chain:
+     *
+     * 3 -> 2 -> 0
+     *
+     * Therefore:
+     *
+     * find(3) returns 0
+     */
+    private int find(int computer) {
+
+        /*
+         * If parent[computer] == computer, then the computer
+         * is already the root of its component.
+         *
+         * Otherwise, recursively search for the final root.
+         */
+        if (parent[computer] != computer) {
+
+            /*
+             * Path compression:
+             *
+             * After finding the final root, connect the current
+             * computer directly to that root.
+             *
+             * Before:
+             *
+             * 3 -> 2 -> 0
+             *
+             * After find(3):
+             *
+             * 3 ------> 0
+             *
+             * This makes future find() operations faster.
+             */
+            parent[computer] = find(parent[computer]);
+        }
+
+        /*
+         * Return the final root of the computer's component.
+         */
+        return parent[computer];
+    }
+
+    /*
+     * Attempts to join the components containing
+     * computer1 and computer2.
+     *
+     * Returns true:
+     * Two different components were successfully joined.
+     *
+     * Returns false:
+     * Both computers were already in the same component,
+     * so this connection is redundant.
+     */
+    private boolean union(int computer1, int computer2) {
+
+        /*
+         * Find the final roots of both computers.
+         *
+         * We must use find(), not:
+         *
+         * parent[computer1]
+         * parent[computer2]
+         *
+         * parent[] may give only the immediate parent.
+         * find() gives the final root of the entire component.
+         */
+        int root1 = find(computer1);
+        int root2 = find(computer2);
+
+        /*
+         * If both computers have the same root, they are
+         * already connected directly or indirectly.
+         *
+         * Example:
+         *
+         * 1 --- 0 --- 2
+         *
+         * find(1) = 0
+         * find(2) = 0
+         *
+         * Adding another cable between 1 and 2 is unnecessary.
+         */
+        if (root1 == root2) {
+            return false;
+        }
+
+        /*
+         * The computers belong to different components.
+         *
+         * Use union by rank to join the smaller DSU tree
+         * under the larger DSU tree.
+         */
+        if (rank[root1] < rank[root2]) {
+
+            /*
+             * The tree represented by root1 is shorter.
+             *
+             * Attach root1 under root2.
+             *
+             * Rank does not increase because a shorter tree
+             * is being attached under an already taller tree.
+             */
+            parent[root1] = root2;
+
+        } else if (rank[root2] < rank[root1]) {
+
+            /*
+             * The tree represented by root2 is shorter.
+             *
+             * Attach root2 under root1.
+             *
+             * Rank does not increase because the taller tree's
+             * overall height remains unchanged.
+             */
+            parent[root2] = root1;
+
+        } else {
+
+            /*
+             * Both trees have the same rank.
+             *
+             * We can choose either root as the new leader.
+             * Here, root1 becomes the new leader.
+             */
+            parent[root2] = root1;
+
+            /*
+             * When two trees of equal rank are joined,
+             * the resulting DSU tree becomes one level taller.
+             *
+             * Therefore, increase the rank of the new root.
+             */
+            rank[root1]++;
+        }
+
+        /*
+         * Two different components were successfully joined.
+         */
+        return true;
+    }
+}
