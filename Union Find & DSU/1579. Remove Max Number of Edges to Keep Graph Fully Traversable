@@ -1,0 +1,271 @@
+class Solution {
+
+    public int maxNumEdgesToRemove(int n, int[][] edges) {
+
+        // Alice and Bob need separate DSUs because:
+        // Type 1 edges affect only Alice.
+        // Type 2 edges affect only Bob.
+        // Type 3 edges affect both.
+        DSU alice = new DSU(n);
+        DSU bob = new DSU(n);
+
+        // Stores the number of unnecessary edges that we can remove.
+        int removedEdges = 0;
+
+        /*
+         * STEP 1: Process Type 3 edges first.
+         *
+         * Type 3 edges can be used by both Alice and Bob.
+         * Therefore, one useful Type 3 edge improves both graphs.
+         *
+         * Processing these edges first allows Alice and Bob to share
+         * as many connections as possible.
+         */
+        for (int[] edge : edges) {
+
+            // Every edge has the format:
+            // [type, node1, node2]
+            int type = edge[0];
+            int node1 = edge[1];
+            int node2 = edge[2];
+
+            if (type == 3) {
+
+                /*
+                 * Try connecting the nodes in Alice's graph.
+                 *
+                 * union() returns:
+                 * true  -> nodes were separate and are now connected
+                 * false -> nodes were already connected
+                 */
+                if (!alice.union(node1, node2)) {
+
+                    /*
+                     * union() returned false.
+                     *
+                     * This means Alice already has a path between
+                     * node1 and node2.
+                     *
+                     * At this stage, Alice and Bob have processed the
+                     * same Type 3 edges. Therefore, if the edge is
+                     * unnecessary for Alice, it is unnecessary for Bob too.
+                     */
+                    removedEdges++;
+
+                } else {
+
+                    /*
+                     * Alice's union returned true.
+                     *
+                     * This means the edge created a new connection.
+                     * Since Type 3 edges can also be used by Bob,
+                     * create the same connection in Bob's DSU.
+                     */
+                    bob.union(node1, node2);
+                }
+            }
+        }
+
+        /*
+         * STEP 2: Process Type 1 and Type 2 edges.
+         *
+         * Type 1 -> Alice only
+         * Type 2 -> Bob only
+         */
+        for (int[] edge : edges) {
+
+            int type = edge[0];
+            int node1 = edge[1];
+            int node2 = edge[2];
+
+            if (type == 1) {
+
+                /*
+                 * Type 1 edge belongs only to Alice.
+                 *
+                 * If union() returns false, Alice already has a path
+                 * between these nodes, so this edge can be removed.
+                 */
+                if (!alice.union(node1, node2)) {
+                    removedEdges++;
+                }
+
+            } else if (type == 2) {
+
+                /*
+                 * Type 2 edge belongs only to Bob.
+                 *
+                 * If union() returns false, Bob already has a path
+                 * between these nodes, so this edge can be removed.
+                 */
+                if (!bob.union(node1, node2)) {
+                    removedEdges++;
+                }
+            }
+        }
+
+        /*
+         * For the graph to be fully traversable:
+         *
+         * Alice must have exactly one connected component.
+         * Bob must also have exactly one connected component.
+         *
+         * If either has more than one component, some nodes
+         * cannot be reached, so the answer is -1.
+         */
+        if (alice.components != 1 || bob.components != 1) {
+            return -1;
+        }
+
+        // Both graphs are fully connected.
+        // Return the number of unnecessary edges.
+        return removedEdges;
+    }
+
+    /*
+     * Disjoint Set Union data structure.
+     *
+     * It helps us:
+     * 1. Find which component a node belongs to.
+     * 2. Connect two different components.
+     * 3. Detect whether an edge is redundant.
+     */
+    static class DSU {
+
+        // parent[node] stores the parent of that node.
+        int[] parent;
+
+        // rank[root] represents the approximate height of the tree.
+        // It helps keep the DSU tree short.
+        int[] rank;
+
+        // Tracks the number of separate connected components.
+        int components;
+
+        public DSU(int n) {
+
+            // Nodes are numbered from 1 to n.
+            // Therefore, create arrays of size n + 1.
+            parent = new int[n + 1];
+            rank = new int[n + 1];
+
+            /*
+             * Initially, every node is separate.
+             *
+             * For n = 4:
+             * {1} {2} {3} {4}
+             *
+             * Therefore, components = 4.
+             */
+            components = n;
+
+            /*
+             * Initially, every node is its own parent.
+             *
+             * parent[1] = 1
+             * parent[2] = 2
+             * parent[3] = 3
+             * parent[4] = 4
+             */
+            for (int node = 1; node <= n; node++) {
+                parent[node] = node;
+            }
+        }
+
+        /*
+         * Finds the ultimate parent or root of a node.
+         */
+        private int find(int node) {
+
+            /*
+             * If parent[node] == node, this node is the root.
+             *
+             * Otherwise, recursively search for the actual root.
+             */
+            if (parent[node] != node) {
+
+                /*
+                 * Path compression:
+                 *
+                 * Directly connect the current node to its root.
+                 * This makes future find operations faster.
+                 */
+                parent[node] = find(parent[node]);
+            }
+
+            return parent[node];
+        }
+
+        /*
+         * Tries to connect node1 and node2.
+         *
+         * Returns true if a new connection was created.
+         * Returns false if they were already connected.
+         */
+        private boolean union(int node1, int node2) {
+
+            // Find the root of node1.
+            int parent1 = find(node1);
+
+            // Find the root of node2.
+            int parent2 = find(node2);
+
+            /*
+             * If both nodes have the same root, they are already
+             * part of the same connected component.
+             *
+             * Therefore, this edge is redundant.
+             */
+            if (parent1 == parent2) {
+                return false;
+            }
+
+            /*
+             * Union by rank:
+             *
+             * Attach the shorter tree underneath the taller tree.
+             * This prevents the DSU tree from becoming unnecessarily tall.
+             */
+            if (rank[parent1] < rank[parent2]) {
+
+                // Tree of parent1 is shorter.
+                // Attach it below parent2.
+                parent[parent1] = parent2;
+
+            } else if (rank[parent1] > rank[parent2]) {
+
+                // Tree of parent2 is shorter.
+                // Attach it below parent1.
+                parent[parent2] = parent1;
+
+            } else {
+
+                /*
+                 * Both trees have the same rank.
+                 *
+                 * We can attach either tree below the other.
+                 * Here, parent2 is attached below parent1.
+                 */
+                parent[parent2] = parent1;
+
+                // The height of parent1's tree increases by one.
+                rank[parent1]++;
+            }
+
+            /*
+             * Two separate components have now become one.
+             *
+             * Example:
+             *
+             * Before: {1,2} {3,4}
+             * After:  {1,2,3,4}
+             *
+             * Therefore, reduce the component count.
+             */
+            components--;
+
+            // A new connection was successfully created.
+            return true;
+        }
+    }
+}
