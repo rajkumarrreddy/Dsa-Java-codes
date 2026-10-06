@@ -1,0 +1,285 @@
+class Solution {
+
+    public boolean equationsPossible(String[] equations) {
+
+        /*
+         * There are only 26 lowercase English letters:
+         *
+         * a -> 0
+         * b -> 1
+         * c -> 2
+         * ...
+         * z -> 25
+         *
+         * DSU will create groups of variables that must be equal.
+         */
+        DSU dsu = new DSU(26);
+
+        /*
+         * FIRST PASS:
+         *
+         * Process only equality equations such as:
+         *
+         * "a==b"
+         * "b==c"
+         *
+         * Equality means both variables must belong
+         * to the same DSU group.
+         */
+        for (String equation : equations) {
+
+            /*
+             * Every equation contains four characters.
+             *
+             * Example: "a==b"
+             *
+             * Index 0 -> 'a'
+             * Index 1 -> '='
+             * Index 2 -> '='
+             * Index 3 -> 'b'
+             *
+             * Therefore, charAt(1) tells us whether the
+             * equation represents equality or inequality.
+             */
+            if (equation.charAt(1) == '=') {
+
+                /*
+                 * Convert the first character into an index.
+                 *
+                 * For example:
+                 *
+                 * 'a' - 'a' = 0
+                 * 'b' - 'a' = 1
+                 * 'c' - 'a' = 2
+                 */
+                int firstVariable = equation.charAt(0) - 'a';
+
+                /*
+                 * The second variable is present at index 3.
+                 *
+                 * For "a==b":
+                 *
+                 * equation.charAt(3) gives 'b'
+                 * 'b' - 'a' gives 1
+                 */
+                int secondVariable = equation.charAt(3) - 'a';
+
+                /*
+                 * The equation says both variables must be equal.
+                 *
+                 * Therefore, place them in the same DSU group.
+                 *
+                 * Example:
+                 *
+                 * "a==b" creates the group {a, b}
+                 */
+                dsu.union(firstVariable, secondVariable);
+            }
+        }
+
+        /*
+         * SECOND PASS:
+         *
+         * Process only inequality equations such as:
+         *
+         * "a!=b"
+         * "c!=d"
+         *
+         * Now all equality groups have already been created.
+         * We only need to check whether an inequality
+         * contradicts any equality group.
+         */
+        for (String equation : equations) {
+
+            // '!' at index 1 means this is an inequality.
+            if (equation.charAt(1) == '!') {
+
+                // Convert both characters into DSU indices.
+                int firstVariable = equation.charAt(0) - 'a';
+                int secondVariable = equation.charAt(3) - 'a';
+
+                /*
+                 * Find the root parent of both variables.
+                 *
+                 * If they have the same root, equality equations
+                 * have forced them into the same group.
+                 *
+                 * Example:
+                 *
+                 * "a==b"
+                 * "b==c"
+                 *
+                 * These equations create:
+                 *
+                 * {a, b, c}
+                 *
+                 * If we now find "a!=c", it is a contradiction
+                 * because a and c already belong to the same group.
+                 */
+                if (dsu.find(firstVariable)
+                        == dsu.find(secondVariable)) {
+
+                    // Both variables are forced to be equal,
+                    // but the current equation says they are different.
+                    return false;
+                }
+            }
+        }
+
+        /*
+         * If no inequality contradicted an equality group,
+         * all the equations can be satisfied together.
+         */
+        return true;
+    }
+
+    /*
+     * DSU is used to create groups of variables
+     * that are required to be equal.
+     */
+    static class DSU {
+
+        /*
+         * parent[i] stores the parent of variable i.
+         *
+         * If parent[i] == i, then i is the root
+         * representative of its group.
+         */
+        int[] parent;
+
+        /*
+         * rank[root] represents the approximate height
+         * of the DSU tree.
+         *
+         * It helps us attach the shorter tree below
+         * the taller tree.
+         */
+        int[] rank;
+
+        public DSU(int size) {
+
+            parent = new int[size];
+            rank = new int[size];
+
+            /*
+             * Initially, every variable belongs to its own group.
+             *
+             * parent[0] = 0 means a is its own group.
+             * parent[1] = 1 means b is its own group.
+             * parent[2] = 2 means c is its own group.
+             *
+             * Initial groups:
+             *
+             * {a} {b} {c} ... {z}
+             */
+            for (int variable = 0; variable < size; variable++) {
+                parent[variable] = variable;
+            }
+        }
+
+        /*
+         * find() returns the ultimate parent or root
+         * of a variable's equality group.
+         */
+        public int find(int variable) {
+
+            /*
+             * If the variable is not its own parent,
+             * then it is not the root.
+             *
+             * Continue searching upward until the
+             * actual root is found.
+             */
+            if (parent[variable] != variable) {
+
+                /*
+                 * Path compression:
+                 *
+                 * Directly connect the current variable
+                 * to the root of its group.
+                 *
+                 * Example before compression:
+                 *
+                 * c -> b -> a
+                 *
+                 * Example after compression:
+                 *
+                 * c -> a
+                 * b -> a
+                 *
+                 * This makes future find operations faster.
+                 */
+                parent[variable] = find(parent[variable]);
+            }
+
+            // Return the root of the equality group.
+            return parent[variable];
+        }
+
+        /*
+         * union() combines the equality groups of
+         * firstVariable and secondVariable.
+         */
+        public void union(int firstVariable, int secondVariable) {
+
+            // Find the root of the first variable's group.
+            int firstParent = find(firstVariable);
+
+            // Find the root of the second variable's group.
+            int secondParent = find(secondVariable);
+
+            /*
+             * If both variables already have the same root,
+             * they already belong to the same equality group.
+             *
+             * No further work is required.
+             */
+            if (firstParent == secondParent) {
+                return;
+            }
+
+            /*
+             * Union by rank:
+             *
+             * Attach the shorter DSU tree underneath
+             * the taller DSU tree.
+             *
+             * This prevents the tree from becoming
+             * unnecessarily tall.
+             */
+            if (rank[firstParent] < rank[secondParent]) {
+
+                /*
+                 * The first tree is shorter.
+                 * Attach it below the second tree.
+                 */
+                parent[firstParent] = secondParent;
+
+            } else if (rank[firstParent] > rank[secondParent]) {
+
+                /*
+                 * The second tree is shorter.
+                 * Attach it below the first tree.
+                 */
+                parent[secondParent] = firstParent;
+
+            } else {
+
+                /*
+                 * Both trees have the same rank.
+                 *
+                 * We can attach either tree below the other.
+                 * Here, we attach secondParent below firstParent.
+                 */
+                parent[secondParent] = firstParent;
+
+                /*
+                 * Since both trees had the same height,
+                 * merging them increases the height of the
+                 * resulting tree by one.
+                 */
+                rank[firstParent]++;
+            }
+        }
+    }
+}
