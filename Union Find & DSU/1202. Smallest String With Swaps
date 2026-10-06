@@ -1,0 +1,146 @@
+class Solution {
+
+    // DSU (Disjoint Set Union) class
+    class DSU {
+
+        int[] parent;
+        int[] rank;
+
+        public DSU(int size) {
+
+            parent = new int[size];
+            rank = new int[size];
+
+            // Initially every index is its own parent
+            // Meaning every index starts as its own component
+            for (int i = 0; i < size; i++) {
+                parent[i] = i;
+            }
+        }
+
+        // Find the ultimate parent (root) of a node
+        public int find(int node) {
+
+            // If node is its own parent,
+            // we have reached the root
+            if (parent[node] == node) {
+                return node;
+            }
+
+            // Path Compression
+            // Make every node directly point to root
+            return parent[node] = find(parent[node]);
+        }
+
+        // Union two nodes/components
+        public void union(int node1, int node2) {
+
+            int parent1 = find(node1);
+            int parent2 = find(node2);
+
+            // Already in same component
+            if (parent1 == parent2) {
+                return;
+            }
+
+            // Attach smaller rank tree under bigger rank tree
+            if (rank[parent1] < rank[parent2]) {
+
+                parent[parent1] = parent2;
+
+            } else if (rank[parent1] > rank[parent2]) {
+
+                parent[parent2] = parent1;
+
+            } else {
+
+                // Same rank
+                parent[parent2] = parent1;
+                rank[parent1]++;
+            }
+        }
+    }
+
+    public String smallestStringWithSwaps(String s, List<List<Integer>> pairs) {
+
+        int n = s.length();
+
+        DSU dsu = new DSU(n);
+
+        //-----------------------------------------------------
+        // STEP 1:
+        // Connect all swappable indices using DSU
+        //-----------------------------------------------------
+        for (List<Integer> pair : pairs) {
+
+            int index1 = pair.get(0);
+            int index2 = pair.get(1);
+
+            dsu.union(index1, index2);
+        }
+
+        //-----------------------------------------------------
+        // STEP 2:
+        // Group indices belonging to same component
+        //
+        // Example:
+        // root 0 -> [0,3]
+        // root 1 -> [1,2]
+        //-----------------------------------------------------
+        Map<Integer, List<Integer>> groups = new HashMap<>();
+
+        for (int index = 0; index < n; index++) {
+
+            int root = dsu.find(index);
+
+            groups.computeIfAbsent(root, k -> new ArrayList<>())
+                  .add(index);
+        }
+
+        //-----------------------------------------------------
+        // STEP 3:
+        // Create answer array
+        //-----------------------------------------------------
+        char[] result = new char[n];
+
+        //-----------------------------------------------------
+        // STEP 4:
+        // For every connected component:
+        //
+        // 1. Collect characters
+        // 2. Sort characters
+        // 3. Place smallest chars into smallest indices
+        //-----------------------------------------------------
+        for (List<Integer> indices : groups.values()) {
+
+            List<Character> characters = new ArrayList<>();
+
+            // Collect all characters of this component
+            for (int index : indices) {
+                characters.add(s.charAt(index));
+            }
+
+            // Sort indices
+            Collections.sort(indices);
+
+            // Sort characters
+            Collections.sort(characters);
+
+            //-------------------------------------------------
+            // Greedy Assignment
+            //
+            // Smallest char -> Smallest index
+            // Next smallest char -> Next smallest index
+            //
+            // This guarantees lexicographically
+            // smallest possible string.
+            //-------------------------------------------------
+            for (int i = 0; i < indices.size(); i++) {
+
+                result[indices.get(i)] = characters.get(i);
+            }
+        }
+
+        return new String(result);
+    }
+}
