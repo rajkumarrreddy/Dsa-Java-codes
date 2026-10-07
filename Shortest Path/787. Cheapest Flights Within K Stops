@@ -1,0 +1,115 @@
+import java.util.Arrays;
+
+class Solution {
+
+    public int findCheapestPrice(
+        int n,
+        int[][] flights,
+        int src,
+        int dst,
+        int k
+    ) {
+
+        // dist[city] stores the cheapest price found
+        // to reach that city from the source.
+        int[] dist = new int[n];
+
+        // Initially, all cities are unreachable.
+        // Integer.MAX_VALUE represents infinity.
+        Arrays.fill(dist, Integer.MAX_VALUE);
+
+        // The cost of reaching the source itself is 0.
+        dist[src] = 0;
+
+        /*
+         * k stops means we can use at most k + 1 flights.
+         *
+         * k = 0 stops -> maximum 1 flight
+         * k = 1 stop  -> maximum 2 flights
+         * k = 2 stops -> maximum 3 flights
+         *
+         * The loop runs from 0 through k,
+         * so it executes exactly k + 1 times.
+         */
+        for (int round = 0; round <= k; round++) {
+
+            /*
+             * Copy the previous round's distances.
+             *
+             * We READ from dist and WRITE into updatedDist.
+             *
+             * This ensures that each round allows only
+             * one additional flight.
+             *
+             * Without this copy, a value updated during the
+             * current round could be reused immediately during
+             * the same round, allowing multiple flights at once
+             * and possibly breaking the stop limit.
+             */
+            int[] updatedDist = dist.clone();
+
+            // Check every available flight.
+            for (int[] flight : flights) {
+
+                // Starting city of the flight.
+                int from = flight[0];
+
+                // Destination city of the flight.
+                int to = flight[1];
+
+                // Cost of taking this flight.
+                int price = flight[2];
+
+                /*
+                 * We can take this flight only if the starting
+                 * city was reachable in the previous round.
+                 *
+                 * This check also prevents integer overflow from:
+                 *
+                 * Integer.MAX_VALUE + price
+                 */
+                if (dist[from] != Integer.MAX_VALUE) {
+
+                    // Price of reaching 'to' through 'from'.
+                    int newPrice = dist[from] + price;
+
+                    /*
+                     * Compare:
+                     *
+                     * 1. Current cheapest price for 'to'
+                     * 2. New price obtained through 'from'
+                     *
+                     * Store the smaller price.
+                     *
+                     * Important:
+                     * Read from dist[from].
+                     * Write into updatedDist[to].
+                     */
+                    updatedDist[to] = Math.min(
+                        updatedDist[to],
+                        newPrice
+                    );
+                }
+            }
+
+            /*
+             * The current round is complete.
+             *
+             * The updated prices can now be used in the next
+             * round, where one more flight will be allowed.
+             */
+            dist = updatedDist;
+        }
+
+        /*
+         * If the destination still has Integer.MAX_VALUE,
+         * no valid route was found within k stops.
+         *
+         * Return -1 when unreachable.
+         * Otherwise, return the cheapest price.
+         */
+        return dist[dst] == Integer.MAX_VALUE
+                ? -1
+                : dist[dst];
+    }
+}
