@@ -1,0 +1,243 @@
+import java.util.*;
+
+class Solution {
+
+    public int networkDelayTime(int[][] times, int n, int k) {
+
+        /*
+         * graph is an array of lists.
+         *
+         * graph[node] stores all the outgoing edges from that node.
+         *
+         * Each edge is stored as:
+         * int[]{destinationNode, travelTime}
+         *
+         * We use n + 1 because nodes are numbered from 1 to n.
+         * Index 0 will remain unused.
+         */
+        List<int[]>[] graph = new ArrayList[n + 1];
+
+        /*
+         * Initially, every position in graph contains null.
+         *
+         * Therefore, we create an empty ArrayList for every node.
+         *
+         * For example:
+         * graph[1] = []
+         * graph[2] = []
+         * graph[3] = []
+         */
+        for (int node = 1; node <= n; node++) {
+            graph[node] = new ArrayList<>();
+        }
+
+        /*
+         * Build the directed graph using the given edges.
+         *
+         * Every edge has:
+         * edge[0] = source node
+         * edge[1] = destination node
+         * edge[2] = travel time
+         */
+        for (int[] edge : times) {
+
+            int source = edge[0];
+            int destination = edge[1];
+            int travelTime = edge[2];
+
+            /*
+             * Store this edge inside the source node's list.
+             *
+             * We only store destination and travel time because
+             * the source is already represented by graph[source].
+             *
+             * Example:
+             * If edge = [2, 3, 5]
+             *
+             * graph[2] will contain [3, 5]
+             *
+             * Meaning:
+             * Node 2 can reach Node 3 in 5 units of time.
+             */
+            graph[source].add(new int[]{destination, travelTime});
+        }
+
+        /*
+         * distance[node] stores the minimum time currently known
+         * to reach that node from starting node k.
+         *
+         * We use n + 1 because nodes are numbered from 1 to n.
+         */
+        int[] distance = new int[n + 1];
+
+        /*
+         * Initially, we do not know how to reach any node.
+         *
+         * Therefore, every distance is set to infinity.
+         */
+        Arrays.fill(distance, Integer.MAX_VALUE);
+
+        /*
+         * The starting node can be reached in 0 time because
+         * the signal begins from this node.
+         */
+        distance[k] = 0;
+
+        /*
+         * The priority queue stores:
+         *
+         * int[]{time, node}
+         *
+         * The comparator compares a[0] and b[0].
+         * Since index 0 stores time, the entry with the smallest
+         * time receives the highest priority.
+         *
+         * Example:
+         * [2, 3] comes before [6, 1] because 2 < 6.
+         */
+        PriorityQueue<int[]> minHeap =
+                new PriorityQueue<>(
+                        (a, b) -> Integer.compare(a[0], b[0])
+                );
+
+        /*
+         * Add the starting node to the heap.
+         *
+         * [0, k] means:
+         * We can reach starting node k in 0 time.
+         */
+        minHeap.offer(new int[]{0, k});
+
+        /*
+         * Continue until there are no more reachable nodes
+         * waiting to be processed.
+         */
+        while (!minHeap.isEmpty()) {
+
+            /*
+             * Remove the entry having the smallest time.
+             *
+             * Because this is a min-heap, poll() gives us
+             * the currently closest node.
+             */
+            int[] current = minHeap.poll();
+
+            /*
+             * current has the format:
+             * [time, node]
+             */
+            int currentTime = current[0];
+            int currentNode = current[1];
+
+            /*
+             * The priority queue may contain an older, slower route
+             * to the same node.
+             *
+             * Example:
+             * The heap may contain [7, 3], but later we may discover
+             * that Node 3 can be reached in only 3 units.
+             *
+             * Then:
+             * currentTime = 7
+             * distance[3] = 3
+             *
+             * Since 7 > 3, the current heap entry is outdated.
+             * We skip it using continue.
+             */
+            if (currentTime > distance[currentNode]) {
+                continue;
+            }
+
+            /*
+             * graph[currentNode] gives us all outgoing edges
+             * from the current node.
+             *
+             * Example:
+             * graph[2] = [[1, 4], [3, 2]]
+             *
+             * The loop will visit:
+             * neighbor = [1, 4]
+             * neighbor = [3, 2]
+             */
+            for (int[] neighbor : graph[currentNode]) {
+
+                /*
+                 * Every neighbor has this format:
+                 * [destinationNode, edgeTime]
+                 */
+                int nextNode = neighbor[0];
+                int edgeTime = neighbor[1];
+
+                /*
+                 * Calculate the time required to reach nextNode
+                 * through currentNode.
+                 *
+                 * Example:
+                 * We reached currentNode in 4 units.
+                 * The edge to nextNode costs 3 units.
+                 *
+                 * newTime = 4 + 3 = 7
+                 */
+                int newTime = currentTime + edgeTime;
+
+                /*
+                 * Check whether this newly discovered route is
+                 * shorter than the best route found previously.
+                 *
+                 * This process is called edge relaxation.
+                 */
+                if (newTime < distance[nextNode]) {
+
+                    /*
+                     * We found a better route, so update the
+                     * minimum distance of nextNode.
+                     */
+                    distance[nextNode] = newTime;
+
+                    /*
+                     * Add the improved route to the min-heap.
+                     *
+                     * We store:
+                     * [new minimum time, destination node]
+                     *
+                     * The heap will process the smallest-time
+                     * entry first.
+                     */
+                    minHeap.offer(new int[]{newTime, nextNode});
+                }
+            }
+        }
+
+        /*
+         * Once Dijkstra finishes, distance[node] contains the
+         * shortest signal arrival time for every reachable node.
+         *
+         * We need the time when the final node receives the signal.
+         * Therefore, we take the maximum shortest distance.
+         */
+        int answer = 0;
+
+        for (int node = 1; node <= n; node++) {
+
+            /*
+             * If a node still has infinity as its distance,
+             * the signal was never able to reach that node.
+             *
+             * Therefore, not all nodes can receive the signal.
+             */
+            if (distance[node] == Integer.MAX_VALUE) {
+                return -1;
+            }
+
+            /*
+             * Keep track of the largest arrival time.
+             *
+             * The node with the largest shortest distance is
+             * the last node to receive the signal.
+             */
+            answer = Math.max(answer, distance[node]);
+        }
+
+        return answer;
+    }
+}
