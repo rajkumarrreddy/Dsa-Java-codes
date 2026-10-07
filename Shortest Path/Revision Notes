@@ -1,0 +1,1562 @@
+# Shortest Path Pattern
+
+Shortest Path problems ask us to find the minimum cost required to travel from a source state to a destination state.
+
+The cost may represent:
+
+- Number of edges
+- Number of moves
+- Total distance
+- Travel time
+- Ticket price
+- Number of transformations
+- Obstacles removed
+- Maximum effort
+- Probability
+- Direction changes
+
+The most important part is not memorizing every algorithm. It is identifying the graph type and selecting the correct algorithm.
+
+---
+
+# 1. Shortest Path Decision Tree
+
+```text
+Are all edges equal in cost?
+│
+├── Yes
+│   ├── One source         → BFS
+│   └── Multiple sources   → Multi-Source BFS
+│
+└── No
+    │
+    ├── Weights are only 0 and 1
+    │   └── 0-1 BFS
+    │
+    ├── All weights are non-negative
+    │   └── Dijkstra
+    │
+    ├── Negative weights are possible
+    │   └── Bellman-Ford
+    │
+    ├── Graph is a DAG
+    │   └── Topological Sort + Relaxation
+    │
+    └── Shortest path between every pair
+        └── Floyd-Warshall
+```
+
+## Quick Memory Rule
+
+```text
+Equal edge cost             → Queue
+Multiple starting points    → Multi-Source Queue
+Edge weights only 0 and 1   → Deque
+Different positive weights  → PriorityQueue
+Negative weights            → Bellman-Ford
+Weighted DAG                → Topological Sort
+All-pairs shortest path     → Floyd-Warshall
+```
+
+---
+
+# 2. Graph Representation
+
+## Unweighted Graph
+
+```java
+List<List<Integer>> graph = new ArrayList<>();
+
+for (int node = 0; node < n; node++) {
+    graph.add(new ArrayList<>());
+}
+
+for (int[] edge : edges) {
+    int node1 = edge[0];
+    int node2 = edge[1];
+
+    graph.get(node1).add(node2);
+    graph.get(node2).add(node1);
+}
+```
+
+## Weighted Graph
+
+Each adjacency-list entry stores:
+
+```text
+{neighbour, weight}
+```
+
+```java
+List<List<int[]>> graph = new ArrayList<>();
+
+for (int node = 0; node < n; node++) {
+    graph.add(new ArrayList<>());
+}
+
+for (int[] edge : edges) {
+    int from = edge[0];
+    int to = edge[1];
+    int weight = edge[2];
+
+    graph.get(from).add(new int[]{to, weight});
+}
+```
+
+For an undirected weighted graph:
+
+```java
+graph.get(from).add(new int[]{to, weight});
+graph.get(to).add(new int[]{from, weight});
+```
+
+---
+
+# 3. Relaxation
+
+Relaxation means checking whether a newly discovered route is better than the previously known route.
+
+```java
+int newDistance = distance[currentNode] + edgeWeight;
+
+if (newDistance < distance[neighbour]) {
+    distance[neighbour] = newDistance;
+}
+```
+
+## Intuition
+
+Suppose:
+
+```text
+distance[A] = 4
+A → B has weight 3
+distance[B] = 10
+```
+
+Through `A`, we can reach `B` with:
+
+```text
+4 + 3 = 7
+```
+
+Since:
+
+```text
+7 < 10
+```
+
+we update:
+
+```java
+distance[B] = 7;
+```
+
+Relaxation asks:
+
+> Did I discover a cheaper route to this node?
+
+It is used in:
+
+- Dijkstra
+- Bellman-Ford
+- DAG shortest path
+- Floyd-Warshall
+
+---
+
+# 4. BFS Shortest Path
+
+## When to Use
+
+Use BFS when:
+
+- The graph is unweighted
+- Every edge has equal cost
+- Every move costs one step
+- We need the minimum number of transformations
+- We need the minimum number of moves in a grid
+
+BFS explores nodes level by level.
+
+```text
+Level 0 → Source
+Level 1 → One edge away
+Level 2 → Two edges away
+Level 3 → Three edges away
+```
+
+Therefore, the first time BFS reaches a node, it has found the minimum number of edges required to reach it.
+
+## Java Template
+
+```java
+import java.util.*;
+
+class Solution {
+
+    public in* shortestPath(
+        int numberO*Nodes,
+        int[][] edges,
+    *   int source,
+        int destina*ion
+    ) {
+
+        List<List<Int*ger>> graph = new ArrayList<>();
+
+*       for (int node = 0; node < n*mberOfNodes; node++) {
+           *graph.add(new ArrayList<>());
+    *   }
+
+        for (int[] edge : ed*es) {
+            int node1 = edge*0];
+            int node2 = edge[1];
+
+            graph.get(node1).ad*(node2);
+            graph.get(nod*2).add(node1);
+        }
+
+        *ueue<Integer> queue = new LinkedLi*t<>();
+
+        int[] distance = n*w int[numberOfNodes];
+        Arra*s.fill(distance, -1);
+
+        que*e.offer(source);
+        distance[source] = 0;
+
+        while (!queue*isEmpty()) {
+
+            int curr*ntNode = queue.poll();
+
+          * if (currentNode == destination) {*                return distance[currentNode];
+            }
+
+        *   for (int neighbour : graph.get(*urrentNode)) {
+
+                if*(distance[neighbour] == -1) {
+
+   *                distance[neighbour] =
+                        distanc*[currentNode] + 1;
+
+              *     queue.offer(neighbour);
+     *          }
+            }
+        *
+
+        return -1;
+    }
+}
+```
+
+*# Distance Array as Visited Array
+*```java
+Arrays.fill(distance, -1);*```
+
+Here:
+
+```text
+distance[node]*== -1 → Not visited
+distance[node]*!= -1 → Already visited
+```
+
+So a *eparate `visited[]` array is not r*quired.
+
+## Complexity
+
+```text
+Ti*e:  O(V + E)
+Space: O(V + E)
+```
+
+*--
+
+# 5. Grid Shortest Path
+
+A mat*ix can be treated as a graph.
+
+```*ext
+Cell           → Node
+Valid mo*ement → Edge
+```
+
+## Four Directio*s
+
+```java
+int[][] directions = {
+*   {-1, 0},
+    {1, 0},
+    {0, -1*,
+    {0, 1}
+};
+```
+
+## Eight Dire*tions
+
+```java
+int[][] directions * {
+    {-1, -1}, {-1, 0}, {-1, 1},*    {0, -1},           {0, 1},
+   *{1, -1},  {1, 0},  {1, 1}
+};
+```
+
+*# Grid BFS Template
+
+```java
+impor* java.util.*;
+
+class Solution {
+
+ *  public int shortestPath(int[][] *rid) {
+
+        int rows = grid.le*gth;
+        int columns = grid[0]*length;
+
+        if (grid[0][0] ==*1) {
+            return -1;
+      * }
+
+        int[][] directions = {*            {-1, 0},
+            {*, 0},
+            {0, -1},
+       *    {0, 1}
+        };
+
+        Que*e<int[]> queue = new LinkedList<>(*;
+        boolean[][] visited = ne* boolean[rows][columns];
+
+        *ueue.offer(new int[]{0, 0, 0});
+  *     visited[0][0] = true;
+
+      * while (!queue.isEmpty()) {
+
+     *      int[] current = queue.poll()*
+
+            int row = current[0]*
+            int column = current[*];
+            int distance = curr*nt[2];
+
+            if (row == row* - 1 &&
+                column == *olumns - 1) {
+
+                ret*rn distance;
+            }
+
+      *     for (int[] direction : direct*ons) {
+
+                int newRow*= row + direction[0];
+            *   int newColumn = column + direct*on[1];
+
+                if (newRow*>= 0 &&
+                    newRow*< rows &&
+                    newC*lumn >= 0 &&
+                    n*wColumn < columns &&
+             *      grid[newRow][newColumn] == 0*&&
+                    !visited[ne*Row][newColumn]) {
+
+              *     visited[newRow][newColumn] = *rue;
+
+                    queue.of*er(
+                        new in*[]{
+                            ne*Row,
+                            n*wColumn,
+                         *  distance + 1
+                   *    }
+                    );
+     *          }
+            }
+        *
+
+        return -1;
+    }
+}
+```
+
+*# Important Rule
+
+Mark a cell as v*sited when adding it to the queue.*
+```java
+visited[newRow][newColumn] = true;
+queue.offer(new int[]{new*ow, newColumn});
+```
+
+Do not wait *ntil removing it from the queue.
+
+*therwise, multiple neighbouring ce*ls may insert the same cell into t*e queue.
+
+---
+
+# 6. Multi-Source B*S
+
+## When to Use
+
+Use Multi-Sourc* BFS when:
+
+- There are multiple s*arting points
+- Infection spreads *rom multiple cells
+- We need dista*ce to the nearest source
+- We need*minimum time for something to reac* every cell
+
+Common question wordi*g:
+
+```text
+Distance to nearest ze*o
+Distance to nearest gate
+Time un*il all oranges rot
+Distance to nea*est land
+Spread from all infected *ells
+```
+
+## Main Idea
+
+Insert all*sources into the queue before star*ing BFS.
+
+```java
+Queue<int[]> que*e = new LinkedList<>();
+
+for (int *ow = 0; row < rows; row++) {
+
+    *or (int column = 0; column < colum*s; column++) {
+
+        if (grid[r*w][column] == sourceValue) {
+
+    *       queue.offer(new int[]{row, *olumn});
+            visited[row][*olumn] = true;
+        }
+    }
+}
+`*`
+
+Then perform normal BFS.
+
+## Wh* It Works
+
+All sources spread simu*taneously.
+
+```text
+Source 1 ↘
+Sou*ce 2 → BFS spreads together
+Source*3 ↗
+```
+
+Every cell is reached fro* its nearest source.
+
+## Complexit*
+
+```text
+Time:  O(Rows × Columns)*Space: O(Rows × Columns)
+```
+
+---
+*# 7. Dijkstra's Algorithm
+
+## When*to Use
+
+Use Dijkstra when:
+
+- The *raph is weighted
+- Edge weights ar* non-negative
+- We need minimum to*al cost
+- We need minimum time
+- W* need minimum distance
+- We need m*nimum effort
+
+Unlike BFS, Dijkstra*does not process nodes in insertio* order.
+
+It processes the node hav*ng the smallest known distance fir*t.
+
+Therefore, it uses a min-heap.*
+## Heap Entry
+
+```java
+new int[]{*ode, distance}
+```
+
+Meaning:
+
+```t*xt
+index 0 → Node
+index 1 → Distan*e from source
+```
+
+## Java Templat*
+
+```java
+import java.util.*;
+
+cla*s Solution {
+
+    public int[] dij*stra(
+        int numberOfNodes,
+ *      int[][] edges,
+        int s*urce
+    ) {
+
+        List<List<in*[]>> graph = new ArrayList<>();
+
+ *      for (int node = 0; node < nu*berOfNodes; node++) {
+            *raph.add(new ArrayList<>());
+     *  }
+
+        for (int[] edge : edg*s) {
+
+            int from = edge[*];
+            int to = edge[1];
+ *          int weight = edge[2];
+
+ *          graph.get(from).add(new *nt[]{to, weight});
+        }
+
+    *   int[] distance = new int[number*fNodes];
+
+        Arrays.fill(dist*nce, Integer.MAX_VALUE);
+
+        *riorityQueue<int[]> minHeap =
+    *       new PriorityQueue<>(
+      *         (a, b) -> Integer.compare*a[1], b[1])
+            );
+
+      * distance[source] = 0;
+        min*eap.offer(new int[]{source, 0});
+
+*       while (!minHeap.isEmpty()) *
+
+            int[] current = minH*ap.poll();
+
+            int curren*Node = current[0];
+            int*currentDistance = current[1];
+
+   *        if (currentDistance > dist*nce[currentNode]) {
+              * continue;
+            }
+
+        *   for (int[] neighbourInfo :
+    *               graph.get(currentNo*e)) {
+
+                int neighbo*r = neighbourInfo[0];
+            *   int edgeWeight = neighbourInfo[*];
+
+                int newDistanc* =
+                    currentDist*nce + edgeWeight;
+
+               *if (newDistance < distance[neighbo*r]) {
+
+                    distanc*[neighbour] = newDistance;
+
+      *             minHeap.offer(
+      *                 new int[]{
+      *                     neighbour,
+  *                         newDistan*e
+                        }
+      *             );
+                }
+*           }
+        }
+
+        re*urn distance;
+    }
+}
+```
+
+## Prio*ityQueue Comparator
+
+```java
+(a, b* -> Integer.compare(a[1], b[1])
+``*
+
+This means:
+
+> The entry with th* smaller distance should come out *irst.
+
+## Outdated Heap Entries
+
+A*node can enter the heap multiple t*mes.
+
+Example:
+
+```text
+(node 4, d*stance 10)
+(node 4, distance 6)
+``*
+
+If `(4, 10)` comes out after `(4* 6)`, it is outdated.
+
+```java
+if *currentDistance > distance[current*ode]) {
+    continue;
+}
+```
+
+This *kips the outdated entry.
+
+## Compl*xity
+
+```text
+Time:  O((V + E) log*V)
+Space: O(V + E)
+```
+
+## Importa*t Restriction
+
+Dijkstra should not*be used when negative edge weights*are possible.
+
+---
+
+# 8. Dijkstra *ith Additional State
+
+Sometimes re*ching a node is not enough to desc*ibe the complete state.
+
+The answe* may also depend on:
+
+- Stops used*- Obstacles removed
+- Coupons used*- Fuel remaining
+- Keys collected
+* Visited-node mask
+- Time remainin*
+
+## Normal State
+
+```text
+node
+``*
+
+## Extended State
+
+```text
+(node* stops)
+(row, column, obstaclesRem*ved)
+(node, couponsUsed)
+(node, ma*k)
+```
+
+## Example Distance Struct*res
+
+```java
+int[][] distance =
+  * new int[numberOfNodes][maximumSto*s + 1];
+```
+
+```java
+int[][][] dis*ance =
+    new int[rows][columns][*aximumObstacles + 1];
+```
+
+## Impo*tant Rule
+
+If reaching the same no*e under different conditions can a*fect future decisions, those condi*ions must be included in the state*
+
+---
+
+# 9. 0-1 BFS
+
+## When to Us*
+
+Use 0-1 BFS when every edge weig*t is either:
+
+```text
+0 or 1
+```
+
+*xamples:
+
+```text
+Following the ar*ow costs 0
+Changing direction cost* 1
+
+Using a preferred road costs 0*Using another road costs 1
+```
+
+##*Data Structure
+
+Use a `Deque`.
+
+``*text
+Weight 0 → Add to front
+Weigh* 1 → Add to back
+```
+
+A zero-cost *ransition should be processed imme*iately because it does not increas* the distance.
+
+## Java Template
+
+*``java
+import java.util.*;
+
+class *olution {
+
+    public int[] zeroOn*Bfs(
+        int numberOfNodes,
+  *     List<List<int[]>> graph,
+    *   int source
+    ) {
+
+        int*] distance = new int[numberOfNodes*;
+
+        Arrays.fill(distance, I*teger.MAX_VALUE);
+
+        Deque<I*teger> deque = new ArrayDeque<>();*
+        distance[source] = 0;
+   *    deque.offerFirst(source);
+
+   *    while (!deque.isEmpty()) {
+
+  *         int currentNode = deque.p*llFirst();
+
+            for (int[]*edge : graph.get(currentNode)) {
+
+*               int neighbour = edg*[0];
+                int weight = *dge[1];
+
+                int newDi*tance =
+                    distan*e[currentNode] + weight;
+
+        *       if (newDistance < distance[*eighbour]) {
+
+                    *istance[neighbour] = newDistance;
+*                    if (weight == *) {
+                        deque.*fferFirst(neighbour);
+            *       } else {
+                  *     deque.offerLast(neighbour);
+ *                  }
+              * }
+            }
+        }
+
+      * return distance;
+    }
+}
+```
+
+## *omplexity
+
+```text
+Time:  O(V + E)*Space: O(V + E)
+```
+
+---
+
+# 10. Be*lman-Ford Algorithm
+
+## When to Us*
+
+Use Bellman-Ford when:
+
+- Negati*e edge weights are possible
+- We n*ed to detect a negative cycle
+- Di*kstra cannot be used
+- The number *f edges or stops is restricted
+
+##*Main Idea
+
+A shortest simple path *an contain at most:
+
+```text
+V - 1*edges
+```
+
+Therefore, relax every *dge up to `V - 1` times.
+
+## Java *emplate
+
+```java
+import java.util.*;
+
+class Solution {
+
+    public in*[] bellmanFord(
+        int number*fNodes,
+        int[][] edges,
+   *    int source
+    ) {
+
+        in* infinity = 1_000_000_000;
+
+      * int[] distance = new int[numberOf*odes];
+
+        Arrays.fill(distan*e, infinity);
+
+        distance[so*rce] = 0;
+
+        for (int count * 1;
+             count < numberOfN*des;
+             count++) {
+
+    *       boolean updated = false;
+
+ *          for (int[] edge : edges)*{
+
+                int from = edge*0];
+                int to = edge[*];
+                int weight = ed*e[2];
+
+                if (distanc*[from] != infinity &&
+            *       distance[from] + weight <
+ *                  distance[to]) {
+*                    distance[to] =*                        distance[f*om] + weight;
+
+                   *updated = true;
+                }
+*           }
+
+            if (!upd*ted) {
+                break;
+    *       }
+        }
+
+        return*distance;
+    }
+}
+```
+
+## Why `V -*1` Times?
+
+A simple path cannot co*tain more than `V - 1` edges.
+
+If *t contains more, some node must re*eat, creating a cycle.
+
+## Negativ* Cycle Detection
+
+After `V - 1` re*axation rounds, relax every edge o*e more time.
+
+```java
+for (int[] e*ge : edges) {
+
+    int from = edge*0];
+    int to = edge[1];
+    int *eight = edge[2];
+
+    if (distance*from] != infinity &&
+        dista*ce[from] + weight < distance[to]) *
+
+        return true;
+    }
+}
+```*
+If a distance can still improve, * reachable negative cycle exists.
+*## Complexity
+
+```text
+Time:  O(V * E)
+Space: O(V)
+```
+
+---
+
+# 11. Sh*rtest Path in a DAG
+
+## When to Us*
+
+Use this approach when:
+
+- The g*aph is directed
+- The graph has no*cycles
+- The graph may contain neg*tive weights
+- We need shortest pa*hs from one source
+
+## Approach
+
+1* Find the topological order.
+2. In*tialize the source distance as `0`*
+3. Process nodes in topological o*der.
+4. Relax every outgoing edge.*
+## Why It Works
+
+In topological o*der, every node appears after its *redecessors.
+
+By the time we proce*s a node, all earlier paths that c*n improve its distance have alread* been considered.
+
+## Relaxation
+
+*``java
+while (!stack.isEmpty()) {
+*    int currentNode = stack.pop();*
+    if (distance[currentNode] == *nfinity) {
+        continue;
+    }*
+    for (int[] edge : graph.get(c*rrentNode)) {
+
+        int neighbo*r = edge[0];
+        int weight = *dge[1];
+
+        if (distance[curr*ntNode] + weight <
+            dis*ance[neighbour]) {
+
+            di*tance[neighbour] =
+               *distance[currentNode] + weight;
+  *     }
+    }
+}
+```
+
+## Complexity
+*```text
+Time:  O(V + E)
+Space: O(V*+ E)
+```
+
+---
+
+# 12. Floyd-Warshal* Algorithm
+
+## When to Use
+
+Use Fl*yd-Warshall when:
+
+- We need short*st paths between every pair of nod*s
+- There are many source-destinat*on queries
+- The number of nodes i* relatively small
+- Negative edges*may exist
+- There is no relevant n*gative cycle
+
+## Main Idea
+
+For ev*ry intermediate node `via`, check *hether travelling through it produ*es a shorter route.
+
+```text
+sourc* → via → destination
+```
+
+## Trans*tion
+
+```java
+distance[source][destination] =
+    Math.min(
+        d*stance[source][destination],
+     *  distance[source][via] +
+        *istance[via][destination]
+    );
+`*`
+
+## Java Template
+
+```java
+for (*nt via = 0; via < numberOfNodes; v*a++) {
+
+    for (int source = 0;
+ *       source < numberOfNodes;
+   *     source++) {
+
+        for (int*destination = 0;
+             dest*nation < numberOfNodes;
+          *  destination++) {
+
+            if*(distance[source][via] != infinity*&&
+                distance[via][d*stination] != infinity) {
+
+       *        distance[source][destinati*n] =
+                    Math.min(*                        distance[s*urce][destination],
+              *         distance[source][via] +
+ *                      distance[via*[destination]
+                    *;
+            }
+        }
+    }
+}
+*``
+
+## Initialization
+
+```java
+for*(int source = 0; source < n; sourc*++) {
+
+    for (int destination = *;
+         destination < n;
+      *  destination++) {
+
+        if (so*rce == destination) {
+            *istance[source][destination] = 0;
+*       } else {
+            distan*e[source][destination] = infinity;*        }
+    }
+}
+```
+
+For every e*ge:
+
+```java
+distance[from][to] =
+*   Math.min(distance[from][to], we*ght);
+```
+
+## Negative Cycle Detec*ion
+
+After Floyd-Warshall:
+
+```jav*
+if (distance[node][node] < 0) {
+ *  // Negative cycle exists
+}
+```
+
+*# Complexity
+
+```text
+Time:  O(V³)*Space: O(V²)
+```
+
+---
+
+# 13. Recon*tructing the Actual Path
+
+Sometime* the question asks for the path it*elf, not only the minimum distance*
+
+Maintain a `parent[]` array.
+
+##*Initialization
+
+```java
+int[] pare*t = new int[n];
+
+for (int node = 0* node < n; node++) {
+    parent[no*e] = node;
+}
+```
+
+## Update Parent*During Relaxation
+
+```java
+if (new*istance < distance[neighbour]) {
+
+*   distance[neighbour] = newDistan*e;
+    parent[neighbour] = current*ode;
+}
+```
+
+## Reconstruct Path
+
+`*`java
+List<Integer> path = new Arr*yList<>();
+
+int currentNode = dest*nation;
+
+while (parent[currentNode] != currentNode) {
+
+    path.add(c*rrentNode);
+    currentNode = pare*t[currentNode];
+}
+
+path.add(source*;
+
+Collections.reverse(path);
+```
+*## Meaning
+
+```text
+distance[] → M*nimum cost
+parent[]   → Actual rou*e
+```
+
+---
+
+# 14. BFS vs Dijkstra
+*## BFS
+
+Use when every edge has eq*al cost.
+
+```java
+Queue<Integer> q*eue = new LinkedList<>();
+```
+
+Pro*essing order:
+
+```text
+0 steps
+1 s*ep
+2 steps
+3 steps
+```
+
+## Dijkstr*
+
+Use when edges have different no*-negative weights.
+
+```java
+Priori*yQueue<int[]> minHeap;
+```
+
+Proces*ing order:
+
+```text
+Cost 0
+Cost 2
+*ost 4
+Cost 7
+```
+
+## Memory Rule
+
+*``text
+Equal cost                 *  → BFS
+Different non-negative cos*s → Dijkstra
+Only 0 and 1 costs   *       → 0-1 BFS
+```
+
+---
+
+# 15. H*dden Graph Recognition
+
+Many quest*ons do not directly mention a grap*.
+
+## Grid
+
+```text
+Node → Cell
+Ed*e → Valid movement
+```
+
+## Word Tr*nsformation
+
+```text
+Node → Word
+E*ge → One valid character change
+``*
+
+## Lock Combination
+
+```text
+Nod* → Lock state
+Edge → Rotate one wh*el
+```
+
+## Flights
+
+```text
+Node  *→ City
+Edge   → Flight
+Weight → Ti*ket price
+```
+
+## Game
+
+```text
+No*e → Current game state
+Edge → One *alid move
+```
+
+## Key Collection
+
+*``text
+State → Position + keys col*ected
+Edge  → One valid movement
+`*`
+
+Ask:
+
+```text
+What represents o*e state?
+What operation moves me t* another state?
+What is the cost o* that operation?
+```
+
+---
+
+# 16. I*portant Interview Framework
+
+Whene*er you see a shortest-path problem* ask these questions.
+
+## Step 1: *hat Is the State?
+
+Examples:
+
+```t*xt
+A graph node
+A matrix cell
+A wo*d
+A lock combination
+A city
+A cell*plus remaining obstacles
+A node pl*s stops used
+```
+
+## Step 2: What *re the Transitions?
+
+Examples:
+
+``*text
+Move up, down, left, or right*Travel using an edge
+Change one ch*racter
+Rotate one lock wheel
+Take *ne available flight
+```
+
+## Step 3* What Is the Edge Cost?
+
+```text
+E*ery move costs 1?
+Weights are 0 or*1?
+Weights are different but non-n*gative?
+Negative weights are possi*le?
+```
+
+## Step 4: How Many Sourc*s?
+
+```text
+One source  → BFS or D*jkstra
+Many sources → Multi-Source*BFS
+```
+
+## Step 5: What Answer Is*Required?
+
+```text
+One destination*
+Distance to every node?
+Shortest *ath between every pair?
+Actual pat*?
+Only minimum cost?
+```
+
+## Step *: Choose the Algorithm
+
+```text
+Equal cost           → BFS
+Multiple sources     → Multi-Source BFS
+Weights 0 and 1      → 0-1 BFS
+Non-negative weights → Dijkstra
+Negative weights     → Bellman-Ford
+Weighted DAG         → Topological Sort
+All pairs            → Floyd-Warshall
+```
+
+## Step 7: Define the Distance Structure
+
+```java
+int[] distance;
+```
+
+Use for a normal graph.
+
+```java
+int[][] distance;
+```
+
+Use for grids or additional state.
+
+```java
+int[][][] distance;
+```
+
+Use for row, column, and one more changing condition.
+
+---
+
+# 17. Common Mistakes
+
+## Mistake 1: Using DFS for General Shortest Path
+
+DFS may find a path, but the first path found is not guaranteed to be the shortest.
+
+```text
+DFS → Explore, detect, search, backtrack
+BFS → Shortest path in an unweighted graph
+```
+
+---
+
+## Mistake 2: Using BFS on a Weighted Graph
+
+BFS minimizes the number of edges, not the total weight.
+
+```text
+A → B costs 100
+
+A → C costs 1
+C → B costs 1
+```
+
+BFS may prefer:
+
+```text
+A → B
+```
+
+because it uses one edge.
+
+But the cheaper path is:
+
+```text
+A → C → B
+```
+
+with total cost `2`.
+
+---
+
+## Mistake 3: Using Dijkstra With Negative Edges
+
+Dijkstra assumes that once the smallest-distance state is selected, a negative edge will not later produce a cheaper route.
+
+Negative edges break this assumption.
+
+Use Bellman-Ford instead.
+
+---
+
+## Mistake 4: Marking Dijkstra Nodes Visited Too Early
+
+A node may enter the heap more than once.
+
+Use:
+
+```java
+if (currentDistance > distance[currentNode]) {
+    continue;
+}
+```
+
+---
+
+## Mistake 5: Integer Overflow
+
+Avoid adding a weight to infinity.
+
+Wrong:
+
+```java
+int newDistance =
+    Integer.MAX_VALUE + weight;
+```
+
+Safer:
+
+```java
+if (distance[currentNode] != Integer.MAX_VALUE) {
+
+    int newDistance =
+        distance[currentNode] + weight;
+}
+```
+
+For large constraints, use `long`.
+
+```java
+long[] distance = new long[n];
+Arrays.fill(distance, Long.MAX_VALUE);
+```
+
+---
+
+## Mistake 6: Incorrect Directed or Undirected Graph
+
+Directed graph:
+
+```java
+graph.get(from).add(new int[]{to, weight});
+```
+
+Undirected graph:
+
+```java
+graph.get(from).add(new int[]{to, weight});
+graph.get(to).add(new int[]{from, weight});
+```
+
+---
+
+## Mistake 7: Marking Grid Cells Visited Too Late
+
+Correct:
+
+```java
+visited[newRow][newColumn] = true;
+queue.offer(new int[]{newRow, newColumn});
+```
+
+Mark visited when inserting into the queue.
+
+---
+
+## Mistake 8: Returning Nodes Instead of Edges
+
+For:
+
+```text
+A → B → C
+```
+
+```text
+Number of nodes = 3
+Number of edges = 2
+```
+
+Check what the question expects.
+
+---
+
+## Mistake 9: Ignoring Additional State
+
+These states are different:
+
+```text
+Reach node 5 using 1 stop
+Reach node 5 using 4 stops
+```
+
+Even though the node is the same, the remaining possibilities are different.
+
+Therefore, store both node and stops.
+
+---
+
+# 18. Algorithm Complexity Summary
+
+| Algorithm | Graph Type | Time | Space |
+|---|---|---:|---:|
+| BFS | Unweighted or equal weights | `O(V + E)` | `O(V + E)` |
+| Multi-Source BFS | Multiple equal-cost sources | `O(V + E)` | `O(V + E)` |
+| 0-1 BFS | Weights only 0 and 1 | `O(V + E)` | `O(V + E)` |
+| Dijkstra | Non-negative weights | `O((V + E) log V)` | `O(V + E)` |
+| Bellman-Ford | Negative weights | `O(V × E)` | `O(V)` |
+| DAG Shortest Path | Weighted DAG | `O(V + E)` | `O(V + E)` |
+| Floyd-Warshall | All-pairs shortest path | `O(V³)` | `O(V²)` |
+
+---
+
+# 19. Important LeetCode Problems
+
+## BFS Shortest Path
+
+- 1091. Shortest Path in Binary Matrix
+- 127. Word Ladder
+- 752. Open the Lock
+- 433. Minimum Genetic Mutation
+- 1926. Nearest Exit from Entrance in Maze
+
+## Multi-Source BFS
+
+- 994. Rotting Oranges
+- 542. 01 Matrix
+- 286. Walls and Gates
+- 1162. As Far from Land as Possible
+
+## BFS With Additional State
+
+- 1293. Shortest Path in a Grid with Obstacles Elimination
+- 864. Shortest Path to Get All Keys
+
+## Dijkstra
+
+- 743. Network Delay Time
+- 1631. Path With Minimum Effort
+- 778. Swim in Rising Water
+- 1514. Path with Maximum Probability
+- 1976. Number of Ways to Arrive at Destination
+
+## Restricted Stops or Additional State
+
+- 787. Cheapest Flights Within K Stops
+
+## 0-1 BFS
+
+- 1368. Minimum Cost to Make at Least One Valid Path in a Grid
+
+## Floyd-Warshall
+
+- 1334. Find the City With the Smallest Number of Neighbors at a Threshold Distance
+
+---
+
+# 20. Recommended Practice Order
+
+## Stage 1: BFS Foundation
+
+1. Shortest Path in Binary Matrix
+2. Open the Lock
+3. Word Ladder
+4. Nearest Exit from Entrance in Maze
+
+## Stage 2: Multi-Source BFS
+
+5. Rotting Oranges
+6. 01 Matrix
+7. As Far from Land as Possible
+
+## Stage 3: Dijkstra
+
+8. Network Delay Time
+9. Path With Minimum Effort
+10. Swim in Rising Water
+11. Number of Ways to Arrive at Destination
+
+## Stage 4: Additional State
+
+12. Cheapest Flights Within K Stops
+13. Shortest Path in a Grid with Obstacles Elimination
+14. Shortest Path to Get All Keys
+
+## Stage 5: Special Algorithms
+
+15. Minimum Cost to Make at Least One Valid Path
+16. Find the City With the Smallest Number of Neighbors
+17. Bellman-Ford problems
+18. Shortest Path in a DAG
+
+---
+
+# 21. Final Revision Cheat Sheet
+
+```text
+1. Identify the state.
+2. Identify the possible transitions.
+3. Determine the cost of each transition.
+4. Check whether there is one source or multiple sources.
+5. Check whether an additional condition belongs in the state.
+6. Select the shortest-path algorithm.
+7. Create the correct distance structure.
+8. Perform relaxation whenever a better route is found.
+9. Use a parent array if the actual path is required.
+```
+
+## Final Algorithm Selection
+
+```text
+Unweighted graph
+→ BFS
+
+Equal-cost grid movements
+→ BFS
+
+Multiple starting points
+→ Multi-Source BFS
+
+Edges weighted 0 or 1
+→ 0-1 BFS
+
+Different non-negative weights
+→ Dijkstra
+
+Negative edge weights
+→ Bellman-Ford
+
+Weighted DAG
+→ Topological Sort + Relaxation
+
+Every pair of nodes
+→ Floyd-Warshall
+```
+
+## One-Line Memory Trick
+
+```text
+Queue         → Equal cost
+Deque         → Cost 0 or 1
+PriorityQueue → Different non-negative costs
+Relax edges   → Negative weights
+Matrix DP     → Every pair of nodes
+```
+
+## Core Shortest Path Formula
+
+```java
+if (distance[currentNode] + edgeWeight
+        < distance[neighbour]) {
+
+    distance[neighbour] =
+        distance[currentNode] + edgeWeight;
+}
+```
+
+This is called relaxation.
+
+It means:
+
+> If reaching the neighbour through the current node is cheaper, update its shortest known distance.
