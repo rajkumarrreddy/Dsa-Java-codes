@@ -1,0 +1,219 @@
+import java.util.*;
+
+class Solution {
+
+    public double maxProbability(
+            int n,
+            int[][] edges,
+            double[] succProb,
+            int start_node,
+            int end_node) {
+
+        /*
+         * graph[node] stores all the neighbors connected to that node.
+         *
+         * Each double[] inside the list represents:
+         * {neighborNode, edgeProbability}
+         *
+         * Example:
+         * graph[0] = {{1, 0.5}, {2, 0.2}}
+         *
+         * This means:
+         * 0 -> 1 has probability 0.5
+         * 0 -> 2 has probability 0.2
+         */
+        List<double[]>[] graph = new ArrayList[n];
+
+        // Create an empty neighbor list for every node.
+        for (int node = 0; node < n; node++) {
+            graph[node] = new ArrayList<>();
+        }
+
+        /*
+         * Build the adjacency list.
+         *
+         * The graph is undirected, so every edge must be added
+         * in both directions.
+         *
+         * If the edge is:
+         * 0 --0.5-- 1
+         *
+         * We add:
+         * 0 -> 1 with probability 0.5
+         * 1 -> 0 with probability 0.5
+         */
+        for (int i = 0; i < edges.length; i++) {
+
+            int node1 = edges[i][0];
+            int node2 = edges[i][1];
+
+            double edgeProbability = succProb[i];
+
+            graph[node1].add(
+                    new double[]{node2, edgeProbability}
+            );
+
+            graph[node2].add(
+                    new double[]{node1, edgeProbability}
+            );
+        }
+
+        /*
+         * maxProbability[node] stores the maximum probability
+         * discovered so far to reach that node from start_node.
+         *
+         * Initially, every value is 0.0 because no node has
+         * been reached yet.
+         */
+        double[] maxProbability = new double[n];
+
+        /*
+         * The probability of reaching the starting node is 1.0.
+         *
+         * We are already standing at start_node, so there is a
+         * 100% probability of being there.
+         */
+        maxProbability[start_node] = 1.0;
+
+        /*
+         * The priority queue stores:
+         *
+         * {probability, node}
+         *
+         * We need a MAX HEAP because the path having the highest
+         * probability must be processed first.
+         *
+         * Double.compare(b[0], a[0]) creates descending order:
+         *
+         * 0.8 comes before 0.5
+         * 0.5 comes before 0.2
+         *
+         * Therefore, the largest probability is removed first.
+         */
+        PriorityQueue<double[]> maxHeap =
+                new PriorityQueue<>(
+                        (a, b) -> Double.compare(b[0], a[0])
+                );
+
+        /*
+         * Begin from start_node.
+         *
+         * Probability of reaching start_node = 1.0
+         */
+        maxHeap.offer(
+                new double[]{1.0, start_node}
+        );
+
+        // Continue while there are paths available to explore.
+        while (!maxHeap.isEmpty()) {
+
+            /*
+             * Remove the entry having the highest probability.
+             *
+             * current[0] = probability
+             * current[1] = node
+             */
+            double[] current = maxHeap.poll();
+
+            double currentProbability = current[0];
+
+            /*
+             * The node was stored in a double[].
+             * Therefore, we convert it back from double to int.
+             */
+            int currentNode = (int) current[1];
+
+            /*
+             * If the destination comes out of the max heap,
+             * we can immediately return its probability.
+             *
+             * Because the heap processes the highest probability
+             * first, this is the best possible probability for
+             * reaching end_node.
+             */
+            if (currentNode == end_node) {
+                return currentProbability;
+            }
+
+            /*
+             * The priority queue can contain an older entry for
+             * the same node.
+             *
+             * Example:
+             *
+             * We first reach node 2 with probability 0.20.
+             * Later, we find a better path with probability 0.25.
+             *
+             * Both entries may temporarily exist in the heap:
+             *
+             * {0.25, 2}
+             * {0.20, 2}
+             *
+             * When {0.20, 2} is eventually removed, we ignore it
+             * because we already know a better probability of 0.25.
+             */
+            if (currentProbability < maxProbability[currentNode]) {
+                continue;
+            }
+
+            /*
+             * Explore every neighbor connected to currentNode.
+             *
+             * Each neighbor array contains:
+             *
+             * neighbor[0] = neighboring node
+             * neighbor[1] = probability of the connecting edge
+             */
+            for (double[] neighbor : graph[currentNode]) {
+
+                int neighborNode = (int) neighbor[0];
+
+                double edgeProbability = neighbor[1];
+
+                /*
+                 * The probabilities of edges in a path are
+                 * multiplied.
+                 *
+                 * Example:
+                 *
+                 * Probability to reach currentNode = 0.5
+                 * Edge probability                  = 0.5
+                 *
+                 * New probability = 0.5 * 0.5 = 0.25
+                 */
+                double newProbability =
+                        currentProbability * edgeProbability;
+
+                /*
+                 * If this route gives a higher probability than
+                 * the previously known route, update the answer
+                 * for neighborNode.
+                 */
+                if (newProbability >
+                        maxProbability[neighborNode]) {
+
+                    // Save the newly discovered better probability.
+                    maxProbability[neighborNode] =
+                            newProbability;
+
+                    /*
+                     * Add this improved path to the max heap so
+                     * that its neighboring nodes can be explored.
+                     */
+                    maxHeap.offer(
+                            new double[]{
+                                    newProbability,
+                                    neighborNode
+                            }
+                    );
+                }
+            }
+        }
+
+        /*
+         * If the heap becomes empty without reaching end_node,
+         * there is no path from start_node to end_node.
+         */
+        return 0.0;
+    }
+}
