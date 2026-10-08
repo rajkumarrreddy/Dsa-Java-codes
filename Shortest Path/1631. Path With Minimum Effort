@@ -1,0 +1,240 @@
+import java.util.Arrays;
+import java.util.PriorityQueue;
+
+class Solution {
+
+    public int minimumEffortPath(int[][] heights) {
+
+        // Total number of rows and columns in the grid.
+        int rows = heights.length;
+        int cols = heights[0].length;
+
+        /*
+         * effort[row][col] stores the minimum effort required
+         * to travel from the starting cell (0, 0) to that cell.
+         *
+         * Remember:
+         * The effort of a path is the maximum height difference
+         * encountered between any two consecutive cells.
+         */
+        int[][] effort = new int[rows][cols];
+
+        /*
+         * Initially, we do not know how much effort is required
+         * to reach each cell.
+         *
+         * Therefore, initialize every cell with infinity.
+         */
+        for (int[] row : effort) {
+            Arrays.fill(row, Integer.MAX_VALUE);
+        }
+
+        /*
+         * We start at cell (0, 0).
+         *
+         * Since we are already standing at the starting cell,
+         * the effort required to reach it is 0.
+         */
+        effort[0][0] = 0;
+
+        /*
+         * The PriorityQueue works as a min-heap.
+         *
+         * Every int[] stored inside the heap contains:
+         *
+         * index 0 -> effort required to reach the cell
+         * index 1 -> row of the cell
+         * index 2 -> column of the cell
+         *
+         * Example:
+         * {2, 1, 0}
+         *
+         * This means that cell (1, 0) can be reached
+         * with an effort of 2.
+         *
+         * We compare a[0] and b[0], so the path with the
+         * smallest effort will be removed first.
+         */
+        PriorityQueue<int[]> minHeap =
+                new PriorityQueue<>(
+                        (a, b) -> Integer.compare(a[0], b[0])
+                );
+
+        /*
+         * Add the starting cell to the heap.
+         *
+         * {0, 0, 0} means:
+         * effort = 0
+         * row = 0
+         * column = 0
+         */
+        minHeap.offer(new int[]{0, 0, 0});
+
+        /*
+         * Four possible directions:
+         *
+         * {-1, 0} -> move up
+         * { 1, 0} -> move down
+         * { 0,-1} -> move left
+         * { 0, 1} -> move right
+         */
+        int[][] directions = {
+                {-1, 0},
+                {1, 0},
+                {0, -1},
+                {0, 1}
+        };
+
+        /*
+         * Continue processing cells until the heap becomes empty.
+         */
+        while (!minHeap.isEmpty()) {
+
+            /*
+             * Remove the cell that currently has the
+             * smallest effort.
+             */
+            int[] current = minHeap.poll();
+
+            int currentEffort = current[0];
+            int currentRow = current[1];
+            int currentCol = current[2];
+
+            /*
+             * The same cell may be added to the heap more than once.
+             *
+             * For example, we may first reach a cell with effort 5,
+             * and later find a better route with effort 2.
+             *
+             * In that case, the entry with effort 5 becomes outdated.
+             * We skip such outdated entries.
+             */
+            if (currentEffort > effort[currentRow][currentCol]) {
+                continue;
+            }
+
+            /*
+             * If the current cell is the bottom-right cell,
+             * we have reached the destination.
+             *
+             * Because the min-heap always processes the route with
+             * the smallest effort first, this is the minimum possible
+             * effort required to reach the destination.
+             */
+            if (currentRow == rows - 1 &&
+                currentCol == cols - 1) {
+
+                return currentEffort;
+            }
+
+            /*
+             * Check all four neighboring cells.
+             */
+            for (int[] direction : directions) {
+
+                /*
+                 * Calculate the neighbor's row and column.
+                 */
+                int newRow = currentRow + direction[0];
+                int newCol = currentCol + direction[1];
+
+                /*
+                 * Check whether the neighboring cell is outside
+                 * the boundaries of the grid.
+                 *
+                 * If it is outside, skip it.
+                 */
+                if (newRow < 0 || newRow >= rows ||
+                    newCol < 0 || newCol >= cols) {
+
+                    continue;
+                }
+
+                /*
+                 * Calculate the effort required for this single move.
+                 *
+                 * We use Math.abs() because the difference must
+                 * always be positive.
+                 *
+                 * Example:
+                 * Current height = 3
+                 * Neighbor height = 8
+                 *
+                 * heightDifference = |3 - 8| = 5
+                 */
+                int heightDifference = Math.abs(
+                        heights[currentRow][currentCol]
+                        - heights[newRow][newCol]
+                );
+
+                /*
+                 * This is the most important part of the solution.
+                 *
+                 * currentEffort:
+                 * The largest height difference encountered before
+                 * making this movement.
+                 *
+                 * heightDifference:
+                 * The height difference of the current movement.
+                 *
+                 * The effort of the complete path is the largest
+                 * difference encountered anywhere on that path.
+                 *
+                 * Therefore, we take the maximum of these two values.
+                 *
+                 * Example:
+                 * currentEffort = 2
+                 * heightDifference = 5
+                 *
+                 * newEffort = max(2, 5) = 5
+                 *
+                 * Another example:
+                 * currentEffort = 4
+                 * heightDifference = 1
+                 *
+                 * newEffort = max(4, 1) = 4
+                 */
+                int newEffort = Math.max(
+                        currentEffort,
+                        heightDifference
+                );
+
+                /*
+                 * Check whether this new path reaches the neighboring
+                 * cell with less effort than the previously known path.
+                 *
+                 * If yes:
+                 * 1. Update the minimum effort for the neighbor.
+                 * 2. Add the neighbor to the min-heap.
+                 */
+                if (newEffort < effort[newRow][newCol]) {
+
+                    // Save the better effort.
+                    effort[newRow][newCol] = newEffort;
+
+                    /*
+                     * Add the neighbor to the heap.
+                     *
+                     * Store:
+                     * {new effort, new row, new column}
+                     */
+                    minHeap.offer(
+                            new int[]{
+                                    newEffort,
+                                    newRow,
+                                    newCol
+                            }
+                    );
+                }
+            }
+        }
+
+        /*
+         * According to the problem, a path always exists.
+         *
+         * This return statement is added because Java requires
+         * every possible execution path to return an integer.
+         */
+        return 0;
+    }
+}
