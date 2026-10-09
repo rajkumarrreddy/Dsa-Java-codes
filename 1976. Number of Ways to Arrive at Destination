@@ -1,0 +1,132 @@
+import java.util.*;
+
+class Solution {
+
+    public int countPaths(int n, int[][] roads) {
+
+        int MOD = 1_000_000_007;
+
+        // Adjacency List:
+        // graph[u] contains all neighbors of u.
+        // Each neighbor is stored as:
+        // {nextNode, travelTime}
+        List<long[]>[] graph = new ArrayList[n];
+
+        for (int node = 0; node < n; node++) {
+            graph[node] = new ArrayList<>();
+        }
+
+        // Build the undirected graph.
+        for (int[] road : roads) {
+
+            int u = road[0];
+            int v = road[1];
+            int time = road[2];
+
+            graph[u].add(new long[]{v, time});
+            graph[v].add(new long[]{u, time});
+        }
+
+        // dist[node]
+        // = shortest distance from city 0 to node.
+        long[] dist = new long[n];
+        Arrays.fill(dist, Long.MAX_VALUE);
+
+        // ways[node]
+        // = number of shortest paths that reach node.
+        long[] ways = new long[n];
+
+        // Source node.
+        dist[0] = 0;
+
+        // There is exactly one way to reach node 0:
+        // Start there.
+        ways[0] = 1;
+
+        // Min Heap:
+        // {distance, node}
+        PriorityQueue<long[]> minHeap =
+                new PriorityQueue<>((a, b) -> Long.compare(a[0], b[0]));
+
+        minHeap.offer(new long[]{0, 0});
+
+        while (!minHeap.isEmpty()) {
+
+            // Remove the node having the smallest distance.
+            long[] current = minHeap.poll();
+
+            long currentDistance = current[0];
+            int currentNode = (int) current[1];
+
+            // Skip stale entries.
+            // Example:
+            // Heap may contain:
+            // (10,5)
+            // Later we find:
+            // (7,5)
+            //
+            // When (10,5) comes out,
+            // it is no longer useful.
+            if (currentDistance > dist[currentNode]) {
+                continue;
+            }
+
+            // Explore every neighbor.
+            for (long[] neighbor : graph[currentNode]) {
+
+                int nextNode = (int) neighbor[0];
+                long edgeWeight = neighbor[1];
+
+                // Distance if we travel:
+                // currentNode -> nextNode
+                long newDistance =
+                        currentDistance + edgeWeight;
+
+                // ------------------------------------------------
+                // CASE 1:
+                // Better shortest path found.
+                // ------------------------------------------------
+                if (newDistance < dist[nextNode]) {
+
+                    // Update shortest distance.
+                    dist[nextNode] = newDistance;
+
+                    // Important:
+                    // Since we found a strictly shorter path,
+                    // all previous shortest-path counts become
+                    // useless.
+                    //
+                    // Copy ways from currentNode.
+                    ways[nextNode] = ways[currentNode];
+
+                    // Push updated state into heap.
+                    minHeap.offer(
+                            new long[]{newDistance, nextNode}
+                    );
+                }
+
+                // ------------------------------------------------
+                // CASE 2:
+                // Another shortest path found.
+                // ------------------------------------------------
+                else if (newDistance == dist[nextNode]) {
+
+                    // Example:
+                    //
+                    // 0 -> A -> X = 7
+                    // 0 -> B -> X = 7
+                    //
+                    // Both are shortest paths.
+                    //
+                    // Add path counts.
+                    ways[nextNode] =
+                            (ways[nextNode] + ways[currentNode]) % MOD;
+                }
+            }
+        }
+
+        // Answer:
+        // Number of shortest paths to destination.
+        return (int) ways[n - 1];
+    }
+}
