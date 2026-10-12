@@ -1,0 +1,1563 @@
+# Prim's Minimum Spanning Tree Algorithm
+
+## 1. What Does Prim's Algorithm Do?
+
+Prim's algorithm finds the **Minimum Spanning Tree (MST)** of a weighted, undirected graph.
+
+A Minimum Spanning Tree:
+
+- Connects every node
+- Does not contain cycles
+- Contains exactly `V - 1` edges
+- Has the minimum possible total edge weight
+
+---
+
+## 2. Prim's Main Intuition
+
+Prim's algorithm grows one connected tree.
+
+> Start from any node and repeatedly choose the cheapest edge that connects the current tree to an unvisited node.
+
+Unlike Kruskal, Prim does not sort all edges globally.
+
+Instead, Prim maintains a group of nodes that are already part of the MST.
+
+Initially:
+
+```text
+MST nodes = {0}
+Outside   = {1, 2, 3}
+```
+
+Prim looks at all edges leaving the current MST and chooses the cheapest one that reaches an unvisited node.
+
+The process continues until every node becomes part of the MST.
+
+---
+
+## 3. Example Graph
+
+```text
+0 -- 1 = 1
+0 -- 2 = 4
+1 -- 2 = 2
+1 -- 3 = 5
+2 -- 3 = 3
+```
+
+Visual representation:
+
+```text
+         1
+    0 -------- 1
+    |          / \
+  4 |       2 /   \ 5
+    |        /     \
+    2 ----------- 3
+         3
+```
+
+Expected MST:
+
+```text
+0 -- 1 = 1
+1 -- 2 = 2
+2 -- 3 = 3
+```
+
+Total cost:
+
+```text
+1 + 2 + 3 = 6
+```
+
+---
+
+# 4. Prim's Algorithm Steps
+
+```text
+1. Create an adjacency list for the graph.
+
+2. Create a min-heap.
+
+3. Insert any starting node into the heap with cost 0.
+
+4. Remove the minimum-cost entry from the heap.
+
+5. If the node is already visited:
+      Skip it.
+
+6. Otherwise:
+      Mark the node as visited.
+      Add its connection cost to the MST cost.
+      Count the node as part of the MST.
+
+7. Add all edges from the current node to unvisited
+   neighbors into the min-heap.
+
+8. Repeat until all nodes have been visited.
+
+9. If all nodes could not be visited, the graph is
+   disconnected and an MST cannot be formed.
+```
+
+---
+
+# 5. Why Do We Need a Min-Heap?
+
+At every step, Prim needs to answer:
+
+```text
+What is the cheapest available edge that connects
+the current MST to an unvisited node?
+```
+
+A min-heap allows us to retrieve the smallest edge weight efficiently.
+
+In Java, we use:
+
+```java
+PriorityQueue<int[]> minHeap
+```
+
+Each heap entry will contain:
+
+```text
+{edgeWeight, currentNode, parentNode}
+```
+
+For example:
+
+```java
+{2, 2, 1}
+```
+
+means:
+
+```text
+Node 2 can be connected from node 1
+using an edge with weight 2.
+```
+
+The heap is ordered using `edgeWeight`.
+
+---
+
+# 6. Why Do We Need a Visited Array?
+
+A node may enter the heap multiple times through different edges.
+
+Example:
+
+```text
+0 -- 2 = 4
+1 -- 2 = 2
+```
+
+Node 2 may enter the heap as:
+
+```text
+{4, 2, 0}
+```
+
+Later, it may enter again as:
+
+```text
+{2, 2, 1}
+```
+
+The min-heap selects the cheaper connection first:
+
+```text
+{2, 2, 1}
+```
+
+Once node 2 becomes part of the MST, the old entry:
+
+```text
+{4, 2, 0}
+```
+
+becomes stale.
+
+The visited array helps us skip such entries:
+
+```java
+if (visited[currentNode]) {
+    continue;
+}
+```
+
+---
+
+# 7. Complete Java Code
+
+```java
+import java.util.*;
+
+public class PrimMST {
+
+    public static int findMST(
+        int numberOfNodes,
+        int[][] edges
+    ) {
+
+        /*
+         * Create an adjacency list.
+         *
+         * graph.get(node) will contain all neighbors
+         * directly connected to that node.
+         *
+         * Each neighbor is stored as:
+         *
+         * {neighborNode, edgeWeight}
+         */
+        List<List<int[]>> graph = new ArrayList<>();
+
+        /*
+         * Create one empty neighbor list for every node.
+         */
+        for (int node = 0; node < numberOfNodes; node++) {
+            graph.add(new ArrayList<>());
+        }
+
+        /*
+         * Build the adjacency list from the given edges.
+         *
+         * Every edge is represented as:
+         *
+         * {node1, node2, weight}
+         */
+        for (int[] edge : edges) {
+
+            int node1 = edge[0];
+            int node2 = edge[1];
+            int weight = edge[2];
+
+            /*
+             * The graph is undirected.
+             *
+             * Therefore, if node1 is connected to node2,
+             * node2 is also connected to node1.
+             */
+            graph.get(node1).add(
+                new int[]{node2, weight}
+            );
+
+            graph.get(node2).add(
+                new int[]{node1, weight}
+            );
+        }
+
+        /*
+         * Each heap entry contains:
+         *
+         * {edgeWeight, currentNode, parentNode}
+         *
+         * The heap is sorted by edgeWeight.
+         */
+        PriorityQueue<int[]> minHeap =
+            new PriorityQueue<>(
+                (entry1, entry2) ->
+                    Integer.compare(entry1[0], entry2[0])
+            );
+
+        /*
+         * visited[node] tells us whether the node
+         * has already been included in the MST.
+         */
+        boolean[] visited = new boolean[numberOfNodes];
+
+        /*
+         * Begin Prim's algorithm from node 0.
+         *
+         * Starting entry:
+         *
+         * edgeWeight  = 0
+         * currentNode = 0
+         * parentNode  = -1
+         *
+         * Cost is 0 because no edge is required to
+         * include the starting node.
+         *
+         * Parent is -1 because the starting node
+         * does not have a parent.
+         */
+        minHeap.offer(new int[]{0, 0, -1});
+
+        int totalCost = 0;
+        int visitedNodes = 0;
+
+        System.out.println("Selected MST edges:");
+
+        /*
+         * Continue while there are available connections.
+         */
+        while (!minHeap.isEmpty()) {
+
+            /*
+             * Remove the cheapest available connection.
+             */
+            int[] current = minHeap.poll();
+
+            int edgeWeight = current[0];
+            int currentNode = current[1];
+            int parentNode = current[2];
+
+            /*
+             * A node may appear in the heap multiple times.
+             *
+             * If it has already been included in the MST,
+             * this heap entry is stale and must be skipped.
+             */
+            if (visited[currentNode]) {
+                continue;
+            }
+
+            /*
+             * This is the cheapest available edge that
+             * connects currentNode to the existing MST.
+             *
+             * Therefore, include currentNode in the MST.
+             */
+            visited[currentNode] = true;
+
+            /*
+             * Add the connection cost to the result.
+             *
+             * For the starting node, edgeWeight is 0.
+             */
+            totalCost += edgeWeight;
+
+            /*
+             * Count how many nodes have joined the MST.
+             */
+            visitedNodes++;
+
+            /*
+             * The starting node has parent -1.
+             *
+             * Therefore, it does not represent a real edge
+             * and should not be printed.
+             */
+            if (parentNode != -1) {
+                System.out.println(
+                    parentNode + " -- " +
+                    currentNode + " = " +
+                    edgeWeight
+                );
+            }
+
+            /*
+             * Explore every neighbor of currentNode.
+             */
+            for (int[] neighbor : graph.get(currentNode)) {
+
+                int nextNode = neighbor[0];
+                int nextWeight = neighbor[1];
+
+                /*
+                 * Add this edge to the heap only when
+                 * nextNode has not yet joined the MST.
+                 *
+                 * We do not mark nextNode as visited here.
+                 *
+                 * A node becomes visited only when it is
+                 * removed from the heap using its cheapest
+                 * available connection.
+                 */
+                if (!visited[nextNode]) {
+
+                    minHeap.offer(
+                        new int[]{
+                            nextWeight,
+                            nextNode,
+                            currentNode
+                        }
+                    );
+                }
+            }
+        }
+
+        /*
+         * If some nodes were not visited, the graph
+         * was disconnected.
+         *
+         * Therefore, a single MST cannot be formed.
+         */
+        if (visitedNodes != numberOfNodes) {
+            return -1;
+        }
+
+        return totalCost;
+    }
+
+    public static void main(String[] args) {
+
+        int numberOfNodes = 4;
+
+        /*
+         * Every edge is represented as:
+         *
+         * {node1, node2, weight}
+         */
+        int[][] edges = {
+      *     {0, 1, 1},
+            {0, 2,*4},
+            {1, 2, 2},
+       *    {1, 3, 5},
+            {2, 3, *}
+        };
+
+        int minimumC*st = findMST(
+            numberOf*odes,
+            edges
+        );*
+        System.out.println(
+     *      "Minimum spanning tree cost:*" + minimumCost
+        );
+    }
+}*```
+
+---
+
+# 8. Code Explanation
+
+#* Step 1: Store the Input Edges
+
+``*java
+int[][] edges = {
+    {0, 1, *},
+    {0, 2, 4},
+    {1, 2, 2},
+ *  {1, 3, 5},
+    {2, 3, 3}
+};
+```
+*Every edge has the format:
+
+```tex*
+{node1, node2, weight}
+```
+
+For e*ample:
+
+```java
+{1, 2, 2}
+```
+
+mea*s:
+
+```text
+Node 1 and node 2 are *onnected
+with an edge of weight 2.*```
+
+---
+
+# 9. Creating the Adjace*cy List
+
+```java
+List<List<int[]>>*graph = new ArrayList<>();
+```
+
+Th* adjacency list stores the neighbo*s of every node.
+
+Create an empty *eighbor list for each node:
+
+```ja*a
+for (int node = 0; node < number*fNodes; node++) {
+    graph.add(ne* ArrayList<>());
+}
+```
+
+For four n*des, this initially creates:
+
+```t*xt
+graph.get(0) = []
+graph.get(1) * []
+graph.get(2) = []
+graph.get(3)*= []
+```
+
+---
+
+## Adding Edges to *he Adjacency List
+
+```java
+for (in*[] edge : edges) {
+
+    int node1 * edge[0];
+    int node2 = edge[1];*    int weight = edge[2];
+
+    gra*h.get(node1).add(
+        new int[]{node2, weight}
+    );
+
+    graph.*et(node2).add(
+        new int[]{n*de1, weight}
+    );
+}
+```
+
+Because*the graph is undirected, every edg* must be stored in both directions*
+
+For:
+
+```text
+0 -- 1 = 1
+```
+
+we*store:
+
+```text
+0 → 1 with weight *
+1 → 0 with weight 1
+```
+
+The fina* adjacency list becomes:
+
+```text
+* → (1,1), (2,4)
+
+1 → (0,1), (2,2),*(3,5)
+
+2 → (0,4), (1,2), (3,3)
+
+3 * (1,5), (2,3)
+```
+
+---
+
+# 10. Crea*ing the Min-Heap
+
+```java
+Priority*ueue<int[]> minHeap =
+    new Prio*ityQueue<>(
+        (entry1, entry*) ->
+            Integer.compare(e*try1[0], entry2[0])
+    );
+```
+
+Ev*ry heap entry contains:
+
+```text
+{*dgeWeight, currentNode, parentNode*
+```
+
+The comparator uses:
+
+```jav*
+entry1[0]
+entry2[0]
+```
+
+because *ndex `0` contains the edge weight.*
+Therefore, the entry with the sma*lest edge weight is removed first.*
+---
+
+# 11. Starting Prim's Algori*hm
+
+```java
+minHeap.offer(new int[*{0, 0, -1});
+```
+
+This means:
+
+```*ext
+Start at node 0.
+
+Connection c*st = 0
+Current node    = 0
+Parent *ode     = -1
+```
+
+Why is the cost *0`?
+
+```text
+The starting node doe* not require an edge
+to become par* of the MST.
+```
+
+Why is the paren* `-1`?
+
+```text
+The starting node *as not reached from another node.
+*``
+
+The starting heap is:
+
+```text*{0, 0, -1}
+```
+
+---
+
+# 12. Process*ng the Min-Heap
+
+```java
+while (!m*nHeap.isEmpty())
+```
+
+The loop con*inues while there are possible edg*s to process.
+
+Inside the loop:
+
+`*`java
+int[] current = minHeap.poll*);
+```
+
+`poll()` removes the heap *ntry with the smallest edge weight*
+
+We extract the information:
+
+```*ava
+int edgeWeight = current[0];
+i*t currentNode = current[1];
+int pa*entNode = current[2];
+```
+
+---
+
+# *3. Why Do We Skip Visited Nodes?
+
+*``java
+if (visited[currentNode]) {*    continue;
+}
+```
+
+A node may en*er the heap through multiple edges*
+
+Consider:
+
+```text
+0 -- 2 = 4
+1 *- 2 = 2
+```
+
+Node 2 may enter as:
+*```text
+{4, 2, 0}
+```
+
+and later a*:
+
+```text
+{2, 2, 1}
+```
+
+The chea*er entry is processed first.
+
+Once*node 2 is visited through cost `2`* the cost `4` entry becomes useles*.
+
+Without the visited check:
+
+```*ava
+if (visited[currentNode]) {
+  * continue;
+}
+```
+
+we could:
+
+- Add*node 2 more than once
+- Add its co*t more than once
+- Print unnecessa*y edges
+- Produce an incorrect ans*er
+
+---
+
+# 14. Adding a Node to th* MST
+
+```java
+visited[currentNode]*= true;
+totalCost += edgeWeight;
+v*sitedNodes++;
+```
+
+These statement* mean:
+
+```text
+1. This node is no* part of the MST.
+
+2. Add the cost*of the edge used to connect this n*de.
+
+3. Increase the number of nod*s included in the MST.
+```
+
+For th* starting node:
+
+```text
+edgeWeigh* = 0
+```
+
+Therefore, adding its co*t does not change the total.
+
+---
+*# 15. Printing the Selected Edge
+
+*``java
+if (parentNode != -1) {
+   *System.out.println(
+        parent*ode + " -- " +
+        currentNode*+ " = " +
+        edgeWeight
+    )*
+}
+```
+
+Every accepted node except*the starting node represents an MS* edge.
+
+For example:
+
+```text
+pare*tNode  = 1
+currentNode = 2
+edgeWei*ht  = 2
+```
+
+The selected edge is:*
+```text
+1 -- 2 = 2
+```
+
+The start*ng node has:
+
+```text
+parentNode =*-1
+```
+
+Therefore, no edge is prin*ed for it.
+
+---
+
+# 16. Exploring t*e Neighbors
+
+```java
+for (int[] ne*ghbor : graph.get(currentNode))
+``*
+
+This loop visits every node dire*tly connected to `currentNode`.
+
+E*ch neighbor array contains:
+
+```te*t
+{nextNode, edgeWeight}
+```
+
+We e*tract:
+
+```java
+int nextNode = nei*hbor[0];
+int nextWeight = neighbor*1];
+```
+
+If the neighbor has not y*t joined the MST:
+
+```java
+if (!vi*ited[nextNode])
+```
+
+we add the po*sible connection to the heap:
+
+```*ava
+minHeap.offer(
+    new int[]{
+*       nextWeight,
+        nextNod*,
+        currentNode
+    }
+);
+```*
+---
+
+# 17. Why Don't We Mark a No*e Visited While Pushing It?
+
+We mu*t not do this:
+
+```java
+if (!visit*d[nextNode]) {
+    visited[nextNode] = true; // Incorrect here
+    mi*Heap.offer(...);
+}
+```
+
+A node may*be reachable through multiple edge*.
+
+Example:
+
+```text
+0 -- 2 = 10
+0*-- 1 = 1
+1 -- 2 = 2
+```
+
+When proc*ssing node 0, node 2 can be reache* with cost `10`.
+
+If we immediatel* mark node 2 visited, we would pre*ent the later, cheaper connection:*
+```text
+1 -- 2 = 2
+```
+
+Therefore*
+
+> A node should be marked visite* only when it is removed from the *in-heap using its cheapest availab*e connection.
+
+Correct place:
+
+```*ava
+int[] current = minHeap.poll()*
+
+if (visited[currentNode]) {
+    *ontinue;
+}
+
+visited[currentNode] =*true;
+```
+
+---
+
+# 18. Why Does Pri* Use Only the Edge Weight?
+
+When a*ding a neighbor, Prim uses:
+
+```ja*a
+minHeap.offer(
+    new int[]{
+  *     nextWeight,
+        nextNode,*        currentNode
+    }
+);
+```
+
+*rim does not use:
+
+```java
+edgeWei*ht + nextWeight
+```
+
+That would be*shortest-path thinking.
+
+Prim asks*
+
+```text
+What is the cheapest sin*le edge that can attach
+a new node*to the current MST?
+```
+
+Prim does*not ask:
+
+```text
+What is the comp*ete path cost from the starting no*e?
+```
+
+Therefore:
+
+```text
+Prim  *  → Use nextWeight
+Dijkstra → Use *urrentDistance + nextWeight
+```
+
+-*-
+
+# 19. Complete Dry Run
+
+## Init*al Input
+
+```text
+Number of nodes * 4
+
+Edges:
+
+0-1 = 1
+0-2 = 4
+1-2 = *
+1-3 = 5
+2-3 = 3
+```
+
+Adjacency li*t:
+
+```text
+0 → (1,1), (2,4)
+
+1 → *0,1), (2,2), (3,5)
+
+2 → (0,4), (1,*), (3,3)
+
+3 → (1,5), (2,3)
+```
+
+In*tial state:
+
+```text
+visited = [fa*se, false, false, false]
+
+minHeap:*{0, 0, -1}
+
+totalCost = 0
+visitedN*des = 0
+```
+
+---
+
+## Iteration 1: *emove Starting Node 0
+
+Heap entry *emoved:
+
+```text
+{0, 0, -1}
+```
+
+V*lues:
+
+```text
+edgeWeight = 0
+curr*ntNode = 0
+parentNode = -1
+```
+
+No*e 0 is not visited, so accept it.
+*Updated state:
+
+```text
+visited = *true, false, false, false]
+
+totalC*st = 0
+visitedNodes = 1
+```
+
+Node * has parent `-1`, so no edge is pr*nted.
+
+Explore neighbors of node 0*
+
+```text
+0 -- 1 = 1
+0 -- 2 = 4
+``*
+
+Both nodes are unvisited, so pus*:
+
+```text
+{1, 1, 0}
+{4, 2, 0}
+```*
+Heap:
+
+```text
+{1, 1, 0}
+{4, 2, 0*
+```
+
+---
+
+## Iteration 2: Remove *ode 1
+
+Minimum heap entry:
+
+```tex*
+{1, 1, 0}
+```
+
+Values:
+
+```text
+e*geWeight = 1
+currentNode = 1
+paren*Node = 0
+```
+
+Node 1 is not visite*, so accept it.
+
+Selected edge:
+
+`*`text
+0 -- 1 = 1
+```
+
+Updated stat*:
+
+```text
+visited = [true, true, *alse, false]
+
+totalCost = 0 + 1 = *
+visitedNodes = 2
+```
+
+Explore nei*hbors of node 1:
+
+```text
+1 -- 0 =*1
+1 -- 2 = 2
+1 -- 3 = 5
+```
+
+Node * is already visited, so skip it.
+
+*ush the other edges:
+
+```text
+{2, *, 1}
+{5, 3, 1}
+```
+
+Heap now conta*ns:
+
+```text
+{2, 2, 1}
+{4, 2, 0}
+{*, 3, 1}
+```
+
+Notice that node 2 ap*ears twice:
+
+```text
+Node 2 throug* node 1 with cost 2
+Node 2 through*node 0 with cost 4
+```
+
+The heap w*ll choose the cheaper connection f*rst.
+
+---
+
+## Iteration 3: Remove *ode 2 With Cost 2
+
+Minimum heap en*ry:
+
+```text
+{2, 2, 1}
+```
+
+Values*
+
+```text
+edgeWeight = 2
+currentNo*e = 2
+parentNode = 1
+```
+
+Node 2 i* not visited, so accept it.
+
+Selec*ed edge:
+
+```text
+1 -- 2 = 2
+```
+
+*pdated state:
+
+```text
+visited = [*rue, true, true, false]
+
+totalCost*= 1 + 2 = 3
+visitedNodes = 3
+```
+
+*xplore neighbors of node 2:
+
+```te*t
+2 -- 0 = 4
+2 -- 1 = 2
+2 -- 3 = 3*```
+
+Nodes 0 and 1 are already vis*ted.
+
+Push:
+
+```text
+{3, 3, 2}
+```*
+Heap now contains:
+
+```text
+{3, 3* 2}
+{4, 2, 0}
+{5, 3, 1}
+```
+
+---
+
+*# Iteration 4: Remove Node 3 With *ost 3
+
+Minimum heap entry:
+
+```tex*
+{3, 3, 2}
+```
+
+Values:
+
+```text
+e*geWeight = 3
+currentNode = 3
+paren*Node = 2
+```
+
+Node 3 is not visite*, so accept it.
+
+Selected edge:
+
+`*`text
+2 -- 3 = 3
+```
+
+Updated stat*:
+
+```text
+visited = [true, true, true, true]
+
+totalCost = 3 + 3 = 6
+*isitedNodes = 4
+```
+
+Explore neigh*ors of node 3:
+
+```text
+3 -- 1 = 5*3 -- 2 = 3
+```
+
+Both neighbors are*already visited, so nothing is add*d.
+
+Heap still contains:
+
+```text
+*4, 2, 0}
+{5, 3, 1}
+```
+
+---
+
+## It*ration 5: Remove Stale Entry for N*de 2
+
+Heap entry:
+
+```text
+{4, 2, *}
+```
+
+Node 2 is already visited:
+*```java
+if (visited[currentNode]) *
+    continue;
+}
+```
+
+Therefore, s*ip it.
+
+Important:
+
+```text
+Cost 4*is not added again.
+Node 2 is not *ounted again.
+Edge 0-2 is not sele*ted.
+```
+
+Heap:
+
+```text
+{5, 3, 1}*```
+
+---
+
+## Iteration 6: Remove S*ale Entry for Node 3
+
+Heap entry:
+*```text
+{5, 3, 1}
+```
+
+Node 3 is a*ready visited.
+
+Therefore, skip it*
+
+The heap is now empty.
+
+---
+
+# 2*. Final Result
+
+Selected MST edges*
+
+```text
+0 -- 1 = 1
+1 -- 2 = 2
+2 *- 3 = 3
+```
+
+Total cost:
+
+```text
+* + 2 + 3 = 6
+```
+
+Final output:
+
+`*`text
+Selected MST edges:
+0 -- 1 =*1
+1 -- 2 = 2
+2 -- 3 = 3
+Minimum sp*nning tree cost: 6
+```
+
+---
+
+# 21.*Detecting a Disconnected Graph
+
+At*the end, we check:
+
+```java
+if (vi*itedNodes != numberOfNodes) {
+    *eturn -1;
+}
+```
+
+Suppose the graph*is:
+
+```text
+0 -- 1
+
+2 -- 3
+```
+
+S*arting from node 0, Prim can visit*
+
+```text
+0 and 1
+```
+
+But it cann*t reach:
+
+```text
+2 and 3
+```
+
+The*efore:
+
+```text
+visitedNodes = 2
+n*mberOfNodes = 4
+```
+
+Since all nod*s were not reached, a single MST c*nnot be formed.
+
+The method return*:
+
+```java
+-1
+```
+
+---
+
+# 22. What*Would Break Without the Min-Heap?
+*Without a min-heap, we would not e*ficiently know which available edg* has the minimum weight.
+
+We might*select:
+
+```text
+0 -- 2 = 4
+```
+
+b*fore:
+
+```text
+0 -- 1 = 1
+```
+
+The*min-heap ensures that the cheapest*available connection is processed *irst.
+
+---
+
+# 23. What Would Break*Without the Visited Array?
+
+Withou* the visited array, the same node *ould be added to the MST multiple *imes.
+
+For example, node 2 appears*as:
+
+```text
+{2, 2, 1}
+{4, 2, 0}
+```
+
+Without checking:
+
+```java
+if (visited[currentNode]) {
+    continue;
+}
+```
+
+both entries could contribute to the total cost.
+
+The result would incorrectly include:
+
+```text
+1 -- 2 = 2
+0 -- 2 = 4
+```
+
+This would add unnecessary cost and create a cycle.
+
+---
+
+# 24. Why Does Prim Not Need DSU?
+
+Kruskal processes edges across the entire graph.
+
+Therefore, it needs DSU to determine whether two endpoints already belong to the same component.
+
+Prim grows one connected tree.
+
+A node joins the tree only once.
+
+Therefore, Prim uses:
+
+```java
+visited[node]
+```
+
+to determine whether a node has already joined the MST.
+
+```text
+Kruskal cycle prevention → DSU
+Prim cycle prevention    → Visited array
+```
+
+---
+
+# 25. Prim vs Dijkstra in Code
+
+Both algorithms may use:
+
+```text
+Adjacency list
+PriorityQueue
+Visited or distance arrays
+```
+
+But their heap values mean different things.
+
+## Prim
+
+```java
+minHeap.offer(
+    new int[]{edgeWeight, nextNode}
+);
+```
+
+Meaning:
+
+```text
+Cheapest edge used to attach nextNode to the MST
+```
+
+## Dijkstra
+
+```java
+int newDistance =
+    currentDistance + edgeWeight;
+```
+
+Meaning:
+
+```text
+Complete path cost from the source to nextNode
+```
+
+Remember:
+
+```text
+Prim:
+Minimize the total cost of building the network.
+
+Dijkstra:
+Minimize path cost from one source.
+```
+
+---
+
+# 26. Time and Space Complexity
+
+Let:
+
+```text
+V = number of vertices
+E = number of edges
+```
+
+Building the adjacency list:
+
+```text
+O(V + E)
+```
+
+Heap operations:
+
+```text
+O(E log E)
+```
+
+This is commonly written as:
+
+```text
+O(E log V)
+```
+
+for standard graph complexity analysis.
+
+Overall time complexity:
+
+```text
+O(E log V)
+```
+
+Space used by the adjacency list:
+
+```text
+O(V + E)
+```
+
+Space used by the visited array:
+
+```text
+O(V)
+```
+
+Space used by the heap:
+
+```text
+O(E)
+```
+
+Overall space complexity:
+
+```text
+O(V + E)
+```
+
+---
+
+# 27. Important Interview Points
+
+```text
+1. Prim grows one connected tree.
+
+2. It can start from any node.
+
+3. A min-heap stores the available edges.
+
+4. The heap returns the cheapest available connection.
+
+5. A visited array prevents adding the same node twice.
+
+6. A node may appear in the heap multiple times.
+
+7. Old heap entries become stale after the node is visited.
+
+8. A node is marked visited when it is removed from
+   the heap, not when it is inserted.
+
+9. Prim adds only the current edge weight, not the
+   complete path cost.
+
+10. The starting node is inserted with cost 0.
+
+11. The starting node has no real parent.
+
+12. If all nodes are not visited, the graph is disconnected.
+
+13. The MST contains exactly V - 1 actual edges.
+
+14. Prim usually uses an adjacency list, min-heap
+    and visited array.
+```
+
+---
+
+# 28. Prim's Core Code
+
+```java
+PriorityQueue<int[]> minHeap =
+    new PriorityQueue<>(
+        (a, b) -> Integer.compare(a[0], b[0])
+    );
+
+boolean[] visited = new boolean[numberOfNodes];
+
+minHeap.offer(new int[]{0, 0});
+
+int totalCost = 0;
+int visitedNodes = 0;
+
+while (!minHeap.isEmpty()) {
+
+    int[] current = minHeap.poll();
+
+    int edgeWeight = current[0];
+    int currentNode = current[1];
+
+    if (visited[currentNode]) {
+        continue;
+    }
+
+    visited[currentNode] = true;
+    visitedNodes++;
+    totalCost += edgeWeight;
+
+    for (int[] neighbor : graph.get(currentNode)) {
+
+        int nextNode = neighbor[0];
+        int nextWeight = neighbor[1];
+
+        if (!visited[nextNode]) {
+            minHeap.offer(
+                new int[]{nextWeight, nextNode}
+            );
+        }
+    }
+}
+```
+
+---
+
+# 29. Final Memory Trick
+
+```text
+START FROM ONE NODE
+        ↓
+PUSH ITS AVAILABLE EDGES
+        ↓
+REMOVE THE CHEAPEST EDGE
+        ↓
+IS THE NODE ALREADY VISITED?
+       /                    \
+     YES                     NO
+      ↓                       ↓
+    SKIP              ADD NODE TO MST
+                              ↓
+                    ADD CONNECTION COST
+                              ↓
+                    PUSH ITS UNVISITED
+                         NEIGHBORS
+                              ↓
+                           REPEAT
+```
+
+The most important idea is:
+
+> Prim repeatedly chooses the cheapest edge that expands the current MST to one new, unvisited node.
+
+Short memory:
+
+```text
+Prim = Min-Heap + Adjacency List + Visited Array
+```
+
+And the most important coding rule is:
+
+```java
+if (visited[currentNode]) {
+    continue;
+}
+```
+
+This ensures that each node is added to the MST exactly once.
