@@ -1,1 +1,634 @@
+# Kruskal's Minimum Spanning Tree Algorithm
 
+## 1. What Does Kruskal's Algorithm Do?
+
+Kruskal's algorithm finds the **Minimum Spanning Tree (MST)** of a weighted, undirected graph.
+
+An MST:
+
+- Connects every node
+- Contains no cycles
+- Contains exactly `V - 1` edges
+- Has the minimum possible total edge weight
+
+---
+
+## 2. Kruskal's Main Intuition
+
+Kruskal thinks about all edges globally.
+
+> Process edges from cheapest to most expensive and accept an edge only when it connects two currently separate components.
+
+Initially, every node is a separate component.
+
+```text
+{0} {1} {2} {3}
+```
+
+When we accept an edge, two components merge.
+
+```text
+Accept 0-1:
+
+{0,1} {2} {3}
+```
+
+If an edge connects nodes already belonging to the same component, we reject it because it would create a cycle.
+
+---
+
+## 3. Example Graph
+
+```text
+0 -- 1 = 1
+0 -- 2 = 4
+1 -- 2 = 2
+1 -- 3 = 5
+2 -- 3 = 3
+```
+
+Visual representation:
+
+```text
+         1
+    0 -------- 1
+    |          / \
+  4 |       2 /   \ 5
+    |        /     \
+    2 ----------- 3
+         3
+```
+
+Expected MST:
+
+```text
+0 -- 1 = 1
+1 -- 2 = 2
+2 -- 3 = 3
+```
+
+Total cost:
+
+```text
+1 + 2 + 3 = 6
+```
+
+---
+
+## 4. Kruskal's Steps
+
+```text
+1. Sort all edges by increasing weight.
+
+2. Initially, consider every node as a separate component.
+
+3. Process the sorted edges one by one.
+
+4. For each edge u-v:
+      Find the component containing u.
+      Find the component containing v.
+
+5. If u and v belong to different components:
+      Accept the edge.
+      Add its weight to the total cost.
+      Merge their components.
+
+6. If u and v belong to the same component:
+      Reject the edge because it creates a cycle.
+
+7. Stop after selecting V - 1 edges.
+```
+
+---
+
+## 5. Why Do We Need DSU?
+
+Kruskal must repeatedly answer:
+
+```text
+Are node u and node v already connected?
+```
+
+We could perform DFS or BFS every time, but that would be inefficient.
+
+Instead, we use **Disjoint Set Union**, also called:
+
+```text
+DSU
+Union-Find
+```
+
+DSU provides two important operations:
+
+```text
+find(node)
+```
+
+Returns the representative or ultimate parent of the component containing the node.
+
+```text
+union(node1, node2)
+```
+
+Merges the components containing the two nodes.
+
+---
+
+## 6. Complete Java Code
+
+```java
+import java.util.*;
+
+public class KruskalMST {
+
+    /*
+     * DSU is used to keep track of connected components.
+     */
+    static class DSU {
+
+        int[] parent;
+        int[] rank;
+
+        public DSU(int numberOfNodes) {
+
+            parent = new int[numberOfNodes];
+            rank = new int[numberOfNodes];
+
+            /*
+             * Initially, every node belongs to its own component.
+             *
+             * parent[0] = 0
+             * parent[1] = 1
+             * parent[2] = 2
+             * parent[3] = 3
+             */
+            for (int node = 0; node < numberOfNodes; node++) {
+                parent[node] = node;
+            }
+        }
+
+        /*
+         * Finds the ultimate parent or representative
+         * of the component containing the given node.
+         */
+        public int find(int node) {
+
+            /*
+             * If parent[node] == node, this node is the
+             * representative of its component.
+             */
+            if (parent[node] == node) {
+                return node;
+            }
+
+            /*
+             * Otherwise, recursively find the ultimate parent.
+             *
+             * Path compression connects the current node
+             * directly to the ultimate parent.
+             */
+            parent[node] = find(parent[node]);
+
+            return parent[node];
+        }
+
+        /*
+         * Attempts to merge the components containing
+         * node1 and node2.
+         *
+         * Returns true when the components were different
+         * and were successfully merged.
+         *
+         * Returns false when both nodes were already in
+         * the same component.
+         */
+        public boolean union(int node1, int node2) {
+
+            int parent1 = find(node1);
+            int parent2 = find(node2);
+
+            /*
+             * If both nodes have the same ultimate parent,
+             * they are already connected.
+             *
+             * Adding an edge between them would create a cycle.
+             */
+            if (parent1 == parent2) {
+                return false;
+            }
+
+            /*
+             * Union by rank:
+             *
+             * Attach the shorter DSU tree below the taller tree.
+             * This prevents the DSU tree from becoming too deep.
+             */
+            if (rank[parent1] < rank[parent2]) {
+
+                parent[parent1] = parent2;
+
+            } else if (rank[parent1] > rank[parent2]) {
+
+                parent[parent2] = parent1;
+
+            } else {
+
+                /*
+                 * Both trees have the same rank.
+                 *
+                 * We can choose either root as the new parent.
+                 * Here, parent1 becomes the parent of parent2.
+                 */
+                parent[parent2] = parent1;
+                rank[parent1]++;
+            }
+
+            return true;
+        }
+    }
+
+    public static int findMST(
+        int numberOfNodes,
+        int[][] edges
+    ) {
+
+        /*
+         * Every edge is represented as:
+         *
+         * {node1, node2, weight}
+         *
+         * Sort all edges in increasing order of weight.
+         */
+        Arrays.sort(
+            edges,
+            (edge1, edge2) ->
+                Integer.compare(edge1[2], edge2[2])
+        );
+
+        DSU dsu = new DSU(numberOfNodes);
+
+        int totalCost = 0;
+        int selectedEdges = 0;
+
+        System.out.println("Selected MST edges:");
+
+        /*
+         * Process edges from cheapest to most expensive.
+         */
+        for (int[] edge : edges) {
+
+            int node1 = edge[0];
+            int node2 = edge[1];
+            int weight = edge[2];
+
+            /*
+             * union() returns true only when node1 and node2
+             * originally belonged to different components.
+             *
+             * Therefore, this edge can be safely accepted.
+             */
+            if (dsu.union(node1, node2)) {
+
+                totalCost += weight;
+                selectedEdges++;
+
+                System.out.println(
+                    node1 + " -- " + node2 + " = " + weight
+                );
+
+                /*
+                 * A spanning tree of V nodes contains
+                 * exactly V - 1 edges.
+                 *
+                 * Therefore, once we have selected V - 1
+                 * edges, the MST is complete.
+                 */
+                if (selectedEdges == numberOfNodes - 1) {
+                    break;
+                }
+            }
+        }
+
+        /*
+         * If we could not select V - 1 edges, all nodes
+         * could not be connected.
+         *
+         * Therefore, the original graph was disconnected.
+         */
+        if (selectedEdges != numberOfNodes - 1) {
+            return -1;
+        }
+
+        return totalCost;
+    }
+
+    public static void main(String[] args) {
+
+        int numberOfNodes = 4;
+
+        /*
+         * Edge format:
+         *
+         * {node1, node2, weight}
+         */
+        int[][] edges = {
+            {0, 1, 1},
+            {0, 2, 4},
+            {1, 2, 2},
+            {1, 3, 5},
+            {2, 3, 3}
+        };
+
+        int minimumCost = findMST(
+            numberOfNodes,
+            edges
+        );
+
+        System.out.println(
+            "Minimum spanning tree cost: " + minimumCost
+        );
+    }
+}
+```
+
+---
+
+# 7. Code Explanation
+
+## Step 1: Store the Edges
+
+```java
+int[][] edges = {
+    {0, 1, 1},
+    {0, 2, 4},
+    {1, 2, 2},
+    {1, 3, 5},
+    {2, 3, 3}
+};
+```
+
+Every edge has the format:
+
+```text
+{node1, node2, weight}
+```
+
+For example:
+
+```java
+{0, 1, 1}
+```
+
+means:
+
+```text
+There is an undirected edge between 0 and 1
+with weight 1.
+```
+
+---
+
+## Step 2: Sort All Edges
+
+```java
+Arrays.sort(
+    edges,
+    (edge1, edge2) ->
+        Integer.compare(edge1[2], edge2[2])
+);
+```
+
+Here:
+
+```java
+edge1[2]
+```
+
+is the weight of the first edge.
+
+```java
+edge2[2]
+```
+
+is the weight of the second edge.
+
+We sort edges because Kruskal always wants to process the cheapest available edge first.
+
+Before sorting:
+
+```text
+0-1 = 1
+0-2 = 4
+1-2 = 2
+1-3 = 5
+2-3 = 3
+```
+
+After sorting:
+
+```text
+0-1 = 1
+1-2 = 2
+2-3 = 3
+0-2 = 4
+1-3 = 5
+```
+
+---
+
+## Step 3: Create the DSU
+
+```java
+DSU dsu = new DSU(numberOfNodes);
+```
+
+Initially:
+
+```text
+parent = [0, 1, 2, 3]
+rank   = [0, 0, 0, 0]
+```
+
+This represents four separate components:
+
+```text
+{0} {1} {2} {3}
+```
+
+---
+
+## Step 4: Process Every Edge
+
+```java
+for (int[] edge : edges)
+```
+
+This loop processes one complete edge during each iteration.
+
+For example:
+
+```java
+edge = {0, 1, 1}
+```
+
+Then:
+
+```java
+int node1 = edge[0];  // 0
+int node2 = edge[1];  // 1
+int weight = edge[2]; // 1
+```
+
+---
+
+## Step 5: Attempt to Merge the Components
+
+```java
+if (dsu.union(node1, node2))
+```
+
+The `union()` method checks whether the endpoints are already connected.
+
+### If it returns true
+
+```text
+The nodes were in different components.
+The edge is useful.
+Accept the edge.
+```
+
+### If it returns false
+
+```text
+The nodes were already connected.
+The edge would create a cycle.
+Reject the edge.
+```
+
+---
+
+## Step 6: Add the Accepted Edge Cost
+
+```java
+totalCost += weight;
+selectedEdges++;
+```
+
+We update the cost and edge count only when the edge is accepted.
+
+We must not update them for rejected edges.
+
+---
+
+## Step 7: Stop After V - 1 Accepted Edges
+
+```java
+if (selectedEdges == numberOfNodes - 1) {
+    break;
+}
+```
+
+For four nodes:
+
+```text
+V - 1 = 4 - 1 = 3
+```
+
+Once three edges have been accepted, all four nodes are connected without a cycle.
+
+Processing additional edges is unnecessary.
+
+---
+
+## Step 8: Detect a Disconnected Graph
+
+```java
+if (selectedEdges != numberOfNodes - 1) {
+    return -1;
+}
+```
+
+Suppose the graph is:
+
+```text
+0 -- 1
+
+2 -- 3
+```
+
+The two groups cannot be joined because no edge exists between them.
+
+Kruskal will not be able to select `V - 1` edges.
+
+Therefore, returning `-1` indicates that a single MST cannot be formed.
+
+---
+
+# 8. Understanding the find() Method
+
+```java
+public int find(int node) {
+
+    if (parent[node] == node) {
+        return node;
+    }
+
+    parent[node] = find(parent[node]);
+
+    return parent[node];
+}
+```
+
+The purpose of `find()` is:
+
+> Determine which component contains this node.
+
+Suppose:
+
+```text
+parent = [0, 0, 1, 2]
+```
+
+This represents:
+
+```text
+3 → 2 → 1 → 0
+```
+
+Calling:
+
+```java
+find(3)
+```
+
+works like this:
+
+```text
+find(3)
+→ find(2)
+→ find(1)
+→ find(0)
+→ returns 0
+```
+
+Therefore, the ultimate parent of node 3 is node 0.
+
+After path compression:
+
+```text
+3 → 0
+2 → 0
+1 → 0
+```
+
+The parent array becomes approximately:
+
+```text
+parent = [0, 0, 0, 0]
+```
+
+Future `find()` operations become faster.
+
+---
+
+# 9
