@@ -1,0 +1,164 @@
+import java.util.Arrays;
+
+class Solution {
+
+    public int minCostConnectPoints(int[][] points) {
+
+        // Total number of points that must be connected.
+        int n = points.length;
+
+
+        // visited[i] tells us whether point i has already
+        // been included in our connected network (MST).
+        //
+        // Initially, every value is false because
+        // no point has been selected yet.
+        boolean[] visited = new boolean[n];
+
+
+        // minDist[i] stores the minimum cost currently required
+        // to connect point i to any point already inside the MST.
+        //
+        // Example:
+        // If minDist[3] = 5, point 3 can currently be connected
+        // to our network using an edge with cost 5.
+        int[] minDist = new int[n];
+
+
+        // Initially, we do not know how to connect any point.
+        // Therefore, we set every connection cost to infinity.
+        Arrays.fill(minDist, Integer.MAX_VALUE);
+
+
+        // We decide to start Prim's algorithm from point 0.
+        //
+        // The first point does not require an edge because
+        // we are simply placing it inside the MST.
+        //
+        // Therefore, its connection cost is 0.
+        minDist[0] = 0;
+
+
+        // Stores the total cost of all the edges
+        // selected for our Minimum Spanning Tree.
+        int totalCost = 0;
+
+
+        // Every iteration adds exactly one new point to the MST.
+        //
+        // Since there are n points, this loop runs n times.
+        for (int count = 0; count < n; count++) {
+
+
+            // currPoint will store the next point that we want
+            // to add to our connected network.
+            //
+            // -1 means that we have not selected any point yet.
+            int currPoint = -1;
+
+
+            // -------------------------------------------------
+            // STEP 1: FIND THE CHEAPEST UNVISITED POINT
+            // -------------------------------------------------
+            //
+            // Check every point and select the unvisited point
+            // having the smallest value in minDist.
+            for (int point = 0; point < n; point++) {
+
+
+                // !visited[point]
+                //     Only consider points that are not already
+                //     included in the MST.
+                //
+                // currPoint == -1
+                //     This is the first available unvisited point,
+                //     so select it temporarily.
+                //
+                // minDist[point] < minDist[currPoint]
+                //     We found another unvisited point that is
+                //     cheaper to connect than our current choice.
+                if (!visited[point] &&
+                    (currPoint == -1 ||
+                     minDist[point] < minDist[currPoint])) {
+
+                    // Remember this point as the cheapest point
+                    // found so far.
+                    currPoint = point;
+                }
+            }
+
+
+            // -------------------------------------------------
+            // STEP 2: ADD THE SELECTED POINT TO THE MST
+            // -------------------------------------------------
+
+            // Mark the selected point as visited.
+            //
+            // This means the point is now part of our
+            // connected network.
+            visited[currPoint] = true;
+
+
+            // minDist[currPoint] is the cost of the edge
+            // used to bring currPoint into the MST.
+            //
+            // For the starting point, this value is 0.
+            totalCost += minDist[currPoint];
+
+
+            // -------------------------------------------------
+            // STEP 3: UPDATE THE REMAINING POINTS
+            // -------------------------------------------------
+            //
+            // Now that currPoint is inside the MST, it might
+            // provide a cheaper connection to some unvisited points.
+            //
+            // Therefore, inspect every remaining point.
+            for (int nextPoint = 0; nextPoint < n; nextPoint++) {
+
+
+                // We only need to update points that have not
+                // entered the MST yet.
+                if (!visited[nextPoint]) {
+
+
+                    // Cost of connecting two points is their
+                    // Manhattan distance:
+                    //
+                    // |x1 - x2| + |y1 - y2|
+                    //
+                    // points[i][0] represents the x-coordinate.
+                    // points[i][1] represents the y-coordinate.
+                    int dist =
+                        Math.abs(
+                            points[currPoint][0]
+                            - points[nextPoint][0]
+                        )
+                        +
+                        Math.abs(
+                            points[currPoint][1]
+                            - points[nextPoint][1]
+                        );
+
+
+                    // minDist[nextPoint] contains the cheapest
+                    // connection previously found for nextPoint.
+                    //
+                    // dist is the cost of connecting nextPoint
+                    // directly to the newly added currPoint.
+                    //
+                    // Keep whichever connection is cheaper.
+                    minDist[nextPoint] =
+                        Math.min(minDist[nextPoint], dist);
+                }
+            }
+        }
+
+
+        // After n iterations, all points are connected.
+        //
+        // totalCost contains the total weight of the
+        // Minimum Spanning Tree.
+        return totalCost;
+    }
+}
