@@ -1,0 +1,1338 @@
+# Minimum Spanning Tree (MST) / Graph Greedy Pattern
+
+## 1. What Is a Minimum Spanning Tree?
+
+A **Minimum Spanning Tree (MST)** is a set of edges that:
+
+1. Connects all vertices in the graph.
+2. Does not contain any cycle.
+3. Contains exactly `V - 1` edges.
+4. Has the minimum possible total edge weight.
+
+MST is mainly used with:
+
+- Weighted graphs
+- Undirected graphs
+- Connected graphs
+
+---
+
+## 2. Real-World Intuition
+
+Imagine several cities that must be connected using roads.
+
+Each possible road has a construction cost.
+
+The goal is:
+
+> Connect every city while minimizing the total construction cost.
+
+Example:
+
+```text
+A -- B = 1
+A -- C = 4
+B -- C = 2
+B -- D = 5
+C -- D = 3
+```
+
+The cheapest way to connect all cities is:
+
+```text
+A -- B = 1
+B -- C = 2
+C -- D = 3
+```
+
+Total cost:
+
+```text
+1 + 2 + 3 = 6
+```
+
+All cities are connected using exactly `4 - 1 = 3` edges.
+
+---
+
+## 3. Meaning of the Name
+
+### Spanning
+
+All vertices must be included.
+
+If even one vertex remains disconnected, it is not a spanning structure.
+
+### Tree
+
+A tree is a connected graph without cycles.
+
+For `V` vertices, a tree always contains:
+
+```text
+V - 1 edges
+```
+
+### Minimum
+
+Among all possible spanning trees, choose the one with the minimum total edge weight.
+
+Therefore:
+
+```text
+Minimum Spanning Tree
+=
+Connect every vertex
++ No cycles
++ Exactly V - 1 edges
++ Minimum total cost
+```
+
+---
+
+## 4. Why Does an MST Have V - 1 Edges?
+
+Initially, every vertex is a separate component.
+
+For four vertices:
+
+```text
+{A} {B} {C} {D}
+```
+
+After connecting A and B:
+
+```text
+{A, B} {C} {D}
+```
+
+After connecting B and C:
+
+```text
+{A, B, C} {D}
+```
+
+After connecting C and D:
+
+```text
+{A, B, C, D}
+```
+
+Each accepted edge reduces the number of components by one.
+
+```text
+V components
+→ V - 1 components
+→ V - 2 components
+→ ...
+→ 1 component
+```
+
+Therefore, we need exactly:
+
+```text
+V - 1 successful connections
+```
+
+---
+
+## 5. Why Are Cycles Avoided?
+
+Consider:
+
+```text
+A -- B = 1
+B -- C = 2
+A -- C = 4
+```
+
+If all three edges are selected, they form a cycle:
+
+```text
+A → B → C → A
+```
+
+The edge `A-C` is unnecessary because A can already reach C through B.
+
+```text
+A → B → C
+```
+
+Therefore, adding `A-C` increases the cost without improving connectivity.
+
+Important intuition:
+
+> If two nodes are already connected, adding another edge between them creates an unnecessary cycle.
+
+---
+
+## 6. Why Is MST a Greedy Pattern?
+
+A greedy algorithm makes the best safe decision at the current moment.
+
+For MST, the greedy decision is:
+
+> Select the cheapest edge that safely helps connect the graph.
+
+The word **safely** is important.
+
+We cannot blindly select every cheap edge because it may:
+
+- Create a cycle
+- Connect nodes that are already connected
+- Fail to expand the connected network
+
+---
+
+## 7. Cut Property
+
+A **cut** divides the vertices into two non-empty groups.
+
+Example:
+
+```text
+Left side  = {A, B}
+Right side = {C, D}
+```
+
+Suppose the crossing edges are:
+
+```text
+A -- C = 7
+B -- C = 2
+B -- D = 5
+```
+
+The cheapest edge connecting the two groups is:
+
+```text
+B -- C = 2
+```
+
+### Cut Property
+
+> The minimum-weight edge crossing a cut is safe to include in some MST.
+
+If that edge is the unique minimum edge crossing the cut, it must appear in every MST.
+
+### Swap Intuition
+
+Suppose an MST uses an edge costing `5` to connect two groups, even though an edge costing `2` could connect the same groups.
+
+Replace the `5` edge with the `2` edge.
+
+The graph remains connected, but the total cost decreases.
+
+Therefore, the original tree could not have been minimum.
+
+---
+
+## 8. Cycle Property
+
+Consider this cycle:
+
+```text
+A -- B = 1
+B -- C = 2
+A -- C = 5
+```
+
+The uniquely heaviest edge is:
+
+```text
+A -- C = 5
+```
+
+Removing it does not disconnect the graph because A can still reach C through B.
+
+### Cycle Property
+
+> The uniquely heaviest edge in a cycle cannot be part of an MST.
+
+Remember:
+
+```text
+Cut Property   → Helps decide which edge to include
+Cycle Property → Helps decide which edge to reject
+```
+
+---
+
+# 9. MST Algorithms
+
+The two main MST algorithms are:
+
+```text
+1. Kruskal's Algorithm
+2. Prim's Algorithm
+```
+
+Both produce an MST, but their thinking is different.
+
+---
+
+# 10. Kruskal's Algorithm
+
+## Intuition
+
+Kruskal thinks globally:
+
+> Process all edges from cheapest to most expensive and select an edge only when it connects two different components.
+
+Example edges:
+
+```text
+A-B = 1
+B-C = 2
+C-D = 3
+A-C = 4
+B-D = 5
+```
+
+Process them in sorted order.
+
+### Edge A-B = 1
+
+A and B belong to different components.
+
+```text
+Accept
+```
+
+Components:
+
+```text
+{A, B} {C} {D}
+```
+
+### Edge B-C = 2
+
+B and C belong to different components.
+
+```text
+Accept
+```
+
+Components:
+
+```text
+{A, B, C} {D}
+```
+
+### Edge C-D = 3
+
+C and D belong to different components.
+
+```text
+Accept
+```
+
+Components:
+
+```text
+{A, B, C, D}
+```
+
+We selected `V - 1` edges, so the MST is complete.
+
+Total cost:
+
+```text
+1 + 2 + 3 = 6
+```
+
+---
+
+## Kruskal's Steps
+
+```text
+1. Sort all edges by weight.
+2. Create a DSU for all vertices.
+3. Process edges from smallest to largest.
+4. Check whether the two endpoints belong to different components.
+5. If different:
+      Accept the edge.
+      Add its weight to the answer.
+      Union the two components.
+6. If already connected:
+      Reject the edge because it creates a cycle.
+7. Stop after selecting V - 1 edges.
+```
+
+---
+
+## Kruskal's Mental Model
+
+```text
+Take the cheapest available edge
+              ↓
+Are its endpoints in different components?
+           /       \
+         Yes        No
+          ↓          ↓
+       Accept      Reject
+          ↓
+ Merge components using DSU
+```
+
+---
+
+## Why DSU Is Used
+
+DSU efficiently answers:
+
+```text
+Are node u and node v already connected?
+```
+
+The condition is:
+
+```java
+if (find(u) != find(v)) {
+    // They belong to different components.
+    // The edge can be accepted.
+}
+```
+
+If:
+
+```java
+find(u) == find(v)
+```
+
+then the nodes are already connected.
+
+Adding the edge would create a cycle.
+
+---
+
+## Kruskal Template in Java
+
+```java
+import java.util.*;
+
+class Solution {
+
+    static class DSU {
+        int[] parent;
+        int[] rank;
+
+        DSU(int n) {
+            parent = new int[n];
+            rank = new int[n];
+
+            for (int node = 0; node < n; node++) {
+                parent[node] = node;
+            }
+        }
+
+        int find(int node) {
+            if (parent[node] != node) {
+                parent[node] = find(parent[node]);
+            }
+
+            return parent[node];
+        }
+
+        boolean union(int node1, int node2) {
+            int root1 = find(node1);
+            int root2 = find(node2);
+
+            if (root1 == root2) {
+                return false;
+            }
+
+            if (rank[root1] < rank[root2]) {
+                parent[root1] = root2;
+            } else if (rank[root1] > rank[root2]) {
+                parent[root2] = root1;
+            } else {
+                parent[root2] = root1;
+                rank[root1]++;
+            }
+
+            return true;
+        }
+    }
+
+    public int minimumSpanningTree(int vertices, int[][] edges) {
+
+        Arrays.sort(edges, (edge1, edge2) ->
+            Integer.compare(edge1[2], edge2[2])
+        );
+
+        DSU dsu = new DSU(vertices);
+
+        int totalCost = 0;
+        int acceptedEdges = 0;
+
+        for (int[] edge : edges) {
+            int node1 = edge[0];
+            int node2 = edge[1];
+            int weight = edge[2];
+
+            if (dsu.union(node1, node2)) {
+                totalCost += weight;
+                acceptedEdges++;
+
+                if (acceptedEdges == vertices - 1) {
+                    break;
+                }
+            }
+        }
+
+        if (acceptedEdges != vertices - 1) {
+            return -1;
+        }
+
+        return totalCost;
+    }
+}
+```
+
+---
+
+## Kruskal Complexity
+
+Sorting all edges:
+
+```text
+O(E log E)
+```
+
+DSU operations are almost constant time.
+
+Overall:
+
+```text
+Time:  O(E log E)
+Space: O(V)
+```
+
+The edge list itself may require `O(E)` storage.
+
+---
+
+# 11. Prim's Algorithm
+
+## Intuition
+
+Prim grows one connected tree.
+
+> Start from one node and repeatedly add the cheapest edge that connects the current tree to an unvisited node.
+
+Suppose we start from A.
+
+```text
+Connected = {A}
+Outside   = {B, C, D}
+```
+
+Available edges:
+
+```text
+A-B = 1
+A-C = 4
+```
+
+Choose:
+
+```text
+A-B = 1
+```
+
+Now:
+
+```text
+Connected = {A, B}
+Outside   = {C, D}
+```
+
+Available crossing edges:
+
+```text
+A-C = 4
+B-C = 2
+B-D = 5
+```
+
+Choose:
+
+```text
+B-C = 2
+```
+
+Now:
+
+```text
+Connected = {A, B, C}
+Outside   = {D}
+```
+
+Available crossing edges:
+
+```text
+B-D = 5
+C-D = 3
+```
+
+Choose:
+
+```text
+C-D = 3
+```
+
+All nodes are connected.
+
+Total cost:
+
+```text
+1 + 2 + 3 = 6
+```
+
+---
+
+## Prim's Steps
+
+```text
+1. Start from any node.
+2. Add it to a min-heap with cost 0.
+3. Remove the minimum-cost entry from the heap.
+4. If the node is already visited, skip it.
+5. Otherwise:
+      Mark it visited.
+      Add its connection cost to the answer.
+6. Push all edges leading to unvisited neighbors.
+7. Continue until every node is visited.
+```
+
+---
+
+## Prim's Mental Model
+
+```text
+Start with one node
+        ↓
+Look at all edges leaving the current tree
+        ↓
+Choose the cheapest edge to an unvisited node
+        ↓
+Add that node to the tree
+        ↓
+Repeat
+```
+
+---
+
+## Prim Template in Java
+
+```java
+import java.util.*;
+
+class Solution {
+
+    public int minimumSpanningTree(
+        int vertices,
+        List<List<int[]>> graph
+    ) {
+
+        // Each heap entry contains:
+        // {edgeWeight, node}
+        PriorityQueue<int[]> minHeap =
+            new PriorityQueue<>(
+                (a, b) -> Integer.compare(a[0], b[0])
+            );
+
+        boolean[] visited = new boolean[vertices];
+
+        minHeap.offer(new int[]{0, 0});
+
+        int totalCost = 0;
+        int visitedNodes = 0;
+
+        while (!minHeap.isEmpty()) {
+
+            int[] current = minHeap.poll();
+
+            int edgeWeight = current[0];
+            int currentNode = current[1];
+
+            if (visited[currentNode]) {
+                continue;
+            }
+
+            visited[currentNode] = true;
+            visitedNodes++;
+            totalCost += edgeWeight;
+
+            for (int[] neighbor : graph.get(currentNode)) {
+
+                int nextNode = neighbor[0];
+                int nextWeight = neighbor[1];
+
+                if (!visited[nextNode]) {
+                    minHeap.offer(
+                        new int[]{nextWeight, nextNode}
+                    );
+                }
+            }
+        }
+
+        if (visitedNodes != vertices) {
+            return -1;
+        }
+
+        return totalCost;
+    }
+}
+```
+
+---
+
+## Why Do We Skip Visited Nodes in Prim?
+
+The same node may enter the heap through multiple edges.
+
+Example:
+
+```text
+A-B = 5
+A-C = 2
+C-B = 1
+```
+
+B may enter the heap with cost `5`.
+
+Later, B may enter again with cost `1`.
+
+Once B is visited using the cheaper connection, the old heap entry costing `5` becomes stale.
+
+Therefore:
+
+```java
+if (visited[currentNode]) {
+    continue;
+}
+```
+
+prevents:
+
+- Adding the same node multiple times
+- Adding unnecessary cost
+- Creating duplicate MST connections
+
+---
+
+## Prim Complexity
+
+Using an adjacency list and min-heap:
+
+```text
+Time:  O(E log V)
+Space: O(V + E)
+```
+
+---
+
+# 12. Kruskal vs Prim
+
+## Kruskal
+
+```text
+Focus:
+Edges and components
+
+Main question:
+What is the globally cheapest edge that connects
+two separate components?
+
+Main tools:
+Sorting
+Edge list
+DSU
+
+Growth:
+Several components merge together.
+```
+
+## Prim
+
+```text
+Focus:
+Current connected tree
+
+Main question:
+What is the cheapest edge that adds one new node
+to the current tree?
+
+Main tools:
+Adjacency list
+Min-heap
+Visited array
+
+Growth:
+One connected tree expands.
+```
+
+## Memory Trick
+
+```text
+Kruskal → Connect components
+Prim    → Grow one tree
+```
+
+---
+
+# 13. When to Use Kruskal
+
+Prefer Kruskal when:
+
+- The input is already given as an edge list.
+- DSU naturally fits the problem.
+- You need to reason about connected components.
+- You need to classify critical MST edges.
+- Sorting edges is straightforward.
+- You need to include or exclude particular edges.
+
+Typical structure:
+
+```text
+edges = [[u, v, weight], ...]
+```
+
+---
+
+# 14. When to Use Prim
+
+Prefer Prim when:
+
+- The graph is given as an adjacency list.
+- You want to grow a connected structure.
+- Connections are discovered from visited nodes.
+- Heap-based traversal feels natural.
+- Generating and sorting every edge would be inconvenient.
+
+Typical structure:
+
+```text
+graph.get(node) → list of {neighbor, weight}
+```
+
+---
+
+# 15. Prim vs Dijkstra
+
+Prim and Dijkstra can look similar because both may use:
+
+- Adjacency list
+- PriorityQueue
+- Greedy extraction
+- Visited or distance arrays
+
+However, their objectives are different.
+
+## Dijkstra
+
+Dijkstra asks:
+
+> What is the shortest total path from a source to every node?
+
+Candidate value:
+
+```java
+newDistance = currentDistance + edgeWeight;
+```
+
+It cares about the complete path from the source.
+
+## Prim
+
+Prim asks:
+
+> What is the cheapest edge that can attach a new node to the tree?
+
+Candidate value:
+
+```java
+edgeWeight
+```
+
+It cares only about the edge used to add the node.
+
+## Memory Trick
+
+```text
+Dijkstra:
+Minimum travel cost from one source
+
+Prim:
+Minimum total cost to build the entire network
+```
+
+An MST does not guarantee the shortest path between every pair of nodes.
+
+---
+
+# 16. How to Recognize an MST Problem
+
+Look for phrases such as:
+
+- Connect all cities
+- Connect all houses
+- Connect all points
+- Build roads, cables or pipelines
+- Minimum total construction cost
+- Every location must become reachable
+- Minimum cost to connect the network
+- Connect all nodes without unnecessary connections
+
+Ask:
+
+```text
+1. What are the nodes?
+2. What represents an edge?
+3. What is the edge weight?
+4. Must every node become connected?
+5. Are the connections undirected?
+6. Are we minimizing total network cost?
+```
+
+If the answer to these questions is yes, MST is likely the pattern.
+
+---
+
+# 17. MST vs Shortest Path Recognition
+
+Ask:
+
+> Am I minimizing the cost of travelling from one source, or minimizing the total cost of building the entire network?
+
+```text
+Minimum travel from a source
+→ Shortest Path
+
+Minimum total network construction cost
+→ Minimum Spanning Tree
+```
+
+Example:
+
+```text
+Find the cheapest path from A to D
+→ Shortest Path
+
+Connect A, B, C and D with minimum total cost
+→ MST
+```
+
+---
+
+# 18. When a Problem Is Probably Not MST
+
+MST is probably not suitable when:
+
+- Only a source-to-destination path is required.
+- Not all nodes need to be connected.
+- The graph is directed.
+- The problem asks for dependency ordering.
+- The problem involves network flow or capacities.
+- The objective is minimum cost for one specific route.
+
+Possible alternatives:
+
+```text
+Source-to-destination minimum cost → Dijkstra/Bellman-Ford
+Dependency ordering               → Topological Sort
+Directed connectivity             → Directed graph algorithms
+Flow or capacity                  → Network flow
+```
+
+---
+
+# 19. Maximum Spanning Tree
+
+Some problems ask us to maximize instead of minimize.
+
+Examples:
+
+- Maximum total benefit
+- Choose strongest connections
+- Maximum score network
+- Maximum bottleneck path
+
+The structure remains similar.
+
+## Kruskal
+
+```text
+Minimum spanning tree → Sort weights ascending
+Maximum spanning tree → Sort weights descending
+```
+
+## Prim
+
+```text
+Minimum spanning tree → Use min-heap
+Maximum spanning tree → Use max-heap
+```
+
+---
+
+# 20. Important MST Properties
+
+## Property 1
+
+For `V` vertices, an MST contains:
+
+```text
+V - 1 edges
+```
+
+## Property 2
+
+An MST contains no cycle.
+
+## Property 3
+
+An MST connects every vertex.
+
+## Property 4
+
+A graph may have multiple MSTs.
+
+Example:
+
+```text
+A-B = 1
+B-C = 1
+A-C = 1
+```
+
+Any two edges create an MST with total cost `2`.
+
+## Property 5
+
+If all edge weights are distinct, the MST is unique.
+
+## Property 6
+
+Equal edge weights do not automatically guarantee multiple MSTs.
+
+## Property 7
+
+A disconnected graph does not have one spanning tree.
+
+It has a minimum spanning forest.
+
+## Property 8
+
+MST algorithms can handle negative edge weights.
+
+A negative edge is simply a cheaper connection.
+
+## Property 9
+
+Prim can start from any node.
+
+The selected edges may differ when equal weights exist, but the minimum total cost remains the same.
+
+---
+
+# 21. Common Mistakes
+
+## Mistake 1: Accepting an Edge That Creates a Cycle
+
+In Kruskal, verify:
+
+```java
+find(u) != find(v)
+```
+
+before accepting an edge.
+
+---
+
+## Mistake 2: Counting Processed Edges
+
+Only count accepted MST edges.
+
+```java
+if (dsu.union(u, v)) {
+    acceptedEdges++;
+}
+```
+
+Do not increase the count for rejected edges.
+
+---
+
+## Mistake 3: Forgetting V - 1
+
+The MST is complete when:
+
+```java
+acceptedEdges == vertices - 1
+```
+
+---
+
+## Mistake 4: Using Dijkstra Logic in Prim
+
+Incorrect Prim thinking:
+
+```java
+currentCost + edgeWeight
+```
+
+Correct Prim thinking:
+
+```java
+edgeWeight
+```
+
+Prim cares about the cost of attaching the new node.
+
+---
+
+## Mistake 5: Processing a Prim Node Multiple Times
+
+Always skip already visited nodes:
+
+```java
+if (visited[currentNode]) {
+    continue;
+}
+```
+
+---
+
+## Mistake 6: Forgetting Disconnected Graphs
+
+For Kruskal:
+
+```java
+if (acceptedEdges != vertices - 1) {
+    return -1;
+}
+```
+
+For Prim:
+
+```java
+if (visitedNodes != vertices) {
+    return -1;
+}
+```
+
+---
+
+## Mistake 7: Assuming MST Gives All Shortest Paths
+
+MST minimizes:
+
+```text
+Total weight of selected network edges
+```
+
+It does not minimize:
+
+```text
+Distance between every pair of nodes
+```
+
+---
+
+# 22. Problem-Solving Framework
+
+When solving an MST problem, follow this order:
+
+```text
+Step 1:
+Identify the nodes.
+
+Step 2:
+Identify possible connections.
+
+Step 3:
+Determine the weight or cost of each connection.
+
+Step 4:
+Check whether all nodes must become connected.
+
+Step 5:
+Check whether the graph is undirected.
+
+Step 6:
+Confirm that the goal is minimum total connection cost.
+
+Step 7:
+Check whether edges are explicitly provided or must be generated.
+
+Step 8:
+Choose Prim or Kruskal.
+
+Step 9:
+Prevent cycles or repeated nodes.
+
+Step 10:
+Verify that all nodes became connected.
+```
+
+---
+
+# 23. LeetCode Learning Order
+
+## Stage 1: Basic MST Construction
+
+### 1584. Min Cost to Connect All Points
+
+Learn:
+
+- How points become graph nodes
+- Manhattan distance as edge weight
+- Prim's algorithm
+- Kruskal's algorithm
+- Complete graph edge generation
+
+Manhattan distance:
+
+```java
+int distance =
+    Math.abs(x1 - x2) +
+    Math.abs(y1 - y2);
+```
+
+---
+
+## Stage 2: Explicit Edge-List MST
+
+### 1135. Connecting Cities With Minimum Cost
+
+Learn:
+
+- Kruskal with DSU
+- Sorting an edge list
+- Detecting disconnected graphs
+- Why an MST needs `V - 1` accepted edges
+
+---
+
+## Stage 3: Graph Transformation
+
+### 1168. Optimize Water Distribution in a Village
+
+Learn:
+
+- Virtual node technique
+- Representing different choices as edges
+- Converting the problem into an MST
+- Graph modelling
+
+Important idea:
+
+```text
+Build a well in house i
+=
+Connect virtual node 0 to house i
+```
+
+---
+
+## Stage 4: Edge Classification
+
+### 1489. Critical and Pseudo-Critical Edges
+
+Learn:
+
+- Temporarily skipping an edge
+- Forcing an edge into the MST
+- Comparing MST costs
+- Critical edges
+- Pseudo-critical edges
+
+---
+
+## Stage 5: Bottleneck Connectivity
+
+### 778. Swim in Rising Water
+
+### 1102. Path With Maximum Minimum Value
+
+Learn:
+
+- Connectivity under a threshold
+- Minimum bottleneck ideas
+- Maximum bottleneck ideas
+- Sorting cells or edges
+- DSU-based connectivity
+- PriorityQueue-based traversal
+
+---
+
+# 24. Final Recognition Cheat Sheet
+
+```text
+Connect all nodes with minimum total cost
+→ MST
+
+Cheapest path from one node to another
+→ Shortest Path
+
+Edges are given directly
+→ Consider Kruskal
+
+Adjacency list or growing from one node
+→ Consider Prim
+
+Need component checking
+→ DSU
+
+Need cheapest available connection
+→ Min-Heap
+
+Need strongest available connection
+→ Max-Heap
+
+Need all nodes connected
+→ Expect V - 1 accepted edges
+
+Need to avoid cycles
+→ DSU or visited array
+```
+
+---
+
+# 25. Final Mental Model
+
+Imagine several isolated villages.
+
+Every possible road has a construction cost.
+
+The goal is to connect all villages while avoiding unnecessary roads.
+
+Therefore:
+
+> Repeatedly choose the cheapest safe road that connects currently separated parts of the graph.
+
+## Kruskal
+
+```text
+Choose the cheapest roads globally.
+Use DSU to connect separate components.
+```
+
+## Prim
+
+```text
+Start from one village.
+Use a min-heap to grow one connected network.
+```
+
+## Most Important Intuition
+
+```text
+MST is not just about choosing cheap edges.
+
+MST is about choosing cheap edges that safely connect
+currently separated parts of the graph.
+```
