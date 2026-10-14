@@ -1,0 +1,733 @@
+# 1489. Find Critical and Pseudo-Critical Edges in Minimum Spanning Tree
+
+## Complete Java Solution with Detailed Comments
+
+```java
+import java.util.*;
+
+class Solution {
+
+    public List<List<Integer>> findCriticalAndPseudoCriticalEdges(
+            int n, int[][] edges) {
+
+        int totalEdges = edges.length;
+
+        /*
+         * Kruskal's algorithm requires edges to be sorted by weight.
+         *
+         * However, after sorting, the positions of the edges will change.
+         * The answer must contain the original indices from the input.
+         *
+         * Therefore, we store each edge in this format:
+         *
+         * [from, to, weight, originalIndex]
+         */
+        int[][] sortedEdges = new int[totalEdges][4];
+
+        for (int i = 0; i < totalEdges; i++) {
+
+            sortedEdges[i][0] = edges[i][0]; // Starting vertex
+            sortedEdges[i][1] = edges[i][1]; // Ending vertex
+            sortedEdges[i][2] = edges[i][2]; // Edge weight
+            sortedEdges[i][3] = i;           // Original input index
+        }
+
+        /*
+         * Sort all edges by increasing weight.
+         *
+         * Kruskal always tries the cheapest edge first.
+         */
+        Arrays.sort(
+                sortedEdges,
+                (a, b) -> Integer.compare(a[2], b[2])
+        );
+
+        /*
+         * First, build a normal MST without skipping or forcing any edge.
+         *
+         * skipEdge = -1 means no edge should be skipped.
+         * forceEdge = -1 means no edge should be forced.
+         *
+         * This gives us the minimum possible MST cost.
+         * We will use this value as our reference.
+         */
+        int baseMSTCost = buildMST(
+                n,
+                sortedEdges,
+                -1,
+                -1
+        );
+
+        /*
+         * This list stores edges that must appear in every MST.
+         */
+        List<Integer> criticalEdges = new ArrayList<>();
+
+        /*
+         * This list stores edges that can appear in at least one MST,
+         * but are not required in every MST.
+         */
+        List<Integer> pseudoCriticalEdges = new ArrayList<>();
+
+        /*
+         * Test every edge independently.
+         *
+         * Here, i represents the edge's position in the sortedEdges array.
+         *
+         * sortedEdges[i][3] represents the edge's original input index.
+         */
+        for (int i = 0; i < totalEdges; i++) {
+
+            /*
+             * TEST 1: Remove the current edge.
+             *
+             * We build an MST while skipping edge i.
+             */
+            int costWithoutEdge = buildMST(
+                    n,
+                    sortedEdges,
+                    i,
+                    -1
+            );
+
+            /*
+             * If removing this edge:
+             *
+             * 1. Increases the MST cost, or
+             * 2. Makes it impossible to connect all vertices
+             *
+             * then this edge is required for achieving the minimum cost.
+             *
+             * Therefore, it is a critical edge.
+             */
+            if (costWithoutEdge > baseMSTCost) {
+
+                /*
+                 * Add the original input index, not the sorted position.
+                 */
+                criticalEdges.add(sortedEdges[i][3]);
+
+            } else {
+
+                /*
+                 * TEST 2: Force the current edge.
+                 *
+                 * This test is performed only if the edge was not critical.
+                 *
+                 * We select this edge first and then use Kruskal
+                 * to complete the remaining spanning tree.
+                 */
+                int costWithEdge = buildMST(
+                        n,
+                        sortedEdges,
+                        -1,
+                        i
+                );
+
+                /*
+                 * If forcing this edge still gives the same minimum cost,
+                 * then at least one MST can contain this edge.
+                 *
+                 * Therefore, it is pseudo-critical.
+                 */
+                if (costWithEdge == baseMSTCost) {
+
+                    /*
+                     * Add the original input index.
+                     */
+                    pseudoCriticalEdges.add(sortedEdges[i][3]);
+                }
+
+                /*
+                 * If costWithEdge is greater than baseMSTCost,
+                 * including this edge makes the spanning tree expensive.
+                 *
+                 * Therefore, the edge is neither critical
+                 * nor pseudo-critical.
+                 */
+            }
+        }
+
+        /*
+         * The problem expects:
+         *
+         * answer[0] = critical edges
+         * answer[1] = pseudo-critical edges
+         */
+        List<List<Integer>> answer = new ArrayList<>();
+
+        answer.add(criticalEdges);
+        answer.add(pseudoCriticalEdges);
+
+        return answer;
+    }
+
+    /*
+     * This method builds an MST using Kruskal's algorithm.
+     *
+     * It can work in three different ways:
+     *
+     * 1. Normal MST:
+     *    skipEdge = -1
+     *    forceEdge = -1
+     *
+     * 2. Remove one edge:
+     *    skipEdge = index of the edge to ignore
+     *    forceEdge = -1
+     *
+     * 3. Force one edge:
+     *    skipEdge = -1
+     *    forceEdge = index of the edge to select first
+     */
+    private int buildMST(
+            int n,
+            int[][] edges,
+            int skipEdge,
+            int forceEdge) {
+
+        /*
+         * Every MST experiment must start from scratch.
+         *
+         * A fresh DSU initially considers every vertex
+         * as a separate component.
+         */
+        DSU dsu = new DSU(n);
+
+        /*
+         * totalCost stores the total weight of selected edges.
+         */
+        int totalCost = 0;
+
+        /*
+         * edgesUsed stores how many edges have been selected.
+         *
+         * A valid MST for n vertices must contain exactly n - 1 edges.
+         */
+        int edgesUsed = 0;
+
+        /*
+         * If forceEdge is not -1, we must select that edge first.
+         *
+         * This helps us check:
+         *
+         * "Can this particular edge belong to at least one MST?"
+         */
+        if (forceEdge != -1) {
+
+            int from = edges[forceEdge][0];
+            int to = edges[forceEdge][1];
+            int weight = edges[forceEdge][2];
+
+            /*
+             * Connect the two vertices of the forced edge.
+             */
+            dsu.union(from, to);
+
+            /*
+             * Since we selected the edge, add its weight.
+             */
+            totalCost += weight;
+
+            /*
+             * Count the forced edge as one selected edge.
+             */
+            edgesUsed++;
+        }
+
+        /*
+         * Run normal Kruskal's algorithm.
+         *
+         * The edges are already sorted from smallest
+         * weight to largest weight.
+         */
+        for (int i = 0; i < edges.length; i++) {
+
+            /*
+             * If this is the edge we are testing by removal,
+             * completely ignore it.
+             */
+            if (i == skipEdge) {
+                continue;
+            }
+
+            /*
+             * If this edge was already forced above,
+             * do not process it again.
+             *
+             * Otherwise, its weight and count would be added twice.
+             */
+            if (i == forceEdge) {
+                continue;
+            }
+
+            int from = edges[i][0];
+            int to = edges[i][1];
+            int weight = edges[i][2];
+
+            /*
+             * union() returns true only when from and to
+             * currently belong to different components.
+             *
+             * In that case, this edge connects two separate groups,
+             * so Kruskal accepts it.
+             *
+             * If union() returns false, the vertices are already
+             * connected. Adding the edge would create a cycle,
+             * so Kruskal rejects it.
+             */
+            if (dsu.union(from, to)) {
+
+                /*
+                 * Add the accepted edge's weight.
+                 */
+                totalCost += weight;
+
+                /*
+                 * Increase the number of selected edges.
+                 */
+                edgesUsed++;
+
+                /*
+                 * An MST for n vertices uses exactly n - 1 edges.
+                 *
+                 * Once we select n - 1 valid edges,
+                 * the MST is complete.
+                 */
+                if (edgesUsed == n - 1) {
+                    break;
+                }
+            }
+        }
+
+        /*
+         * If exactly n - 1 edges were selected,
+         * a valid MST was successfully created.
+         */
+        if (edgesUsed == n - 1) {
+            return totalCost;
+        }
+
+        /*
+         * If we could not select n - 1 edges,
+         * some vertices remained disconnected.
+         *
+         * Return a very large value to represent
+         * that an MST could not be formed.
+         *
+         * During the removal test:
+         *
+         * Integer.MAX_VALUE > baseMSTCost
+         *
+         * Therefore, the removed edge will correctly
+         * be classified as critical.
+         */
+        return Integer.MAX_VALUE;
+    }
+
+    /*
+     * DSU means Disjoint Set Union.
+     *
+     * DSU helps Kruskal:
+     *
+     * 1. Track which vertices are already connected.
+     * 2. Combine two separate components.
+     * 3. Reject edges that would create cycles.
+     */
+    private static class DSU {
+
+        /*
+         * parent[node] stores the parent of the node.
+         *
+         * The root of a component is a node whose parent
+         * is the node itself.
+         */
+        private final int[] parent;
+
+        /*
+         * rank helps keep the DSU trees short.
+         *
+         * When joining two components, the shorter tree
+         * is placed below the taller tree.
+         */
+        private final int[] rank;
+
+        /*
+         * DSU constructor.
+         *
+         * It creates the parent and rank arrays
+         * for n vertices.
+         */
+        DSU(int n) {
+
+            parent = new int[n];
+            rank = new int[n];
+
+            /*
+             * Initially, no vertices are connected.
+             *
+             * Therefore, every vertex starts in its own
+             * separate component and is its own parent.
+             *
+             * For n = 5:
+             *
+             * parent = [0, 1, 2, 3, 4]
+             *
+             * Components:
+             *
+             * {0} {1} {2} {3} {4}
+             */
+            for (int i = 0; i < n; i++) {
+                parent[i] = i;
+            }
+        }
+
+        /*
+         * Finds the final representative or root
+         * of the component containing node.
+         */
+        int find(int node) {
+
+            /*
+             * If the node is not its own parent,
+             * it means the node is not the root.
+             *
+             * Continue moving upward until the root is found.
+             */
+            if (parent[node] != node) {
+
+                /*
+                 * Path compression:
+                 *
+                 * Connect the node directly to the final root.
+                 *
+                 * Before:
+                 *
+                 * node -> another node -> another node -> root
+                 *
+                 * After:
+                 *
+                 * node -> root
+                 *
+                 * This makes future find operations faster.
+                 */
+                parent[node] = find(parent[node]);
+            }
+
+            /*
+             * Return the final root of the component.
+             */
+            return parent[node];
+        }
+
+        /*
+         * Attempts to connect the components containing
+         * nodeA and nodeB.
+         *
+         * Returns:
+         *
+         * true  -> two different components were merged
+         * false -> both nodes were already connected
+         */
+        boolean union(int nodeA, int nodeB) {
+
+            /*
+             * Find the root of nodeA's component.
+             */
+            int parentA = find(nodeA);
+
+            /*
+             * Find the root of nodeB's component.
+             */
+            int parentB = find(nodeB);
+
+            /*
+             * If both nodes have the same root,
+             * they are already connected.
+             *
+             * Adding this edge would create a cycle.
+             */
+            if (parentA == parentB) {
+                return false;
+            }
+
+            /*
+             * Union by rank:
+             *
+             * Attach the shorter tree below the taller tree.
+             */
+            if (rank[parentA] < rank[parentB]) {
+
+                /*
+                 * parentB's tree is taller.
+                 *
+                 * Attach parentA below parentB.
+                 */
+                parent[parentA] = parentB;
+
+            } else if (rank[parentA] > rank[parentB]) {
+
+                /*
+                 * parentA's tree is taller.
+                 *
+                 * Attach parentB below parentA.
+                 */
+                parent[parentB] = parentA;
+
+            } else {
+
+                /*
+                 * Both trees have the same rank.
+                 *
+                 * We can choose either root as the new parent.
+                 * Here, parentA becomes the new root.
+                 */
+                parent[parentB] = parentA;
+
+                /*
+                 * Since two equal-rank trees were joined,
+                 * the rank of the new root increases.
+                 */
+                rank[parentA]++;
+            }
+
+            /*
+             * The two components were successfully merged.
+             */
+            return true;
+        }
+    }
+}
+```
+
+---
+
+# High-Level Approach
+
+## What does the problem ask?
+
+We must divide the edges into two groups:
+
+1. **Critical edges**
+2. **Pseudo-critical edges**
+
+A critical edge must be present in every MST.
+
+A pseudo-critical edge can be present in at least one MST, but it is not required in every MST.
+
+---
+
+## Main Idea
+
+We first calculate the normal MST cost using Kruskal's algorithm.
+
+```text
+baseMSTCost = normal minimum spanning tree cost
+```
+
+Then, for every edge, we perform two experiments.
+
+---
+
+## Experiment 1: Remove the edge
+
+We temporarily skip the current edge and build another MST.
+
+```text
+If removing the edge increases the cost
+or disconnects the graph:
+
+    The edge is critical.
+```
+
+Why?
+
+Because the original minimum cost cannot be achieved without that edge.
+
+```text
+Remove edge -> answer becomes worse -> edge is required
+```
+
+---
+
+## Experiment 2: Force the edge
+
+This experiment is performed only if the edge is not critical.
+
+We select the edge first and then use Kruskal to complete the remaining tree.
+
+```text
+If the final cost is equal to the normal MST cost:
+
+    The edge is pseudo-critical.
+```
+
+Why?
+
+Because we successfully created a minimum spanning tree containing that edge.
+
+```text
+Force edge -> same minimum cost -> edge can belong to an MST
+```
+
+If the forced cost is greater than the normal MST cost:
+
+```text
+The edge is neither critical nor pseudo-critical.
+```
+
+Using that edge prevents us from achieving the minimum cost.
+
+---
+
+## Decision Process
+
+```text
+Find the normal MST cost.
+
+For every edge:
+
+    1. Remove the edge.
+
+       If the MST cost increases
+       or the graph becomes disconnected:
+
+           Mark it as critical.
+
+    2. Otherwise, force the edge.
+
+       If the MST cost remains unchanged:
+
+           Mark it as pseudo-critical.
+
+       Otherwise:
+
+           The edge is neither.
+```
+
+---
+
+## Why Preserve Original Indices?
+
+Kruskal requires sorting edges by weight, but sorting changes their positions.
+
+Therefore, every edge is stored as:
+
+```text
+[from, to, weight, originalIndex]
+```
+
+The sorted position is used while building MSTs.
+
+The original index is added to the final answer.
+
+---
+
+## Purpose of `buildMST()`
+
+The `buildMST()` method builds the cheapest spanning tree under a given condition.
+
+```text
+buildMST(n, edges, -1, -1)
+```
+
+Builds the normal MST.
+
+```text
+buildMST(n, edges, edgeIndex, -1)
+```
+
+Builds an MST while removing one edge.
+
+```text
+buildMST(n, edges, -1, edgeIndex)
+```
+
+Builds an MST after forcefully selecting one edge.
+
+---
+
+## Purpose of DSU
+
+DSU tracks connected components while Kruskal processes edges.
+
+```text
+find(node)
+```
+
+Finds the root of the component containing the node.
+
+```text
+union(nodeA, nodeB)
+```
+
+Attempts to connect two components.
+
+```text
+union() returns true
+```
+
+The nodes were in different components, so the edge is accepted.
+
+```text
+union() returns false
+```
+
+The nodes were already connected, so the edge would create a cycle and is rejected.
+
+---
+
+## Important Mental Model
+
+```text
+Removing an edge checks whether we NEED the edge.
+
+Forcing an edge checks whether we CAN USE the edge.
+```
+
+Therefore:
+
+```text
+Remove -> cost increases -> Critical
+
+Force -> same cost -> Pseudo-critical
+
+Force -> cost increases -> Neither
+```
+
+---
+
+## Time Complexity
+
+Let `E` be the number of edges.
+
+Sorting the edges:
+
+```text
+O(E log E)
+```
+
+For every edge, we may build the MST twice:
+
+```text
+Removal test + forcing test
+```
+
+Each MST construction processes up to `E` edges.
+
+Therefore, the overall time complexity is approximately:
+
+```text
+O(E² × α(N))
+```
+
+Since DSU operations are nearly constant:
+
+```text
+Approximately O(E²)
+```
+
+Space complexity:
+
+```text
+O(N + E)
+```
