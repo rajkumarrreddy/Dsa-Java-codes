@@ -1,0 +1,291 @@
+import java.util.PriorityQueue;
+
+class Solution {
+
+    public int swimInWater(int[][] grid) {
+
+        // The grid is n x n.
+        int n = grid.length;
+
+        /*
+         * Each element inside the min-heap is an int array:
+         *
+         * [cellHeight, row, column]
+         *
+         * Example:
+         * [7, 1, 2]
+         *
+         * This means:
+         * height = 7
+         * row = 1
+         * column = 2
+         *
+         * The comparator compares a[0] and b[0].
+         * Therefore, the cell with the smallest height
+         * will be removed first from the min-heap.
+         */
+        PriorityQueue<int[]> minHeap =
+                new PriorityQueue<>(
+                        (a, b) -> Integer.compare(a[0], b[0])
+                );
+
+        /*
+         * visited[row][column] tells us whether a cell
+         * has already been discovered and added to the heap.
+         *
+         * This prevents the same cell from being added
+         * multiple times.
+         */
+        boolean[][] visited = new boolean[n][n];
+
+        /*
+         * Four directions in which we can move:
+         *
+         * {1, 0}  -> down
+         * {-1, 0} -> up
+         * {0, 1}  -> right
+         * {0, -1} -> left
+         */
+        int[][] directions = {
+                {1, 0},
+                {-1, 0},
+                {0, 1},
+                {0, -1}
+        };
+
+        /*
+         * Start from the top-left cell: (0, 0).
+         *
+         * Store:
+         * [height of starting cell, row, column]
+         */
+        minHeap.offer(new int[]{grid[0][0], 0, 0});
+
+        /*
+         * The starting cell has already been added
+         * to the heap, so mark it as visited.
+         */
+        visited[0][0] = true;
+
+        /*
+         * minTime represents the maximum cell height
+         * processed along the route.
+         *
+         * We need the water level to be at least equal
+         * to the maximum height encountered.
+         */
+        int minTime = 0;
+
+        /*
+         * Continue processing cells until the heap is empty.
+         */
+        while (!minHeap.isEmpty()) {
+
+            /*
+             * Remove the discovered cell having the
+             * smallest height.
+             */
+            int[] current = minHeap.poll();
+
+            /*
+             * Extract the cell information.
+             */
+            int height = current[0];
+            int row = current[1];
+            int col = current[2];
+
+            /*
+             * To enter the current cell, the water level
+             * must be at least equal to its height.
+             *
+             * We also cannot forget a larger height that
+             * we encountered earlier.
+             *
+             * Therefore, keep the maximum value.
+             */
+            minTime = Math.max(minTime, height);
+
+            /*
+             * If we reached the bottom-right cell,
+             * return the required minimum time.
+             *
+             * The min-heap processes the smallest available
+             * heights first, so when the destination is removed,
+             * minTime is the minimum possible answer.
+             */
+            if (row == n - 1 && col == n - 1) {
+                return minTime;
+            }
+
+            /*
+             * Explore all four neighbours of the current cell.
+             */
+            for (int[] direction : directions) {
+
+                /*
+                 * Calculate the neighbour's row and column.
+                 */
+                int newRow = row + direction[0];
+                int newCol = col + direction[1];
+
+                /*
+                 * The neighbour can be processed only when:
+                 *
+                 * 1. newRow is not above the grid.
+                 * 2. newRow is not below the grid.
+                 * 3. newCol is not left of the grid.
+                 * 4. newCol is not right of the grid.
+                 * 5. The neighbour has not already been visited.
+                 */
+                if (newRow >= 0 &&
+                        newRow < n &&
+                        newCol >= 0 &&
+                        newCol < n &&
+                        !visited[newRow][newCol]) {
+
+                    /*
+                     * Mark the neighbour as visited immediately.
+                     *
+                     * This ensures that another cell does not
+                     * add this same neighbour to the heap again.
+                     */
+                    visited[newRow][newCol] = true;
+
+                    /*
+                     * Add the neighbour to the min-heap.
+                     *
+                     * Store:
+                     * [neighbour height, neighbour row, neighbour column]
+                     */
+                    minHeap.offer(
+                            new int[]{
+                                    grid[newRow][newCol],
+                                    newRow,
+                                    newCol
+                            }
+                    );
+                }
+            }
+        }
+
+        /*
+         * According to the problem, a path always exists.
+         * This return statement is included as a safe fallback.
+         */
+        return -1;
+    }
+}
+
+
+
+# 778. Swim in Rising Water
+
+## Problem Goal
+
+We need to travel from the top-left cell:
+
+(0, 0)
+
+to the bottom-right cell:
+
+(n - 1, n - 1)
+
+Each cell contains a height.
+
+We can enter a cell only when the water level is greater than
+or equal to that cell's height.
+
+Our goal is to find the minimum water level required to reach
+the destination.
+
+---
+
+## Main Observation
+
+For any chosen path, the required time is equal to the maximum
+height present on that path.
+
+For example:
+
+Path heights: 0 -> 2 -> 7 -> 4
+
+Required time = 7
+
+This is because we must wait until the water level reaches 7
+before we can complete that path.
+
+Therefore, the problem asks us to find:
+
+> The path whose maximum cell height is as small as possible.
+
+---
+
+## Why Use a Min-Heap?
+
+While exploring the grid, we may discover several cells.
+
+We should not simply choose the smallest direct neighbour and
+follow that path until the end.
+
+Instead, among all cells discovered so far, we should process
+the cell with the smallest height.
+
+A min-heap performs exactly this operation.
+
+It keeps all available cells and gives us the cell having the
+smallest height.
+
+---
+
+## What Does the Heap Store?
+
+Each heap element stores:
+
+[height, row, column]
+
+Example:
+
+[8, 2, 3]
+
+This means:
+
+- Cell height = 8
+- Row = 2
+- Column = 3
+
+The heap compares the height at index 0.
+
+---
+
+## High-Level Algorithm
+
+1. Create a min-heap.
+
+2. Insert the starting cell `(0, 0)` into the heap.
+
+3. Mark the starting cell as visited.
+
+4. Set `minTime = 0`.
+
+5. While the heap is not empty:
+
+   - Remove the cell having the smallest height.
+   - Update `minTime` with the maximum of:
+     - the previous `minTime`
+     - the current cell's height
+   - If the current cell is the destination, return `minTime`.
+   - Visit its valid unvisited neighbours.
+   - Mark each discovered neighbour as visited.
+   - Insert each discovered neighbour into the min-heap.
+
+---
+
+## Meaning of minTime
+
+`minTime` stores the maximum height processed while moving
+toward the destination.
+
+It is updated using:
+
+```java
+minTime = Math.max(minTime, height);
