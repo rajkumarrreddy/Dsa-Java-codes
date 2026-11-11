@@ -1,0 +1,145 @@
+# LeetCode 3: Longest Substring Without Repeating Characters
+
+## Problem
+
+Given a string `s`, return the length of the longest substring that does not contain repeating characters.
+
+### Example
+
+```text
+Input: s = "abcabcbb"
+Output: 3
+
+Explanation: "abc" is the longest substring without repeating characters.
+```
+
+---
+
+## Approach: Variable-Size Sliding Window
+
+Maintain a window between two pointers:
+
+```text
+[left ........ right]
+```
+
+The window must contain only unique characters.
+
+### Steps
+
+1. Move `right` to add a new character.
+2. Store the characters of the current window in a `HashSet`.
+3. If the new character is already present, the window becomes invalid.
+4. Move `left` and remove characters until the duplicate is gone.
+5. Add the current character.
+6. Update the maximum window length.
+
+---
+
+## Java Solution
+
+```java
+import java.util.HashSet;
+import java.util.Set;
+
+class Solution {
+    public int lengthOfLongestSubstring(String s) {
+
+        // Stores all characters currently inside the window.
+        Set<Character> window = new HashSet<>();
+
+        int left = 0;
+        int maxLength = 0;
+
+        // right expands the sliding window.
+        for (int right = 0; right < s.length(); right++) {
+
+            char currentCharacter = s.charAt(right);
+
+            /*
+             * If the current character is already present,
+             * the window has a duplicate.
+             *
+             * Keep removing characters from the left
+             * until the duplicate is removed.
+             */
+            while (window.contai*s(currentCharacter)) {
+           *    window.remove(s.charAt(left));*                left++;
+          * }
+
+            // The current cha*acter can now be added safely.
+   *        window.add(currentCharacte*);
+
+            // Length of the c*rrent valid window.
+            in* currentLength = right - left + 1;*
+            maxLength = Math.max(*axLength, currentLength);
+        *
+
+        return maxLength;
+    }
+*
+```
+
+---
+
+## Dry Run
+
+```text
+s =*"abca"
+
+right = 0, character = 'a'*window = [a]
+maxLength = 1
+
+right * 1, character = 'b'
+window = [a, b]
+maxLength = 2
+
+right = 2, charact*r = 'c'
+window = [a, b, c]
+maxLeng*h = 3
+
+right = 3, character = 'a'
+*a' is already present.
+
+Remove s[left] = 'a'
+left becomes 1
+
+Add the *urrent 'a'
+window = [b, c, a]
+maxL*ngth = 3
+```
+
+---
+
+## Why Do We Us* `while`?
+
+```java
+while (window.c*ntains(currentCharacter))
+```
+
+We *ay need to remove multiple charact*rs before the duplicate character *eaves the window.
+
+Using `if` woul* remove only one character, which *ay not always make the window vali*.
+
+---
+
+## Complexity
+
+```text
+Tim* Complexity:  O(n)
+Space Complexit*: O(min(n, character set size))
+``*
+
+Each character enters and leaves*the window at most once.
+
+---
+
+## *attern Summary
+
+```text
+Window typ*: Variable
+Window condition: All c*aracters must be unique
+Expand: Ad* s[right]
+Shrink: While duplicate *xists
+Answer: Maximum window lengt*
+```
