@@ -1,0 +1,208 @@
+# LeetCode 76: Minimum Window Substring
+
+## Problem
+
+Given two strings `s` and `t`, return the smallest substring of `s` containing every character of `t`, including duplicate characters.
+
+### Example
+
+```text
+Input:
+s = "ADOBECODEBANC"
+t = "ABC"
+
+Output: "BANC"
+```
+
+---
+
+## Approach: Variable-Size Sliding Window
+
+We need to track:
+
+```text
+requiredFrequency = Frequency of characters required from t
+windowFrequency   = Frequency of characters inside the current window
+```
+
+We also use:
+
+```text
+required = Number of distinct characters that must be satisfied
+formed   = Number of distinct characters currently satisfied
+```
+
+The window becomes valid when:
+
+```java
+formed == required
+```
+
+### Steps
+
+1. Store the required frequencies from `t`.
+2. Expand the window using `right`.
+3. Update the frequency of the current character.
+4. Increase `formed` when a character reaches its required frequency.
+5. When the window is valid, shrink it from the left.
+6. Save the smallest valid window.
+
+---
+
+## Java Solution
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+class Solution {
+    public String minWindow(String s, String t) {
+
+        if (s.length() < t.length()) {
+            return "";
+        }
+
+        // Stores the required frequency of each character from t.
+        Map<Character, Integer> requiredFrequency = new HashMap<>();
+
+        for (char character : t.toCharArray()) {
+            requiredFrequency.put(
+                character,
+                requiredFrequency.getOrDefault(character, 0) + 1
+            );
+        }
+
+        // Stores frequencies inside the current window.
+        Map<Character, Integer> windowFrequency = new HashMap<>();
+
+        // Number of distinct required characters.
+        int required = requiredFrequency.size();
+
+        // Number of distinct characters currently satisfying the requirement.
+        int formed = 0;
+
+        int left = 0;
+
+        int minimumLength = Integer.MAX_VALUE;
+        int answerStart = 0;
+
+        for (int right = 0; right < s.length(); right++) {
+
+            char rightCharacter = s.charAt(right);
+
+            // We only need to track characters present in t.
+            if (requiredFrequency.containsKey(rightCharacter)) {
+
+                windowFrequency.put(
+                    rightCharacter,
+                    windowFrequency.getOrDefault(rightCharacter, 0) + 1
+                );
+
+                /*
+                 * Increase formed only when the character's frequency
+                 * becomes exactly equal to its required frequency.
+                 */
+                if (windowFrequency.get(rightCharacter)
+                        .equals(requiredFrequency.get(rightCharacter))) {
+                    formed++;
+                }
+            }
+
+            /*
+             * The current window contains all required characters.
+             * Try to make the window smaller.
+             */
+            while (formed == required) {
+
+                int currentLength = right - left + 1;
+
+                if (currentLength < minimumLength) {
+                    minimumLength = currentLength;
+                    answerStart = left;
+                }
+
+                char leftCharacter = s.charAt(left);
+
+                // Remove the left character from the window.
+                if (requiredFrequency.containsKey(leftCharacter)) {
+
+                    windowFrequency.put(
+                        leftCharacter,
+                        windowFrequency.get(leftCharacter) - 1
+                    );
+
+                    /*
+                     * If its frequency falls below the requirement,
+                     * the window is no longer valid.
+                     */
+                    if (windowFrequency.get(leftCharacter)
+                            < requiredFrequency.get(leftCharacter)) {
+                        formed--;
+                    }
+                }
+
+                left++;
+            }
+        }
+
+        if (minimumLength == Integer.MAX_VALUE) {
+            return "";
+        }
+
+        return s.substring(answerStart, answerStart + minimumLength);
+    }
+}
+```
+
+---
+
+## Important Example with Duplicate Requirements
+
+```text
+t = "AABC"
+
+Required frequencies:
+
+A = 2
+B = 1
+C = 1
+```
+
+A window containing only one `A` is not valid.
+
+That is why checking whether a character is present is not enough. We must check its frequency.
+
+---
+
+## Understanding `formed`
+
+Suppose `A` is required twice:
+
+```text
+First A  → frequency is 1 → requirement not satisfied
+Second A → frequency is 2 → formed increases
+Third A  → frequency is 3 → formed does not increase again
+```
+
+Therefore, `formed` represents satisfied distinct characters, not the total number of matched characters.
+
+---
+
+## Complexity
+
+```text
+Time Complexity:  O(s.length + t.length)
+Space Complexity: O(number of distinct characters)
+```
+
+---
+
+## Pattern Summary
+
+```text
+Window type: Variable
+Valid condition: All required frequencies are satisfied
+Expand: Until the window becomes valid
+Shrink: While the window remains valid
+Answer: Minimum valid substring
+```
