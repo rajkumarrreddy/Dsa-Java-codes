@@ -1,71 +1,162 @@
+# LeetCode 209: Minimum Size Subarray Sum
+
+## Problem
+
+Given an array of positive integers `nums` and an integer `target`, return the minimum length of a contiguous subarray whose sum is at least `target`.
+
+Return `0` if no such subarray exists.
+
+### Example
+
+```text
+Input:
+target = 7
+nums = [2, 3, 1, 2, 4, 3]
+
+Output: 2
+
+Explanation:
+The subarray [4, 3] has sum 7 and length 2.
+```
+
+---
+
+## Approach: Variable-Size Sliding Window
+
+Because all values in `nums` are positive:
+
+- Adding an element increases the sum.
+- Removing an element decreases the sum.
+
+### Steps
+
+1. Expand the window by adding `nums[right]`.
+2. When `windowSum >= target`, the window is valid.
+3. Record its length.
+4. Remove `nums[left]` and move `left`.
+5. Continue shrinking while the sum is still at least `target`.
+6. Return the minimum length found.
+
+---
+
+## Java Solution
+
+```java
 class Solution {
     public int minSubArrayLen(int target, int[] nums) {
 
-        // Left boundary of the sliding window
         int left = 0;
+        int windowSum = 0;
 
-        // Right boundary of the sliding window
-        int right = 0;
+        int minimumLength = Integer.MAX_VALUE;
 
-        // Stores sum of current window
-        int sum = 0;
+        for (int right = 0; right < nums.length; right++) {
 
-        // Stores smallest valid length found so far
-        int minL = Integer.MAX_VALUE;
-
-        // Keep expanding window until right reaches end
-        while (right < nums.length) {
-
-            // Include current element into window
-            sum += nums[right];
-
-            // Move right forward to expand window
-            right++;
+            // Add the current element to the window.
+            windowSum += nums[right];
 
             /*
-             * If sum becomes >= target,
-             * we have found a VALID window.
+             * When the sum reaches the target,
+             * the current window is valid.
              *
-             * Now our goal changes:
-             * We no longer want a bigger window.
-             * We want the SMALLEST possible valid window.
+             * Try to shrink it to find a smaller valid window.
              */
-            while (sum >= target) {
+            while (windowSum >= target) {
 
-                /*
-                 * Current window:
-                 * starts at left
-                 * ends at right-1
-                 *
-                 * Length = right - left
-                 */
-                minL = Math.min(minL, right - left);
+                int currentLength = right - left + 1;
 
-                /*
-                 * Try removing leftmost element.
-                 *
-                 * Why?
-                 * Because maybe this element isn't needed.
-                 *
-                 * If window remains valid after removing it,
-                 * we get a smaller answer.
-                 */
-                sum -= nums[left];
+                minimumLength = Math.min(
+                    minimumLength,
+                    currentLength
+                );
 
-                // Window shrinks from left side
+                // Remove the leftmost element.
+                windowSum -= nums[left];
                 left++;
             }
         }
 
-        /*
-         * If minL never changed,
-         * no valid subarray was found.
-         */
-        if (minL == Integer.MAX_VALUE) {
+        // No valid subarray was found.
+        if (minimumLength == Integer.MAX_VALUE) {
             return 0;
         }
 
-        // Return smallest valid window length
-        return minL;
+        return minimumLength;
     }
 }
+```
+
+---
+
+## Dry Run
+
+```text
+target = 7
+nums = [2, 3, 1, 2, 4, 3]
+```
+
+Expand the window:
+
+```text
+Add 2 → sum = 2
+Add 3 → sum = 5
+Add 1 → sum = 6
+Add 2 → sum = 8
+```
+
+Now the window is valid:
+
+```text
+Window = [2, 3, 1, 2]
+Length = 4
+```
+
+Shrink:
+
+```text
+Remove 2
+sum = 6
+```
+
+The window becomes invalid, so expand again.
+
+Later:
+
+```text
+Window = [4, 3]
+Sum = 7
+Length = 2
+```
+
+The answer is `2`.
+
+---
+
+## Why Does Sliding Window Work?
+
+Sliding window works because every number is positive.
+
+If negative numbers were allowed, adding an element could decrease the sum and removing an element could increase the sum. The current sliding-window logic would no longer work reliably.
+
+---
+
+## Complexity
+
+```text
+Time Complexity:  O(n)
+Space Complexity: O(1)
+```
+
+Although there is a `while` loop inside the `for` loop, each element is added and removed at most once.
+
+---
+
+## Pattern Summary
+
+```text
+Window type: Variable
+Valid condition: windowSum >= target
+Expand: Add nums[right]
+Shrink: While windowSum >= target
+Answer: Minimum window length
+```
