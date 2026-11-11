@@ -1,0 +1,218 @@
+# LeetCode 904: Fruit Into Baskets
+
+## Problem
+
+You are given an integer array `fruits`, where `fruits[i]` represents the type of fruit on the `i-th` tree.
+
+You have two baskets, and each basket can contain only one fruit type.
+
+Return the maximum number of fruits you can collect from consecutive trees.
+
+---
+
+## Simplified Meaning
+
+Ignore the basket story.
+
+The actual problem is:
+
+> Find the longest contiguous subarray containing at most two distinct values.
+
+### Example
+
+```text
+Input: fruits = [1, 2, 3, 2, 2]
+Output: 4
+```
+
+The longest valid subarray is:
+
+```text
+[2, 3, 2, 2]
+```
+
+It contains only two fruit types:
+
+```text
+2 and 3
+```
+
+---
+
+## Approach: Variable-Size Sliding Window
+
+Use a frequency map to store the fruit types currently inside the window.
+
+### Steps
+
+1. Add `fruits[right]` to the frequency map.
+2. If the map contains more than two keys, the window is invalid.
+3. Move `left` and decrease the frequency of `fruits[left]`.
+4. Remove a fruit type from the map when its frequency becomes zero.
+5. Update the longest valid window length.
+
+---
+
+## Java Solution
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+class Solution {
+    public int totalFruit(int[] fruits) {
+
+        // Stores each fruit type and its frequency in the window.
+        Map<Integer, Integer> frequency = new HashMap<>();
+
+        int left = 0;
+        int maxFruits = 0;
+
+        for (int right = 0; right < fruits.length; right++) {
+
+            int rightFruit = fruits[right];
+
+            // Add the current fruit to the window.
+            frequency.put(
+                rightFruit,
+                frequency.getOrDefault(rightFruit, 0) + 1
+            );
+
+            /*
+             * We have only two baskets.
+             * Therefore, the window can contain at most
+             * two distinct fruit types.
+             */
+            while (frequency.size() > 2) {
+
+                int leftFruit = fruits[left];
+
+                frequency.put(
+                    leftFruit,
+                    frequency.get(leftFruit) - 1
+                );
+
+                /*
+                 * If no occurrence of this fruit remains
+                 * in the window, remove the key completely.
+                 */
+                if (frequency.get(leftFruit) == 0) {
+                    frequency.remove(leftFruit);
+                }
+
+                left++;
+            }
+
+            // The current window contains at most two fruit types.
+            int currentLength = right - left + 1;
+
+            maxFruits = Math.max(maxFruits, currentLength);
+        }
+
+        return maxFruits;
+    }
+}
+```
+
+---
+
+## Dry Run
+
+```text
+fruits = [1, 2, 3, 2, 2]
+```
+
+Expand:
+
+```text
+Window = [1]
+Types = {1}
+Length = 1
+```
+
+Expand:
+
+```text
+Window = [1, 2]
+Types = {1, 2}
+Length = 2
+```
+
+Expand:
+
+```text
+Window = [1, 2, 3]
+Types = {1, 2, 3}
+```
+
+The window has three distinct fruit types, so it is invalid.
+
+Shrink:
+
+```text
+Remove fruit 1
+
+Window = [2, 3]
+Types = {2, 3}
+```
+
+Continue expanding:
+
+```text
+Window = [2, 3, 2, 2]
+Types = {2, 3}
+Length = 4
+```
+
+Answer:
+
+```text
+4
+```
+
+---
+
+## Why Must We Remove a Key with Zero Frequency?
+
+Suppose the map contains:
+
+```text
+1 → 0
+2 → 2
+3 → 1
+```
+
+Even though fruit `1` is no longer inside the window, the map size is still `3`.
+
+Therefore, this is necessary:
+
+```java
+if (frequency.get(leftFruit) == 0) {
+    frequency.remove(leftFruit);
+}
+```
+
+After removing the key, the map correctly represents the distinct fruit types inside the window.
+
+---
+
+## Complexity
+
+```text
+Time Complexity:  O(n)
+Space Complexity: O(1)
+```
+
+The map contains only a small number of fruit types during processing.
+
+---
+
+## Pattern Summary
+
+```text
+Window type: Variable
+Valid condition: At most two distinct values
+Expand: Add fruits[right]
+Shrink: While distinct fruit types exceed two
+Answer: Maximum window length
+```
