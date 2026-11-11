@@ -1,0 +1,1148 @@
+# Sliding Window Pattern: Revision Notes
+
+## What Is Sliding Window?
+
+Sliding Window is an optimization technique used to process a **contiguous part** of an array or string.
+
+A window represents a range:
+
+```text
+[left ........ right]
+```
+
+Instead of recalculating every possible subarray or substring from the beginning, we reuse information from the current window.
+
+When the window moves:
+
+```text
+1. Add the new right element
+2. Remove the old left element when required
+3. Update the answer
+```
+
+Sliding Window often reduces:
+
+```text
+Brute Force: O(n²) or O(n³)
+Sliding Window: O(n)
+```
+
+---
+
+# When Should We Think of Sliding Window?
+
+Look for words such as:
+
+```text
+Substring
+Subarray
+Contiguous
+Consecutive
+Longest
+Shortest
+Minimum size
+Maximum size
+At most k
+Exactly k
+Without repeating
+Contains all characters
+Fixed window size
+```
+
+Sliding Window is usually useful when the problem asks about a **contiguous section** of an array or string.
+
+---
+
+# Important Questions to Ask
+
+Before writing the code, identify these five things:
+
+```text
+1. What does the window represent?
+2. What information must be stored inside the window?
+3. When is the window valid or invalid?
+4. When should the left pointer move?
+5. Are we finding a maximum, minimum, count, or existence?
+```
+
+---
+
+# Basic Window Length Formula
+
+For an inclusive window:
+
+```text
+[left ........ right]
+```
+
+The window length is:
+
+```java
+right - left + 1
+```
+
+The `+1` is required because both `left` and `right` are included.
+
+### Example
+
+```text
+left = 2
+right = 5
+
+Indexes: 2, 3, 4, 5
+Length: 4
+```
+
+Using the formula:
+
+```text
+5 - 2 + 1 = 4
+```
+
+---
+
+# Types of Sliding Window
+
+There are two main types:
+
+```text
+1. Fixed-size sliding window
+2. Variable-size sliding window
+```
+
+---
+
+# 1. Fixed-Size Sliding Window
+
+Use this pattern when the window size is already given.
+
+### Common clues
+
+```text
+Subarray of size k
+Substring of length k
+Every window of size k
+Permutation of a string
+Maximum sum of k consecutive elements
+```
+
+---
+
+## Fixed-Size Window Idea
+
+Suppose the required window size is `k`.
+
+1. Add the current right element.
+2. If the window becomes larger than `k`, remove the left element.
+3. When the window size is exactly `k`, calculate or check the answer.
+
+---
+
+## Fixed-Size Template
+
+```java
+int left = 0;
+
+for (int right = 0; right < n; right++) {
+
+    // Add the right element to the window.
+    add(input[right]);
+
+    /*
+     * If the window becomes larger than k,
+     * remove the leftmost element.
+     */
+    if (right - left + 1 > k) {
+        remove(input[left]);
+        left++;
+    }
+
+    /*
+     * The window now has exactly k elements.
+     */
+    if (right - left + 1 == k) {
+        updateAnswer();
+    }
+}
+```
+
+---
+
+## Example: Maximum Sum of Size `k`
+
+```java
+class Solution {
+    public int maximumSum(int[] nums, int k) {
+
+        int left = 0;
+        int windowSum = 0;
+        int maxSum = Integer.MIN_VALUE;
+
+        for (int right = 0; right < nums.length; right++) {
+
+            // Add the new element.
+            windowSum += nums[right];
+
+            // Keep the window size at most k.
+            if (right - left + 1 > k) {
+                windowSum -= nums[left];
+                left++;
+            }
+
+            // Update the answer only for windows of size k.
+            if (right - left + 1 == k) {
+                maxSum = Math.max(maxSum, windowSum);
+            }
+        }
+
+        return maxSum;
+    }
+}
+```
+
+---
+
+## Fixed-Size Example
+
+```text
+nums = [2, 1, 5, 1, 3, 2]
+k = 3
+```
+
+Windows:
+
+```text
+[2, 1, 5] → sum = 8
+[1, 5, 1] → sum = 7
+[5, 1, 3] → sum = 9
+[1, 3, 2] → sum = 6
+```
+
+Answer:
+
+```text
+9
+```
+
+---
+
+## Fixed-Size Problems
+
+```text
+LeetCode 567: Permutation in String
+LeetCode 438: Find All Anagrams in a String
+LeetCode 643: Maximum Average Subarray I
+LeetCode 1456: Maximum Number of Vowels in a Substring
+```
+
+---
+
+# 2. Variable-Size Sliding Window
+
+Use this pattern when the window size is not fixed.
+
+The window expands and shrinks depending on a condition.
+
+### Common clues
+
+```text
+Longest substring satisfying a condition
+Shortest subarray satisfying a condition
+At most k distinct characters
+No repeating characters
+Sum at least target
+Contains every required character
+```
+
+---
+
+# Maximum Valid Window Pattern
+
+Use this pattern when the problem asks for:
+
+```text
+Longest substring
+Longest subarray
+Maximum number of elements
+```
+
+The main process is:
+
+```text
+1. Expand right
+2. If the window becomes invalid, shrink left
+3. After the window is valid, update the maximum answer
+```
+
+---
+
+## Maximum Window Template
+
+```java
+int left = 0;
+int maxLength = 0;
+
+for (int right = 0; right < n; right++) {
+
+    // Add input[right] to the window.
+    add(input[right]);
+
+    /*
+     * Shrink while the window is invalid.
+     */
+    while (windowIsInvalid()) {
+        remove(input[left]);
+        left++;
+    }
+
+    /*
+     * The window is valid here.
+     */
+    maxLength = Math.max(
+        maxLength,
+        right - left + 1
+    );
+}
+```
+
+---
+
+## Main Rule for Maximum Problems
+
+```text
+Shrink while INVALID.
+Update the answer after the window becomes VALID.
+```
+
+Used in:
+
+```text
+LeetCode 3: Longest Substring Without Repeating Characters
+LeetCode 424: Longest Repeating Character Replacement
+LeetCode 904: Fruit Into Baskets
+```
+
+---
+
+# Minimum Valid Window Pattern
+
+Use this pattern when the problem asks for:
+
+```text
+Smallest substring
+Minimum-length subarray
+Shortest valid window
+```
+
+The main process is:
+
+```text
+1. Expand right until the window becomes valid
+2. While it remains valid:
+   - Update the minimum answer
+   - Remove the left element
+   - Move left forward
+```
+
+---
+
+## Minimum Window Template
+
+```java
+int left = 0;
+int minLength = Integer.MAX_VALUE;
+
+for (int right = 0; right < n; right++) {
+
+    // Add input[right] to the window.
+    add(input[right]);
+
+    /*
+     * While the window is valid, record it
+     * and try to make it smaller.
+     */
+    while (windowIsValid()) {
+
+        minLength = Math.min(
+            minLength,
+            right - left + 1
+        );
+
+        remove(input[left]);
+        left++;
+    }
+}
+
+return minLength == Integer.MAX_VALUE ? 0 : minLength;
+```
+
+---
+
+## Main Rule for Minimum Problems
+
+```text
+Shrink while VALID.
+Update the answer before making the valid window smaller.
+```
+
+Used in:
+
+```text
+LeetCode 76: Minimum Window Substring
+LeetCode 209: Minimum Size Subarray Sum
+```
+
+---
+
+# Maximum vs Minimum Window
+
+## Maximum Window
+
+```java
+while (windowIsInvalid()) {
+    remove(input[left]);
+    left++;
+}
+
+answer = Math.max(answer, right - left + 1);
+```
+
+Meaning:
+
+```text
+Fix the invalid window first.
+Then record the valid window.
+```
+
+---
+
+## Minimum Window
+
+```java
+while (windowIsValid()) {
+    answer = Math.min(answer, right - left + 1);
+
+    remove(input[left]);
+    left++;
+}
+```
+
+Meaning:
+
+```text
+Record the valid window first.
+Then try to make it smaller.
+```
+
+---
+
+# When to Use `if` and When to Use `while`
+
+## Use `if`
+
+Use `if` when only one element needs to leave during each iteration.
+
+This is common in fixed-size windows:
+
+```java
+if (right - left + 1 > k) {
+    remove(input[left]);
+    left++;
+}
+```
+
+The window grows by only one element at a time, so removing one element restores the required size.
+
+---
+
+## Use `while`
+
+Use `while` when multiple elements may need to be removed before the window becomes valid.
+
+```java
+while (windowIsInvalid()) {
+    remove(input[left]);
+    left++;
+}
+```
+
+### Example
+
+For a unique-character window:
+
+```text
+Window = "abca"
+```
+
+When the second `a` is added, we may need to remove characters until the previous `a` leaves the window.
+
+---
+
+# Common Data Structures
+
+The data structure depends on what information the window must store.
+
+---
+
+## 1. Running Sum
+
+Use when the condition depends on the total sum.
+
+```java
+int windowSum = 0;
+
+windowSum += nums[right];
+windowSum -= nums[left];
+```
+
+Used in:
+
+```text
+LeetCode 209: Minimum Size Subarray Sum
+```
+
+---
+
+## 2. HashSet
+
+Use when the window must contain unique values.
+
+```java
+Set<Character> window = new HashSet<>();
+
+window.add(character);
+window.remove(character);
+window.contains(character);
+```
+
+Used in:
+
+```text
+LeetCode 3: Longest Substring Without Repeating Characters
+```
+
+---
+
+## 3. HashMap
+
+Use when frequencies or distinct values must be tracked.
+
+```java
+Map<Integer, Integer> frequency = new HashMap<>();
+
+frequency.put(
+    value,
+    frequency.getOrDefault(value, 0) + 1
+);
+```
+
+When removing:
+
+```java
+frequency.put(
+    value,
+    frequency.get(value) - 1
+);
+
+if (frequency.get(value) == 0) {
+    frequency.remove(value);
+}
+```
+
+Used in:
+
+```text
+LeetCode 76: Minimum Window Substring
+LeetCode 904: Fruit Into Baskets
+```
+
+---
+
+## 4. Frequency Array
+
+Use when the character range is small and fixed.
+
+For lowercase English letters:
+
+```java
+int[] frequency = new int[26];
+
+frequency[character - 'a']++;
+frequency[character - 'a']--;
+```
+
+For uppercase English letters:
+
+```java
+frequency[character - 'A']++;
+```
+
+Used in:
+
+```text
+LeetCode 424: Longest Repeating Character Replacement
+LeetCode 567: Permutation in String
+```
+
+---
+
+# How Character-to-Index Conversion Works
+
+For lowercase letters:
+
+```java
+int index = character - 'a';
+```
+
+Mapping:
+
+```text
+'a' - 'a' = 0
+'b' - 'a' = 1
+'c' - 'a' = 2
+...
+'z' - 'a' = 25
+```
+
+For uppercase letters:
+
+```java
+int index = character - 'A';
+```
+
+This allows characters to be stored in an array of size `26`.
+
+---
+
+# Important Sliding Window Conditions
+
+## No Duplicate Characters
+
+```java
+while (window.contains(currentCharacter)) {
+    window.remove(s.charAt(left));
+    left++;
+}
+```
+
+Used in:
+
+```text
+LeetCode 3
+```
+
+---
+
+## Sum Reaches Target
+
+```java
+while (windowSum >= target) {
+    updateMinimumLength();
+
+    windowSum -= nums[left];
+    left++;
+}
+```
+
+Used in:
+
+```text
+LeetCode 209
+```
+
+---
+
+## At Most `k` Distinct Values
+
+```java
+while (frequency.size() > k) {
+
+    int leftValue = nums[left];
+
+    frequency.put(
+        leftValue,
+        frequency.get(leftValue) - 1
+    );
+
+    if (frequency.get(leftValue) == 0) {
+        frequency.remove(leftValue);
+    }
+
+    left++;
+}
+```
+
+For Fruit Into Baskets:
+
+```text
+k = 2
+```
+
+---
+
+## At Most `k` Replacements
+
+```java
+while ((right - left + 1) - maxFrequency > k) {
+    frequency[s.charAt(left) - 'A']--;
+    left++;
+}
+```
+
+Formula:
+
+```text
+Replacements required = Window length - Maximum frequency
+```
+
+Used in:
+
+```text
+LeetCode 424
+```
+
+---
+
+## Frequency Arrays Must Match
+
+```java
+if (Arrays.equals(requiredFrequency, windowFrequency)) {
+    return true;
+}
+```
+
+Used in fixed-size permutation and anagram problems.
+
+---
+
+## Window Contains All Required Characters
+
+```java
+while (formed == required) {
+    updateMinimumWindow();
+    removeLeftCharacter();
+    left++;
+}
+```
+
+Used in:
+
+```text
+LeetCode 76
+```
+
+---
+
+# Why Sliding Window Is Usually O(n)
+
+Sliding Window often contains a `for` loop and a nested `while` loop:
+
+```java
+for (int right = 0; right < n; right++) {
+
+    while (condition) {
+        left++;
+    }
+}
+```
+
+This may look like `O(n²)`, but it is usually `O(n)`.
+
+Why?
+
+```text
+right moves from 0 to n - 1 only once.
+left moves from 0 to n - 1 only once.
+```
+
+Neither pointer moves backward.
+
+Therefore:
+
+```text
+Total right movements = at most n
+Total left movements  = at most n
+
+Total operations = at most 2n
+Time complexity = O(n)
+```
+
+---
+
+# Common Mistakes
+
+## Mistake 1: Forgetting `+1`
+
+Wrong:
+
+```java
+int windowLength = right - left;
+```
+
+Correct:
+
+```java
+int windowLength = right - left + 1;
+```
+
+Both endpoints are included.
+
+---
+
+## Mistake 2: Moving `left` Without Removing Its Effect
+
+Wrong:
+
+```java
+left++;
+```
+
+Correct:
+
+```java
+windowSum -= nums[left];
+left++;
+```
+
+Or:
+
+```java
+frequency.put(
+    nums[left],
+    frequency.get(nums[left]) - 1
+);
+
+left++;
+```
+
+Remove the element’s effect before moving `left`.
+
+---
+
+## Mistake 3: Forgetting to Remove Zero-Frequency Keys
+
+Wrong:
+
+```java
+frequency.put(value, frequency.get(value) - 1);
+```
+
+Correct:
+
+```java
+frequency.put(value, frequency.get(value) - 1);
+
+if (frequency.get(value) == 0) {
+    frequency.remove(value);
+}
+```
+
+This matters when:
+
+```java
+frequency.size()
+```
+
+represents the number of distinct values.
+
+---
+
+## Mistake 4: Using `if` Instead of `while`
+
+Wrong for variable-size windows:
+
+```java
+if (windowIsInvalid()) {
+    left++;
+}
+```
+
+Correct:
+
+```java
+while (windowIsInvalid()) {
+    remove(input[left]);
+    left++;
+}
+```
+
+One removal may not be enough to restore validity.
+
+---
+
+## Mistake 5: Updating a Minimum Answer Outside the Shrinking Loop
+
+For minimum-window problems, update while the window is valid:
+
+```java
+while (windowIsValid()) {
+    minimumLength = Math.min(
+        minimumLength,
+        right - left + 1
+    );
+
+    remove(input[left]);
+    left++;
+}
+```
+
+This allows all smaller valid windows ending at `right` to be considered.
+
+---
+
+## Mistake 6: Updating Maximum Before Fixing the Window
+
+Wrong:
+
+```java
+maxLength = Math.max(maxLength, right - left + 1);
+
+while (windowIsInvalid()) {
+    left++;
+}
+```
+
+Correct:
+
+```java
+while (windowIsInvalid()) {
+    remove(input[left]);
+    left++;
+}
+
+maxLength = Math.max(maxLength, right - left + 1);
+```
+
+Never record an invalid window as the maximum.
+
+---
+
+## Mistake 7: Using Sliding Window When the Condition Is Not Monotonic
+
+Sliding Window requires predictable behavior when the window expands or shrinks.
+
+For example, LeetCode 209 contains only positive numbers:
+
+```text
+Adding an element increases the sum.
+Removing an element decreases the sum.
+```
+
+If negative numbers are allowed, this behavior breaks.
+
+For arrays containing negative numbers, techniques such as prefix sum, monotonic deque, or HashMap may be required instead.
+
+---
+
+# How to Identify the Correct Window Pattern
+
+## Case 1: The window size is given
+
+```text
+"subarray of size k"
+"substring of length k"
+```
+
+Use:
+
+```text
+Fixed-size sliding window
+```
+
+---
+
+## Case 2: Find the longest valid window
+
+```text
+"longest substring without..."
+"maximum subarray with at most..."
+```
+
+Use:
+
+```text
+Expand right
+Shrink while invalid
+Update maximum after shrinking
+```
+
+---
+
+## Case 3: Find the shortest valid window
+
+```text
+"minimum-length subarray with..."
+"smallest substring containing..."
+```
+
+Use:
+
+```text
+Expand until valid
+Update minimum while valid
+Shrink left
+```
+
+---
+
+## Case 4: Check whether a permutation exists
+
+Use:
+
+```text
+Fixed-size window
+Frequency comparison
+```
+
+---
+
+# Problem Comparison
+
+| Problem | Window Type | Stored Data | Window Condition | Answer |
+|---|---|---|---|---|
+| LeetCode 3 | Variable | `HashSet` | No duplicate characters | Maximum length |
+| LeetCode 76 | Variable | Two frequency maps | Contains all required frequencies | Minimum substring |
+| LeetCode 209 | Variable | Running sum | Sum is at least target | Minimum length |
+| LeetCode 424 | Variable | Frequency array | Replacements required ≤ `k` | Maximum length |
+| LeetCode 567 | Fixed | Two frequency arrays | Frequencies are equal | Boolean |
+| LeetCode 904 | Variable | Frequency map | At most two distinct values | Maximum length |
+
+---
+
+# Universal Maximum-Window Template
+
+```java
+int left = 0;
+int answer = 0;
+
+for (int right = 0; right < input.length; right++) {
+
+    // Step 1: Include input[right].
+    addToWindow(input[right]);
+
+    // Step 2: Restore the window condition.
+    while (windowIsInvalid()) {
+        removeFromWindow(input[left]);
+        left++;
+    }
+
+    // Step 3: The window is valid, so update the maximum.
+    answer = Math.max(
+        answer,
+        right - left + 1
+    );
+}
+
+return answer;
+```
+
+---
+
+# Universal Minimum-Window Template
+
+```java
+int left = 0;
+int answer = Integer.MAX_VALUE;
+
+for (int right = 0; right < input.length; right++) {
+
+    // Step 1: Include input[right].
+    addToWindow(input[right]);
+
+    // Step 2: Record and shrink every valid window.
+    while (windowIsValid()) {
+
+        answer = Math.min(
+            answer,
+            right - left + 1
+        );
+
+        removeFromWindow(input[left]);
+        left++;
+    }
+}
+
+return answer == Integer.MAX_VALUE ? 0 : answer;
+```
+
+---
+
+# Universal Fixed-Window Template
+
+```java
+int left = 0;
+
+for (int right = 0; right < input.length; right++) {
+
+    // Step 1: Include input[right].
+    addToWindow(input[right]);
+
+    // Step 2: Remove one element if the window is too large.
+    if (right - left + 1 > k) {
+        removeFromWindow(input[left]);
+        left++;
+    }
+
+    // Step 3: Process complete windows of size k.
+    if (right - left + 1 == k) {
+        updateAnswer();
+    }
+}
+```
+
+---
+
+# Quick Revision Cheat Sheet
+
+```text
+SLIDING WINDOW = contiguous range between left and right
+
+Fixed window:
+    Window size is given.
+    Add right.
+    Remove left when size > k.
+    Process when size == k.
+
+Longest/maximum window:
+    Add right.
+    Shrink while INVALID.
+    Update maximum after shrinking.
+
+Shortest/minimum window:
+    Add right.
+    While VALID:
+        Update minimum.
+        Remove left.
+        Move left.
+
+Window length:
+    right - left + 1
+
+Common storage:
+    Sum            → Running integer
+    Unique values  → HashSet
+    Frequencies    → HashMap or array
+    Distinct count → HashMap size
+
+Time complexity:
+    Usually O(n), because left and right move only forward.
+```
+
+---
+
+# Final Revision Questions
+
+Before solving a Sliding Window problem, answer:
+
+```text
+1. Is the required range contiguous?
+2. Is the window fixed-size or variable-size?
+3. What information must be stored?
+4. What makes the window valid?
+5. What makes the window invalid?
+6. Should left move while valid or while invalid?
+7. Is the answer a maximum, minimum, count, or boolean?
+8. When adding right, what state changes?
+9. Before moving left, what state must be removed?
+10. Is the window condition monotonic enough for Sliding Window?
+```
