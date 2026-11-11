@@ -1,0 +1,191 @@
+# LeetCode 424: Longest Repeating Character Replacement
+
+## Problem
+
+Given an uppercase string `s` and an integer `k`, you may replace at most `k` characters.
+
+Return the length of the longest substring that can be converted into a substring containing only one repeated character.
+
+### Example
+
+```text
+Input:
+s = "AABABBA"
+k = 1
+
+Output: 4
+```
+
+One possible substring is:
+
+```text
+"AABA"
+```
+
+Replace `B` with `A`:
+
+```text
+"AAAA"
+```
+
+---
+
+## Main Formula
+
+Inside the current window:
+
+```text
+Replacements required = Window length - Highest character frequency
+```
+
+The window is valid when:
+
+```java
+windowLength - maxFrequency <= k
+```
+
+### Example
+
+```text
+Window = "AABA"
+
+Window length = 4
+Frequency of A = 3
+Highest frequency = 3
+
+Replacements required = 4 - 3 = 1
+```
+
+If `k = 1`, this window is valid.
+
+---
+
+## Approach: Variable-Size Sliding Window
+
+1. Expand the window using `right`.
+2. Track the frequency of every character.
+3. Track the highest character frequency.
+4. Calculate how many replacements are required.
+5. If replacements exceed `k`, shrink from the left.
+6. Store the maximum valid window length.
+
+---
+
+## Java Solution
+
+```java
+class Solution {
+    public int characterReplacement(String s, int k) {
+
+        // Stores the frequencies of uppercase English letters.
+        int[] frequency = new int[26];
+
+        int left = 0;
+
+        // Highest frequency of one character in the window.
+        int maxFrequency = 0;
+
+        int maxLength = 0;
+
+        for (int right = 0; right < s.length(); right++) {
+
+            char rightCharacter = s.charAt(right);
+            int rightIndex = rightCharacter - 'A';
+
+            // Add the right character to the window.
+            frequency[rightIndex]++;
+
+            maxFrequency = Math.max(
+                maxFrequency,
+                frequency[rightIndex]
+            );
+
+            /*
+             * Characters other than the most frequent character
+             * must be replaced.
+             *
+             * If replacements required exceed k,
+             * shrink the window.
+             */
+            while ((right - left + 1) - maxFrequency > k) {
+
+                char leftCharacter = s.charAt(left);
+                int leftIndex = leftCharacter - 'A';
+
+                frequency[leftIndex]--;
+                left++;
+            }
+
+            // The current window can be made valid using at most k replacements.
+            maxLength = Math.max(
+                maxLength,
+                right - left + 1
+            );
+        }
+
+        return maxLength;
+    }
+}
+```
+
+---
+
+## Why Subtract `maxFrequency`?
+
+Suppose:
+
+```text
+Window = "AABBC"
+```
+
+Frequencies:
+
+```text
+A = 2
+B = 2
+C = 1
+```
+
+The highest frequency is `2`.
+
+Keep either `A` or `B` and replace the remaining characters:
+
+```text
+Window length = 5
+Highest frequency = 2
+
+Replacements required = 5 - 2 = 3
+```
+
+---
+
+## Why Is `maxFrequency` Not Decreased?
+
+When `left` moves, `maxFrequency` can become outdated.
+
+However, we do not need to decrease it because we are searching for the maximum possible window length. An outdated `maxFrequency` does not create an incorrect larger answer; it only prevents unnecessary shrinking.
+
+Recalculating it after every removal is not required.
+
+---
+
+## Complexity
+
+```text
+Time Complexity:  O(n)
+Space Complexity: O(1)
+```
+
+The frequency array always has size `26`.
+
+---
+
+## Pattern Summary
+
+```text
+Window type: Variable
+Valid condition: windowLength - maxFrequency <= k
+Expand: Add s[right]
+Shrink: When replacements required exceed k
+Answer: Maximum window length
+```
